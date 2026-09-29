@@ -157,6 +157,11 @@ const PIECES: &[&str] = &[
     "var(--a, ",
     "--a:",
     "var(--x",
+    "bold",
+    "12px/1.5",
+    "\"Times New Roman\"",
+    "serif",
+    "monospace",
 ];
 
 fn random_css(rng: &mut Rng) -> String {
@@ -196,6 +201,8 @@ fn exercise(input: &str) {
         "font-weight",
         "line-height",
         "z-index",
+        "font",
+        "font-family",
     ] {
         if let Some(longhands) = lumen_css::properties::parse_property(property, &values) {
             for (_, value) in longhands {

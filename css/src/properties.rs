@@ -21,6 +21,9 @@ pub enum SpecifiedValue {
     Number(f64),
     /// Un entier (`z-index: 10`).
     Integer(i32),
+    /// Une liste de familles de polices (`font-family`), chacune déjà
+    /// sérialisée : `"Times New Roman"` (chaîne), `Georgia`, `serif`.
+    FontFamily(Vec<String>),
 }
 
 impl fmt::Display for SpecifiedValue {
@@ -30,6 +33,7 @@ impl fmt::Display for SpecifiedValue {
             SpecifiedValue::LengthPercentage(lp) => write!(f, "{lp}"),
             SpecifiedValue::Number(n) => write!(f, "{}", format_number(*n)),
             SpecifiedValue::Integer(i) => write!(f, "{i}"),
+            SpecifiedValue::FontFamily(list) => write!(f, "{}", list.join(", ")),
         }
     }
 }
@@ -118,6 +122,20 @@ const FONT_SIZE: &[&str] = &[
 
 const SIZES: &[&str] = &["min-content", "max-content", "fit-content"];
 
+/// `display` : un mot-clé, ou `block math` / `inline math` (MathML), que
+/// Chromium écrit `block math` et `math`.
+fn display(values: &[&ComponentValue]) -> Option<SpecifiedValue> {
+    if let [outer, inner] = values
+        && keyword(inner, &["math"]).is_some()
+    {
+        return match keyword(outer, &["block", "inline"])? {
+            SpecifiedValue::Keyword("block") => Some(SpecifiedValue::Keyword("block math")),
+            _ => Some(SpecifiedValue::Keyword("math")),
+        };
+    }
+    single(values, DISPLAY, |v| keyword(v, &["math"]))
+}
+
 /// Parse une propriété longue (une seule valeur).
 fn longhand(name: &str, values: &[&ComponentValue]) -> Option<(&'static str, SpecifiedValue)> {
     let none = |_: &ComponentValue| None;
@@ -149,7 +167,7 @@ fn longhand(name: &str, values: &[&ComponentValue]) -> Option<(&'static str, Spe
             let kw = ["none", SIZES[0], SIZES[1], SIZES[2]];
             (static_name(name), single(values, &kw, |v| lp(v, false))?)
         }
-        "display" => ("display", single(values, DISPLAY, none)?),
+        "display" => ("display", display(values)?),
         "position" => (
             "position",
             single(
@@ -263,6 +281,87 @@ fn four_sides(prefix: &str, values: &[&ComponentValue]) -> Option<Vec<Longhand>>
     )
 }
 
+/// `font-family` : des familles séparées par des virgules, chacune une chaîne
+/// ou une suite d'identifiants (`Times New Roman`).
+fn font_family(values: &[&ComponentValue]) -> Option<SpecifiedValue> {
+    let mut families = Vec::new();
+    for part in values.split(|v| matches!(v, ComponentValue::Token(Token::Comma))) {
+        let family = match part {
+            [ComponentValue::Token(Token::String(s))] => format!("\"{s}\""),
+            _ => {
+                let words: Vec<&str> = part
+                    .iter()
+                    .map(|v| match v {
+                        ComponentValue::Token(Token::Ident(w)) => Some(w.as_ref()),
+                        _ => None,
+                    })
+                    .collect::<Option<_>>()?;
+                // Les mots-clés globaux ne peuvent pas être des noms de famille.
+                let reserved = ["initial", "inherit", "unset", "default", "revert"];
+                if words.is_empty()
+                    || words
+                        .iter()
+                        .any(|w| reserved.iter().any(|k| w.eq_ignore_ascii_case(k)))
+                {
+                    return None;
+                }
+                words.join(" ")
+            }
+        };
+        families.push(family);
+    }
+    Some(SpecifiedValue::FontFamily(families))
+}
+
+/// Le raccourci `font` : `[style || variant || weight || stretch]? size
+/// [/ line-height]? family`. Il remet à leur valeur initiale les propriétés
+/// qu'il ne précise pas (`line-height: normal`...).
+fn font_shorthand(values: &[&ComponentValue]) -> Option<Vec<Longhand>> {
+    const STYLE_LIKE: &[&str] = &[
+        "normal",
+        "italic",
+        "oblique",
+        "small-caps",
+        "ultra-condensed",
+        "extra-condensed",
+        "condensed",
+        "semi-condensed",
+        "semi-expanded",
+        "expanded",
+        "extra-expanded",
+        "ultra-expanded",
+    ];
+    let mut weight = SpecifiedValue::Keyword("normal");
+    let mut i = 0;
+    // Au plus 4 mots avant la taille.
+    while i < values.len().min(4) {
+        let v = values[i];
+        if let Some((_, w)) = longhand("font-weight", &[v]) {
+            weight = w;
+        } else if keyword(v, STYLE_LIKE).is_none() {
+            break;
+        }
+        i += 1;
+    }
+    let (_, size) = longhand("font-size", &[values.get(i)?])?;
+    i += 1;
+    let mut line_height = SpecifiedValue::Keyword("normal");
+    if matches!(
+        values.get(i),
+        Some(ComponentValue::Token(Token::Delim('/')))
+    ) {
+        line_height = longhand("line-height", &[values.get(i + 1)?])?.1;
+        i += 2;
+    }
+    let family = font_family(&values[i..])?;
+    Some(vec![
+        ("font-size", size),
+        ("font-weight", weight),
+        ("line-height", line_height),
+        ("font-family", family),
+    ])
+}
+
 /// Parse la valeur d'une propriété (longue ou raccourci) et renvoie les
 /// propriétés longues qu'elle définit. `None` si la valeur est invalide (la
 /// déclaration est alors ignorée) ou si la propriété est inconnue.
@@ -277,6 +376,8 @@ pub fn parse_property(name: &str, value: &[ComponentValue]) -> Option<Vec<Longha
     }
     match name.as_str() {
         "margin" | "padding" => four_sides(&name, &values),
+        "font" => font_shorthand(&values),
+        "font-family" => font_family(&values).map(|v| vec![("font-family", v)]),
         _ => longhand(&name, &values).map(|l| vec![l]),
     }
 }
@@ -307,6 +408,7 @@ pub fn initial_value(name: &str) -> Option<SpecifiedValue> {
         "font-weight" => Keyword("normal"),
         "line-height" => Keyword("normal"),
         "z-index" => Keyword("auto"),
+        "font-family" => SpecifiedValue::FontFamily(vec!["serif".into()]),
         _ => return None,
     })
 }
@@ -316,6 +418,6 @@ pub fn initial_value(name: &str) -> Option<SpecifiedValue> {
 pub fn is_inherited(name: &str) -> bool {
     matches!(
         name,
-        "visibility" | "font-size" | "font-weight" | "line-height"
+        "visibility" | "font-size" | "font-weight" | "line-height" | "font-family"
     )
 }
