@@ -7,9 +7,10 @@ C'est la première brique d'un navigateur web.
 - **100 % conforme** : tous les tests officiels du tokenizer
   ([html5lib-tests](https://github.com/html5lib/html5lib-tests)) et de la
   construction d'arbre ([WPT](https://github.com/web-platform-tests/wpt/tree/master/html/syntax/parsing)).
-- **Rapide** : plus rapide que [html5ever](https://github.com/servo/html5ever)
-  (le parser de Servo) sur nos pages de test, sauf sur du texte pur où il est
-  légèrement devant. Voir les [benchmarks](#benchmarks) et leurs limites.
+- **Rapide** : sur 5 vraies pages du web (Wikipédia, spec WHATWG, doc Rust, MDN),
+  le parsing complet est **1,17 à 1,39 fois plus rapide** que
+  [html5ever](https://github.com/servo/html5ever), le parser de Servo.
+  Voir les [benchmarks](#benchmarks) et leurs limites.
 - **Aucune dépendance** à l'exécution.
 - Suit la spec la plus récente : nouveau `<select>` personnalisable (2025),
   processing instructions `<?cible données?>` (2026).
@@ -127,6 +128,29 @@ bien plus stables. Une vérification ancienne version / version actuelle, faite
 l'une juste après l'autre, a confirmé qu'un écart de 7 % observé n'était pas une
 régression du code.
 
+### Sur de vraies pages
+
+Cinq pages téléchargées le 29 septembre 2026 et figées dans `benches/pages/`
+(sources et licences : [SOURCES.md](benches/pages/SOURCES.md)). Pour chaque page,
+le benchmark vérifie d'abord que les deux parsers produisent le même nombre de
+nœuds. Mesures sans copie de la page des deux côtés.
+
+| Page | Taille | Nœuds | Parsing complet | Rapport | Tokenizer seul | Rapport |
+|---|---|---|---|---|---|---|
+| Wikipédia FR, *Rust (langage)* | 538 Ko | 12 367 | 193,7 contre 139,1 Mo/s | **×1,39** | 361,3 contre 162,2 Mo/s | ×2,23 |
+| Wikipedia EN, *HTML* | 779 Ko | 15 468 | 199,8 contre 154,7 Mo/s | **×1,29** | 397,2 contre 188,5 Mo/s | ×2,11 |
+| Spec WHATWG, *Parsing* | 769 Ko | 31 031 | 177,3 contre 151,3 Mo/s | **×1,17** | 397,2 contre 212,4 Mo/s | ×1,87 |
+| Doc Rust, `Vec` | 930 Ko | 38 317 | 142,6 contre 114,2 Mo/s | **×1,25** | 260,2 contre 142,0 Mo/s | ×1,83 |
+| MDN FR, `<table>` | 266 Ko | 4 310 | 169,1 contre 144,0 Mo/s | **×1,17** | 270,6 contre 191,9 Mo/s | ×1,41 |
+
+```bash
+cargo bench --bench vraies_pages
+```
+
+### Sur des pages générées
+
+Trois pages générées (`benches/docs/`) qui isolent des cas extrêmes.
+
 **Parsing complet** (tokenizer + DOM), sans copie de la page des deux côtés :
 
 | Page | html-parseur | html5ever | Rapport |
@@ -145,12 +169,14 @@ régression du code.
 
 **Ce que ces chiffres ne disent pas** :
 
-- les trois pages sont **générées** (`benches/docs/`), pas de vraies pages du web ;
+- 5 vraies pages, c'est un échantillon : d'autres sites (très riches en JavaScript
+  ou en SVG, par exemple) pourraient donner d'autres rapports ;
 - une seule machine (ARM64 avec SIMD NEON ; sur x86 notre scan n'a pas de SIMD) ;
 - html5ever fait plus de travail que nous (streaming, numéros de ligne, erreurs de
   parsing) : voir les [limites](#limites-actuelles).
 
 ```bash
+cargo bench --bench vraies_pages   # vraies pages
 cargo bench --bench parse      # parsing complet
 cargo bench --bench tokenize   # tokenizer seul
 ```

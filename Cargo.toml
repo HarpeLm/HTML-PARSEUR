@@ -6,8 +6,9 @@ description = "Tokenizer et parser HTML conformes à la spec WHATWG (100 % html5
 repository = "https://github.com/HarpeLm/HTML-PARSEUR"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
-# Données de test et profils : utiles au développement, pas au paquet publié.
-exclude = ["html5lib-tests", "wpt-tests", "profiling"]
+# Données de test, profils et pages réelles (sous leurs propres licences) :
+# utiles au développement, pas au paquet publié.
+exclude = ["html5lib-tests", "wpt-tests", "profiling", "benches/pages"]
 keywords = ["html", "parser", "tokenizer", "dom", "whatwg"]
 categories = ["parser-implementations", "web-programming"]
 
@@ -31,4 +32,8 @@ debug = true
 
 [[bench]]
 name = "parse"
+harness = false
+
+[[bench]]
+name = "vraies_pages"
 harness = false
