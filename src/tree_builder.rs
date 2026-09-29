@@ -9,6 +9,7 @@
 //!   qu'il faut "rouvrir" quand le HTML est mal imbriqué.
 
 use std::borrow::Cow;
+use std::rc::Rc;
 
 use crate::atoms::{self, Atom};
 use crate::foreign;
@@ -31,7 +32,11 @@ pub fn parse_document(html: &str) -> Document {
 
 pub fn parse_document_with(html: &str, options: ParseOptions) -> Document {
     let mut builder = TreeBuilder { scripting: options.scripting, ..TreeBuilder::default() };
-    let mut tokenizer = Tokenizer::new(html);
+    // Le document garde une copie de la page ; le tokenizer lit CETTE copie, pour
+    // que les textes empruntés puissent devenir des plages du document.
+    let source: Rc<str> = Rc::from(html);
+    builder.doc.set_source(Rc::clone(&source));
+    let mut tokenizer = Tokenizer::new(&source);
     run(&mut builder, &mut tokenizer);
     builder.doc
 }
@@ -42,7 +47,9 @@ pub fn parse_document_with(html: &str, options: ParseOptions) -> Document {
 pub fn parse_fragment(html: &str, context_ns: Namespace, context_name: &str, options: ParseOptions) -> (Document, NodeId) {
     use atoms::*;
     let mut builder = TreeBuilder { scripting: options.scripting, ..TreeBuilder::default() };
-    let mut tokenizer = Tokenizer::new(html);
+    let source: Rc<str> = Rc::from(html);
+    builder.doc.set_source(Rc::clone(&source));
+    let mut tokenizer = Tokenizer::new(&source);
 
     // L'élément de contexte existe dans le document, mais hors de l'arbre.
     let name = builder.doc.atoms.intern(context_name);

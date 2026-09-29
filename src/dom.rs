@@ -8,6 +8,8 @@
 //! Contrairement aux tokens, le DOM POSSÈDE ses données (des `String`) : il doit
 //! pouvoir vivre après la page HTML d'origine et être modifié par JavaScript.
 
+use std::rc::Rc;
+
 use crate::atoms::{Atom, Interner};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -54,6 +56,17 @@ pub struct Element {
     pub template_contents: Option<NodeId>,
 }
 
+/// Le contenu d'un nœud texte.
+///
+/// La plupart des textes d'une page sont recopiés tels quels : on ne stocke alors
+/// qu'une PLAGE de la page d'origine (gardée par le Document), sans aucune copie.
+/// Un texte transformé (entité `&eacute;`, `\r\n` normalisé...) est une `String`.
+#[derive(Debug, Clone)]
+pub enum TextData {
+    Source { start: u32, end: u32 },
+    Owned(String),
+}
+
 #[derive(Debug, Clone)]
 pub enum NodeData {
     Document,
@@ -64,7 +77,7 @@ pub enum NodeData {
         system_id: String,
     },
     Element(Element),
-    Text(String),
+    Text(TextData),
     Comment(String),
     ProcessingInstruction {
         target: String,
@@ -98,13 +111,20 @@ pub enum QuirksMode {
 #[derive(Debug, Clone)]
 pub struct Document {
     nodes: Vec<Node>,
+    /// La page HTML d'origine, à laquelle renvoient les `TextData::Source`.
+    source: Rc<str>,
     pub atoms: Interner,
     pub quirks_mode: QuirksMode,
 }
 
 impl Default for Document {
     fn default() -> Self {
-        let mut doc = Document { nodes: Vec::new(), atoms: Interner::default(), quirks_mode: QuirksMode::NoQuirks };
+        let mut doc = Document {
+            nodes: Vec::new(),
+            source: Rc::from(""),
+            atoms: Interner::default(),
+            quirks_mode: QuirksMode::NoQuirks,
+        };
         doc.create(NodeData::Document);
         doc
     }
@@ -130,6 +150,39 @@ impl Document {
         match &mut self.node_mut(id).data {
             NodeData::Element(e) => Some(e),
             _ => None,
+        }
+    }
+
+    /// Le parser donne au document la page qu'il va lire.
+    pub(crate) fn set_source(&mut self, source: Rc<str>) {
+        self.source = source;
+    }
+
+    /// Le texte d'un `TextData`.
+    pub fn text_str<'s>(&'s self, text: &'s TextData) -> &'s str {
+        match text {
+            TextData::Source { start, end } => &self.source[*start as usize..*end as usize],
+            TextData::Owned(s) => s,
+        }
+    }
+
+    /// Le texte d'un nœud texte (`None` pour les autres nœuds).
+    pub fn text(&self, id: NodeId) -> Option<&str> {
+        match &self.node(id).data {
+            NodeData::Text(t) => Some(self.text_str(t)),
+            _ => None,
+        }
+    }
+
+    /// Si `text` est un morceau de la page d'origine, sa plage (en octets).
+    fn span_of(&self, text: &str) -> Option<(u32, u32)> {
+        let base = self.source.as_ptr() as usize;
+        let ptr = text.as_ptr() as usize;
+        if ptr >= base && ptr + text.len() <= base + self.source.len() {
+            let start = (ptr - base) as u32;
+            Some((start, start + text.len() as u32))
+        } else {
+            None
         }
     }
 
@@ -206,18 +259,41 @@ impl Document {
 
     /// Insère du texte. S'il y a déjà un nœud texte juste avant l'endroit
     /// d'insertion, on le prolonge au lieu d'en créer un nouveau (§13.2.6.1).
+    ///
+    /// Si `text` est un morceau de la page d'origine, rien n'est copié : on
+    /// stocke (ou on agrandit) une plage.
     pub fn insert_text(&mut self, parent: NodeId, before: Option<NodeId>, text: &str) {
+        let span = self.span_of(text);
         let previous = match before {
             None => self.node(parent).last_child,
             Some(b) => self.node(b).prev_sibling,
         };
         if let Some(prev) = previous {
-            if let NodeData::Text(existing) = &mut self.node_mut(prev).data {
-                existing.push_str(text);
+            // `nodes` et `source` sont deux champs distincts : on peut modifier l'un
+            // en lisant l'autre.
+            let (nodes, source) = (&mut self.nodes, &self.source);
+            if let NodeData::Text(existing) = &mut nodes[prev.index()].data {
+                match (existing, span) {
+                    // Le nouveau morceau suit exactement le précédent dans la page :
+                    // on agrandit la plage, toujours sans copie.
+                    (TextData::Source { end, .. }, Some((start, new_end))) if *end == start => *end = new_end,
+                    (existing, _) => {
+                        if let TextData::Source { start, end } = *existing {
+                            *existing = TextData::Owned(source[start as usize..end as usize].to_string());
+                        }
+                        if let TextData::Owned(s) = existing {
+                            s.push_str(text);
+                        }
+                    }
+                }
                 return;
             }
         }
-        let node = self.create(NodeData::Text(text.to_string()));
+        let data = match span {
+            Some((start, end)) => TextData::Source { start, end },
+            None => TextData::Owned(text.to_string()),
+        };
+        let node = self.create(NodeData::Text(data));
         self.insert_before(parent, node, before);
     }
 
@@ -314,7 +390,7 @@ impl Document {
             }
             NodeData::Text(text) => {
                 out.push('"');
-                out.push_str(text);
+                out.push_str(self.text_str(text));
                 out.push('"');
             }
             NodeData::Comment(text) => {
@@ -375,16 +451,28 @@ mod tests {
     use super::*;
 
     fn text(doc: &mut Document, s: &str) -> NodeId {
-        doc.create(NodeData::Text(s.to_string()))
+        doc.create(NodeData::Text(TextData::Owned(s.to_string())))
     }
 
     fn names(doc: &Document, parent: NodeId) -> Vec<String> {
-        doc.children(parent)
-            .map(|c| match &doc.node(c).data {
-                NodeData::Text(t) => t.clone(),
-                _ => "?".into(),
-            })
-            .collect()
+        doc.children(parent).map(|c| doc.text(c).unwrap_or("?").to_string()).collect()
+    }
+
+    #[test]
+    fn texte_partage_avec_la_page() {
+        let mut doc = Document::default();
+        let page: Rc<str> = Rc::from("Bonjour le monde");
+        doc.set_source(page.clone());
+        let root = NodeId::DOCUMENT;
+        // Deux morceaux contigus de la page : une seule plage, aucune copie.
+        doc.insert_text(root, None, &page[0..8]);
+        doc.insert_text(root, None, &page[8..]);
+        let node = doc.node(root).first_child.unwrap();
+        assert!(matches!(doc.node(node).data, NodeData::Text(TextData::Source { start: 0, end: 16 })));
+        // Un texte qui ne vient pas de la page force une copie.
+        doc.insert_text(root, None, " !");
+        assert_eq!(doc.text(node), Some("Bonjour le monde !"));
+        assert!(matches!(doc.node(node).data, NodeData::Text(TextData::Owned(_))));
     }
 
     #[test]
