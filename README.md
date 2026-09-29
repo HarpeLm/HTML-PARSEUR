@@ -8,7 +8,7 @@ C'est la première brique d'un navigateur web.
   ([html5lib-tests](https://github.com/html5lib/html5lib-tests)) et de la
   construction d'arbre ([WPT](https://github.com/web-platform-tests/wpt/tree/master/html/syntax/parsing)).
 - **Rapide** : sur 5 vraies pages du web (Wikipédia, spec WHATWG, doc Rust, MDN),
-  le parsing complet est **1,17 à 1,39 fois plus rapide** que
+  le parsing complet est **1,18 à 2,01 fois plus rapide** que
   [html5ever](https://github.com/servo/html5ever), le parser de Servo.
   Voir les [benchmarks](#benchmarks) et leurs limites.
 - **Aucune dépendance** à l'exécution.
@@ -119,7 +119,7 @@ Le code passe `cargo fmt --check` et
 
 Débits mesurés sur un Apple M5 avec [criterion](https://github.com/criterion-rs/criterion.rs)
 (valeur médiane), contre html5ever 0.40 avec le DOM en arène de son exemple
-officiel. Dernière mesure : commit `3d35487`.
+officiel. Pages générées : commit `3d35487` ; vraies pages : dernier commit.
 
 **Méthode** : les deux parsers sont mesurés dans le même lancement, machine au
 repos, et on compare leur *rapport*. Entre deux sessions, les débits bruts varient
@@ -137,11 +137,11 @@ nœuds. Mesures sans copie de la page des deux côtés.
 
 | Page | Taille | Nœuds | Parsing complet | Rapport | Tokenizer seul | Rapport |
 |---|---|---|---|---|---|---|
-| Wikipédia FR, *Rust (langage)* | 538 Ko | 12 367 | 193,7 contre 139,1 Mo/s | **×1,39** | 361,3 contre 162,2 Mo/s | ×2,23 |
-| Wikipedia EN, *HTML* | 779 Ko | 15 468 | 199,8 contre 154,7 Mo/s | **×1,29** | 397,2 contre 188,5 Mo/s | ×2,11 |
-| Spec WHATWG, *Parsing* | 769 Ko | 31 031 | 177,3 contre 151,3 Mo/s | **×1,17** | 397,2 contre 212,4 Mo/s | ×1,87 |
-| Doc Rust, `Vec` | 930 Ko | 38 317 | 142,6 contre 114,2 Mo/s | **×1,25** | 260,2 contre 142,0 Mo/s | ×1,83 |
-| MDN FR, `<table>` | 266 Ko | 4 310 | 169,1 contre 144,0 Mo/s | **×1,17** | 270,6 contre 191,9 Mo/s | ×1,41 |
+| Wikipédia FR, *Rust (langage)* | 538 Ko | 12 367 | 201,6 contre 136,1 Mo/s | **×1,48** | 384,3 contre 164,7 Mo/s | ×2,33 |
+| Wikipedia EN, *HTML* | 779 Ko | 15 468 | 214,9 contre 153,0 Mo/s | **×1,40** | 447,9 contre 188,6 Mo/s | ×2,38 |
+| Spec WHATWG, *Parsing* | 769 Ko | 31 031 | 179,7 contre 152,1 Mo/s | **×1,18** | 419,6 contre 211,8 Mo/s | ×1,98 |
+| Doc Rust, `Vec` | 930 Ko | 38 317 | 160,1 contre 113,7 Mo/s | **×1,41** | 318,8 contre 143,8 Mo/s | ×2,22 |
+| MDN FR, `<table>` | 266 Ko | 4 310 | 288,3 contre 143,3 Mo/s | **×2,01** | 508,2 contre 191,0 Mo/s | ×2,66 |
 
 ```bash
 cargo bench --bench vraies_pages
@@ -161,28 +161,28 @@ streaming, recopie la sortie et ne décode pas les entités du texte ;
 
 | Page | html-parseur | html5ever | html5gum | lol_html |
 |---|---|---|---|---|
-| Wikipédia FR | **359** | 161 | 175 | 297 |
-| Wikipedia EN | **395** | 187 | 191 | 356 |
-| Spec WHATWG | **403** | 212 | 188 | 229 |
-| Doc Rust | **259** | 143 | 152 | 219 |
-| MDN FR | 269 | 189 | 177 | **481** |
+| Wikipédia FR | **384** | 165 | 168 | 299 |
+| Wikipedia EN | **448** | 189 | 184 | 354 |
+| Spec WHATWG | **420** | 212 | 181 | 231 |
+| Doc Rust | **319** | 144 | 146 | 221 |
+| MDN FR | **508** | 191 | 171 | 482 |
 
-Sur MDN, lol_html est nettement devant : la page contient 2 740 entités (surtout
-`&lt;` et `&gt;`, dans des exemples de code). Notre tokenizer les **décode** toutes
-(recherche dans la table des 2 231 entités, puis copie du texte transformé) ;
-lol_html laisse les entités du texte telles quelles.
+MDN contient 2 740 entités (surtout `&lt;` et `&gt;`, dans des exemples de code) :
+nous les décodons toutes, lol_html non. Les 5 entités les plus courantes (`&lt;`,
+`&gt;`, `&amp;`, `&quot;`, `&nbsp;`) sont reconnues sans passer par la table des
+2 231 entités, ce qui a presque doublé notre débit sur cette page.
 
 **Construction du DOM**
 
 | Page | html-parseur | html5ever | tl (non conforme) | Nœuds : nous / tl |
 |---|---|---|---|---|
-| Wikipédia FR | 195 | 138 | 862 | 12 367 / 12 368 |
-| Wikipedia EN | 202 | 152 | 928 | 15 468 / 15 469 |
-| Spec WHATWG | 177 | 152 | 629 | 31 031 / 30 490 |
-| Doc Rust | 144 | 115 | 579 | 38 317 / 39 321 |
-| MDN FR | 192 | 144 | 1 437 | 4 310 / 4 948 |
+| Wikipédia FR | 202 | 136 | 854 | 12 367 / 12 368 |
+| Wikipedia EN | 215 | 153 | 919 | 15 468 / 15 469 |
+| Spec WHATWG | 180 | 152 | 622 | 31 031 / 30 490 |
+| Doc Rust | 160 | 114 | 573 | 38 317 / 39 321 |
+| MDN FR | 288 | 143 | 1 430 | 4 310 / 4 948 |
 
-tl est 3 à 8 fois plus rapide, mais ne produit pas l'arbre qu'un navigateur
+tl est 3 à 5 fois plus rapide, mais ne produit pas l'arbre qu'un navigateur
 construirait : il ne suit pas les règles de la spec (balises implicites, contenu
 mal imbriqué...), d'où des nombres de nœuds différents. Parmi les parsers
 **conformes**, html-parseur est le plus rapide sur ces 5 pages.

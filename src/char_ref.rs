@@ -2,11 +2,34 @@
 
 use crate::entities::ENTITIES;
 
+/// Les entités les plus fréquentes sur le web, testées avant la grande table.
+///
+/// Sans risque pour la conformité : ces noms se terminent par ';', et aucun nom
+/// d'entité ne contient ';' ailleurs qu'à la fin. Aucune entité plus longue ne
+/// peut donc commencer par l'un d'eux : c'est forcément la plus longue.
+const COMMON: &[(&[u8], &str)] = &[
+    (b"lt;", "<"),
+    (b"gt;", ">"),
+    (b"amp;", "&"),
+    (b"quot;", "\""),
+    (b"nbsp;", "\u{A0}"),
+];
+
 /// Cherche la plus longue entité nommée au début de `input` (sans le '&').
 /// Renvoie (nombre d'octets reconnus, caractères de remplacement).
 ///
 /// Exemple : "notit;" -> Some((3, "¬")) car "not" existe mais pas "notit;".
 pub fn longest_named_match(input: &[u8]) -> Option<(usize, &'static str)> {
+    for &(name, value) in COMMON {
+        if input.starts_with(name) {
+            return Some((name.len(), value));
+        }
+    }
+    longest_named_match_in_table(input)
+}
+
+/// La recherche complète, dans la table des 2231 entités.
+fn longest_named_match_in_table(input: &[u8]) -> Option<(usize, &'static str)> {
     let mut best = None;
 
     for i in 1..=input.len() {
@@ -69,4 +92,29 @@ fn windows_1252(code: u32) -> Option<char> {
         _ => return None,
     };
     Some(c)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn raccourci_identique_a_la_table() {
+        // Le raccourci doit donner exactement le résultat de la recherche
+        // complète, y compris quand du texte suit l'entité.
+        for &(name, _) in COMMON {
+            for suffix in [&b""[..], b"x", b";", b"abc;", b" "] {
+                let input = [name, suffix].concat();
+                assert_eq!(
+                    longest_named_match(&input),
+                    longest_named_match_in_table(&input),
+                    "{}",
+                    String::from_utf8_lossy(&input)
+                );
+            }
+        }
+        // Et les formes sans ';' passent toujours par la table.
+        assert_eq!(longest_named_match(b"amp"), Some((3, "&")));
+        assert_eq!(longest_named_match(b"ltx"), Some((2, "<")));
+    }
 }
