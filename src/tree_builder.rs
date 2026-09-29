@@ -11,6 +11,7 @@
 use std::borrow::Cow;
 
 use crate::atoms::{self, Atom};
+use crate::foreign;
 use crate::dom::{AttrNamespace, Attribute, Document, Element, Namespace, NodeData, NodeId, QuirksMode};
 use crate::token::{Doctype, Token};
 use crate::tokenizer::{InitialState, Tokenizer};
@@ -19,7 +20,10 @@ use crate::tokenizer::{InitialState, Tokenizer};
 pub fn parse_document(html: &str) -> Document {
     let mut builder = TreeBuilder::default();
     let mut tokenizer = Tokenizer::new(html);
-    while let Some(token) = tokenizer.next() {
+    loop {
+        // <![CDATA[ n'est une section CDATA que dans du SVG/MathML.
+        tokenizer.set_cdata_allowed(builder.current_is_foreign());
+        let Some(token) = tokenizer.next() else { break };
         builder.process_token(token);
         // Après <title>, <script>, <textarea>... le parser change l'état du tokenizer.
         if let Some(state) = builder.tokenizer_state.take() {
@@ -190,9 +194,19 @@ impl TreeBuilder {
     /// changé de mode) en le renvoyant.
     fn process<'t>(&mut self, tok: Tok<'t>) {
         let mut tok = tok;
-        while let Some(again) = self.dispatch(tok) {
-            tok = again;
+        loop {
+            // Le "tree construction dispatcher" (§13.2.6) : règles HTML ou règles
+            // du contenu étranger (SVG/MathML) ?
+            let again = if self.use_foreign_rules(&tok) { self.foreign_content(tok) } else { self.dispatch(tok) };
+            match again {
+                Some(t) => tok = t,
+                None => break,
+            }
         }
+    }
+
+    fn current_is_foreign(&self) -> bool {
+        self.open.last().and_then(|&n| self.doc.element(n)).is_some_and(|e| e.ns != Namespace::Html)
     }
 
     fn dispatch<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
@@ -1024,9 +1038,16 @@ impl TreeBuilder {
                 self.insert_html(&tag);
             }
             MATH | SVG => {
-                // SVG/MathML complets : étape suivante.
                 self.reconstruct_formatting();
-                let ns = if name == MATH { Namespace::MathMl } else { Namespace::Svg };
+                let mut tag = tag;
+                let ns = if name == MATH {
+                    foreign::adjust_mathml_attributes(&mut tag.attrs);
+                    Namespace::MathMl
+                } else {
+                    foreign::adjust_svg_attributes(&mut tag.attrs);
+                    Namespace::Svg
+                };
+                foreign::adjust_foreign_attributes(&mut tag.attrs);
                 self.insert_element(&tag, ns);
                 if tag.self_closing {
                     self.open.pop();
@@ -1668,6 +1689,132 @@ impl TreeBuilder {
             }
             tok => self.in_body(tok),
         }
+    }
+
+    // ───────────── Contenu étranger : SVG et MathML ─────────────
+
+    fn is_mathml_text_integration_point(&self, node: NodeId) -> bool {
+        use atoms::*;
+        self.doc.element(node).is_some_and(|e| e.ns == Namespace::MathMl && [MI, MO, MN, MS, MTEXT].contains(&e.name))
+    }
+
+    /// Points où le HTML "reprend ses droits" à l'intérieur du SVG/MathML.
+    fn is_html_integration_point(&self, node: NodeId) -> bool {
+        use atoms::*;
+        let Some(e) = self.doc.element(node) else { return false };
+        match e.ns {
+            Namespace::Svg => [FOREIGN_OBJECT, DESC, TITLE].contains(&e.name),
+            Namespace::MathMl => {
+                e.name == ANNOTATION_XML
+                    && e.attrs.iter().any(|a| {
+                        a.name == "encoding"
+                            && (a.value.eq_ignore_ascii_case("text/html")
+                                || a.value.eq_ignore_ascii_case("application/xhtml+xml"))
+                    })
+            }
+            Namespace::Html => false,
+        }
+    }
+
+    /// Le dispatcher (§13.2.6) : faut-il appliquer les règles du contenu étranger ?
+    fn use_foreign_rules(&self, tok: &Tok) -> bool {
+        use atoms::*;
+        let Some(&node) = self.open.last() else { return false };
+        let Some(e) = self.doc.element(node) else { return false };
+        if e.ns == Namespace::Html || matches!(tok, Tok::Eof) {
+            return false;
+        }
+        if self.is_mathml_text_integration_point(node) {
+            match tok {
+                Tok::Start(t) if t.name != MGLYPH && t.name != MALIGNMARK => return false,
+                Tok::Text(_) => return false,
+                _ => {}
+            }
+        }
+        if e.ns == Namespace::MathMl && e.name == ANNOTATION_XML && matches!(tok, Tok::Start(t) if t.name == SVG) {
+            return false;
+        }
+        if self.is_html_integration_point(node) && matches!(tok, Tok::Start(_) | Tok::Text(_)) {
+            return false;
+        }
+        true
+    }
+
+    // §13.2.6.5
+    fn foreign_content<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
+        match tok {
+            Tok::Text(s) => {
+                let text: Cow<str> = if s.contains('\0') { Cow::Owned(s.replace('\0', "\u{FFFD}")) } else { Cow::Borrowed(s) };
+                if s.chars().any(|c| !is_ws(c) && c != '\0') {
+                    self.frameset_ok = false;
+                }
+                self.insert_text(&text);
+                None
+            }
+            Tok::Comment(data) => {
+                self.insert_comment(data, None);
+                None
+            }
+            Tok::Doctype(_) => None,
+            Tok::Start(ref tag) if self.breaks_out(tag) => self.break_out_of_foreign(tok),
+            Tok::End(ref tag) if tag.name == atoms::BR || tag.name == atoms::P => self.break_out_of_foreign(tok),
+            Tok::Start(mut tag) => {
+                let ns = self.doc.element(self.current()).unwrap().ns;
+                if ns == Namespace::MathMl {
+                    foreign::adjust_mathml_attributes(&mut tag.attrs);
+                } else {
+                    if let Some(fixed) = foreign::svg_tag_name(self.doc.atoms.name(tag.name)) {
+                        tag.name = self.doc.atoms.intern(fixed);
+                    }
+                    foreign::adjust_svg_attributes(&mut tag.attrs);
+                }
+                foreign::adjust_foreign_attributes(&mut tag.attrs);
+                self.insert_element(&tag, ns);
+                if tag.self_closing {
+                    self.open.pop();
+                }
+                None
+            }
+            Tok::End(tag) => {
+                // "Any other end tag" : ferme l'élément étranger du même nom (casse
+                // ignorée), ou rend la main aux règles HTML si on en croise un.
+                let wanted = self.doc.atoms.name(tag.name).to_string();
+                let mut i = self.open.len() - 1;
+                loop {
+                    if i == 0 {
+                        return None;
+                    }
+                    let node = self.open[i];
+                    let name = self.doc.element(node).map(|e| self.doc.atoms.name(e.name).to_ascii_lowercase());
+                    if name.as_deref() == Some(wanted.as_str()) {
+                        self.open.truncate(i);
+                        return None;
+                    }
+                    i -= 1;
+                    if self.doc.element(self.open[i]).is_some_and(|e| e.ns == Namespace::Html) {
+                        return self.dispatch(Tok::End(tag));
+                    }
+                }
+            }
+            Tok::Eof => self.dispatch(Tok::Eof),
+        }
+    }
+
+    fn breaks_out(&self, tag: &TagToken) -> bool {
+        foreign::breaks_out_of_foreign(self.doc.atoms.name(tag.name))
+            || (tag.name == atoms::FONT && tag.attrs.iter().any(|a| matches!(a.name.as_str(), "color" | "face" | "size")))
+    }
+
+    /// Une balise HTML dans du SVG : on referme le SVG et on la retraite en HTML.
+    fn break_out_of_foreign<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
+        while let Some(&node) = self.open.last() {
+            let is_html = self.doc.element(node).is_some_and(|e| e.ns == Namespace::Html);
+            if is_html || self.is_mathml_text_integration_point(node) || self.is_html_integration_point(node) {
+                break;
+            }
+            self.open.pop();
+        }
+        Some(tok)
     }
 
     // ───────────── Templates ─────────────

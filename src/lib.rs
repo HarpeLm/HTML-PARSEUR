@@ -1,6 +1,7 @@
 pub mod atoms;
 mod char_ref;
 pub mod dom;
+mod foreign;
 mod entities;
 pub mod scan;
 mod token;
