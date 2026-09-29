@@ -1072,19 +1072,117 @@ impl TreeBuilder {
         }
     }
 
-    /// L'"adoption agency algorithm" gère le formatage mal imbriqué, comme
-    /// `<b><i></b></i>`. Version simplifiée pour cette étape : on ferme comme
-    /// une balise ordinaire. La version complète arrive à l'étape suivante.
-    fn adoption_agency(&mut self, name: Atom) {
-        let node = self.formatting.iter().rev().find_map(|f| match f {
-            Formatting::Element(n, t) if t.name == name => Some(*n),
-            _ => None,
-        });
-        self.any_other_end_tag(name);
-        if let Some(node) = node {
-            if !self.open.contains(&node) {
-                self.remove_from_formatting(node);
+    fn formatting_index(&self, node: NodeId) -> Option<usize> {
+        self.formatting.iter().position(|f| matches!(f, Formatting::Element(n, _) if *n == node))
+    }
+
+    /// L'"adoption agency algorithm" (§13.2.6.4.7) gère le formatage mal imbriqué.
+    ///
+    /// Exemple : `<b>1<p>2</b>3</p>`. Quand arrive `</b>`, le <p> (le "furthest
+    /// block") est encore ouvert DANS le <b>. L'algorithme sort le <p> du <b>, et
+    /// crée un nouveau <b> à l'intérieur du <p> pour que "2" reste en gras :
+    /// `<b>1</b><p><b>2</b>3</p>`.
+    fn adoption_agency(&mut self, subject: Atom) {
+        // Étape 2 : cas simple, l'élément courant est celui qu'on ferme.
+        let current = self.current();
+        if self.is_html(current, subject) && self.formatting_index(current).is_none() {
+            self.open.pop();
+            return;
+        }
+
+        // Étapes 3-4 : boucle externe, au plus 8 tours.
+        for _ in 0..8 {
+            // 4.3 : l'élément de formatage (le dernier de ce nom depuis le dernier marqueur).
+            let start = self.last_marker_index().map_or(0, |i| i + 1);
+            let found = (start..self.formatting.len()).rev().find_map(|i| match &self.formatting[i] {
+                Formatting::Element(n, t) if t.name == subject => Some((i, *n, t.clone())),
+                _ => None,
+            });
+            let Some((fe_index, formatting_element, fe_tag)) = found else {
+                return self.any_other_end_tag(subject);
+            };
+
+            // 4.4 : plus dans la pile -> on l'oublie.
+            let Some(fe_stack) = self.open.iter().position(|&n| n == formatting_element) else {
+                self.formatting.remove(fe_index);
+                return;
+            };
+            // 4.5 : pas dans la portée -> on ignore la balise.
+            if !self.node_in_scope(formatting_element) {
+                return;
             }
+
+            // 4.7 : le "furthest block", premier élément special AU-DESSUS de lui dans la pile.
+            let Some(fb_stack) = (fe_stack + 1..self.open.len()).find(|&i| self.is_special(self.open[i])) else {
+                // 4.8 : pas de furthest block : on ferme simplement jusqu'à l'élément.
+                self.open.truncate(fe_stack);
+                self.formatting.remove(fe_index);
+                return;
+            };
+            let furthest_block = self.open[fb_stack];
+
+            // 4.9 à 4.12
+            let common_ancestor = self.open[fe_stack - 1];
+            let mut bookmark = fe_index;
+            let mut node_stack = fb_stack;
+            let mut last_node = furthest_block;
+
+            // 4.13 : boucle interne. On remonte la pile du furthest block vers
+            // l'élément de formatage, en recréant les éléments de formatage croisés.
+            let mut inner = 0;
+            loop {
+                inner += 1;
+                node_stack -= 1;
+                let node = self.open[node_stack];
+                if node == formatting_element {
+                    break;
+                }
+                let mut node_fmt = self.formatting_index(node);
+                if inner > 3 {
+                    if let Some(i) = node_fmt {
+                        self.formatting.remove(i);
+                        if i < bookmark {
+                            bookmark -= 1;
+                        }
+                        node_fmt = None;
+                    }
+                }
+                let Some(i) = node_fmt else {
+                    self.open.remove(node_stack);
+                    continue;
+                };
+                let Formatting::Element(_, tag) = self.formatting[i].clone() else { unreachable!() };
+                let new_node = self.create_element(&tag, Namespace::Html);
+                self.formatting[i] = Formatting::Element(new_node, tag);
+                self.open[node_stack] = new_node;
+                if last_node == furthest_block {
+                    bookmark = i + 1;
+                }
+                self.doc.append(new_node, last_node);
+                last_node = new_node;
+            }
+
+            // 4.14 : on accroche la chaîne reconstruite sous l'ancêtre commun.
+            let (parent, before) = self.insertion_place(Some(common_ancestor));
+            self.doc.insert_before(parent, last_node, before);
+
+            // 4.15 à 4.17 : un nouvel élément de formatage prend les enfants du furthest block.
+            let new_fe = self.create_element(&fe_tag, Namespace::Html);
+            self.doc.reparent_children(furthest_block, new_fe);
+            self.doc.append(furthest_block, new_fe);
+
+            // 4.18 : il remplace l'ancien dans la liste, à l'emplacement du marque-page.
+            let old = self.formatting_index(formatting_element).unwrap();
+            self.formatting.remove(old);
+            if old < bookmark {
+                bookmark -= 1;
+            }
+            self.formatting.insert(bookmark, Formatting::Element(new_fe, fe_tag));
+
+            // 4.19 : et dans la pile, juste au-dessus du furthest block.
+            self.open.retain(|&n| n != formatting_element);
+            let fb = self.open.iter().position(|&n| n == furthest_block).unwrap();
+            self.open.insert(fb + 1, new_fe);
         }
     }
 
