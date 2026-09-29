@@ -7,7 +7,7 @@
 use std::panic;
 
 use lumen_css::selectors::parse_selector_list;
-use lumen_css::{Item, Parser, parse_an_plus_b, preprocess};
+use lumen_css::{Item, Parser, parse_an_plus_b, parse_color, preprocess};
 
 struct Rng(u64);
 
@@ -111,6 +111,24 @@ const PIECES: &[&str] = &[
     "\\\\",
     "0.0000001",
     "99999999999999999999",
+    "#f0f",
+    "#ff00ff80",
+    "#12345",
+    "hsl(",
+    "hwb(",
+    "lab(",
+    "lch(",
+    "oklch(",
+    "color(srgb",
+    "color(--x",
+    "device-cmyk(",
+    "light-dark(",
+    "none",
+    "90deg",
+    "1turn",
+    "-1e308",
+    "1e308",
+    "/",
 ];
 
 fn random_css(rng: &mut Rng) -> String {
@@ -135,6 +153,10 @@ fn exercise(input: &str) {
     let _ = Parser::new(&css).parse_block_contents();
     let values = Parser::new(&css).parse_component_value_list();
     let _ = parse_an_plus_b(&values);
+    if let Some(color) = parse_color(&values) {
+        let _ = color.to_string();
+        let _ = color.to_css_color5();
+    }
     let _ = parse_selector_list(&values);
     // Les préludes des règles, comme le ferait un vrai moteur de style.
     for item in Parser::new(&css).parse_stylesheet() {

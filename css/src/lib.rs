@@ -17,12 +17,15 @@
 #![warn(missing_docs)]
 
 mod an_plus_b;
+mod color;
+mod named_colors;
 mod parser;
 mod rules;
 pub mod selectors;
 mod tokenizer;
 
 pub use an_plus_b::parse_an_plus_b;
+pub use color::{Color, LabSpace, parse_color};
 pub use parser::{BlockKind, ComponentValue, ParseError, Parser};
 pub use rules::{AtRule, Declaration, Item, QualifiedRule};
 pub use tokenizer::{Numeric, Token, TokenError, Tokenizer, preprocess};

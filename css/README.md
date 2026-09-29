@@ -9,6 +9,8 @@ Parser CSS écrit en Rust, de zéro, en suivant les specs
   déclarations, `!important`, CSS imbriqué (*nesting*).
 - **Sélecteurs** : parsing, spécificité et correspondance avec n'importe quel DOM
   (via le trait `selectors::Element`).
+- **Couleurs** (CSS Color 4 et 5) : mots-clés, `#hex`, `rgb()`, `hsl()`, `hwb()`,
+  `lab()`, `lch()`, `oklab()`, `oklch()`, `color()`, `device-cmyk()`, `light-dark()`.
 - **Aucune dépendance** à l'exécution.
 
 ## Utilisation
@@ -30,13 +32,14 @@ for item in Parser::new(&css).parse_stylesheet() {
 
 | Vérification | Résultat |
 |---|---|
-| [css-parsing-tests](https://github.com/SimonSapin/css-parsing-tests) (syntaxe et `An+B`) | **277 / 277** |
+| [css-parsing-tests](https://github.com/SimonSapin/css-parsing-tests) (syntaxe, `An+B`, couleurs) | **8 338 / 8 338** |
 | Sélecteurs : test différentiel contre le moteur de Servo (via `scraper`), 5 vraies pages | **1 825 comparaisons, 0 différence** |
 | Spécificité : exemples de la spec Selectors 4 | 13 / 13 |
 | Robustesse : CSS aléatoire (`tests/robustesse.rs`) | **2 000 000 feuilles, 0 panique** |
 
-Pas encore traités : les couleurs (`rgb()`, `oklch()`… : environ 8 000 tests de
-css-parsing-tests en attente) et les feuilles de style en octets (encodages).
+Pas encore traitées : les feuilles de style en octets (encodages, 28 tests). La
+fonction `rgb()` n'étant couverte par aucun fichier de la suite, elle a ses propres
+tests unitaires.
 
 ```bash
 git submodule update --init                                   # tests officiels

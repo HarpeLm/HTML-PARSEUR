@@ -168,6 +168,24 @@ fn run(file: &str, input: &str) -> Option<Value> {
             Some((a, b)) => json!([a, b]),
             None => Value::Null,
         },
+        f if f.starts_with("color_") => {
+            let values = parser.parse_component_value_list();
+            match lumen_css::parse_color(&values) {
+                Some(lumen_css::Color::LightDark(light, dark)) => {
+                    json!([light.to_css_color5(), dark.to_css_color5()])
+                }
+                Some(color) => json!(color.to_string()),
+                // light-dark() invalide : les tests attendent deux null.
+                None if input
+                    .trim_start()
+                    .to_ascii_lowercase()
+                    .starts_with("light-dark(") =>
+                {
+                    json!([null, null])
+                }
+                None => Value::Null,
+            }
+        }
         "stylesheet" => Value::Array(parser.parse_stylesheet().iter().map(item_json).collect()),
         _ => return None,
     })
