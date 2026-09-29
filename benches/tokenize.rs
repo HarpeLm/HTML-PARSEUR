@@ -36,8 +36,14 @@ impl TokenSink for CountingSink {
 }
 
 fn run_html5ever(input: &str) -> usize {
+    run_html5ever_tendril(StrTendril::from_slice(input))
+}
+
+/// Même chose, mais la page est déjà dans un tendril : pas de copie mesurée.
+/// C'est la comparaison équitable (nous non plus, on ne copie pas l'entrée).
+fn run_html5ever_tendril(tendril: StrTendril) -> usize {
     let queue = BufferQueue::default();
-    queue.push_back(StrTendril::from_slice(input));
+    queue.push_back(tendril);
     let tokenizer = H5Tokenizer::new(CountingSink(Cell::new(0)), Default::default());
     let _ = tokenizer.feed(&queue);
     tokenizer.end();
@@ -59,6 +65,11 @@ fn bench(c: &mut Criterion) {
         group.throughput(Throughput::Bytes(html.len() as u64));
         group.bench_function("html-tokenizer", |b| b.iter(|| run_ours(black_box(html))));
         group.bench_function("html5ever", |b| b.iter(|| run_html5ever(black_box(html))));
+        // Cloner un tendril est gratuit (compteur de références), pas de copie.
+        let tendril = StrTendril::from_slice(html);
+        group.bench_function("html5ever-sans-copie", |b| {
+            b.iter(|| run_html5ever_tendril(black_box(tendril.clone())))
+        });
         group.finish();
     }
 }
