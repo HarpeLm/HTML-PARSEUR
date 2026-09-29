@@ -293,6 +293,17 @@ impl TreeBuilder {
         }
     }
 
+    /// Faut-il chercher des '\0' dans ce texte ? Jamais pour un morceau emprunté
+    /// à la page : le tokenizer fait toujours passer '\0' par le chemin lent, qui
+    /// produit une copie. Ça évite un second passage sur tout le texte.
+    fn may_contain_nul(&self, s: &str) -> bool {
+        if self.doc.is_from_source(s) {
+            debug_assert!(!s.contains('\0'), "invariant du tokenizer violé : '\\0' dans un texte emprunté");
+            return false;
+        }
+        s.contains('\0')
+    }
+
     fn current_is_foreign(&self) -> bool {
         self.adjusted_current().and_then(|n| self.doc.element(n)).is_some_and(|e| e.ns != Namespace::Html)
     }
@@ -923,7 +934,11 @@ impl TreeBuilder {
     fn in_body<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
         match tok {
             Tok::Text(s) => {
-                let text: Cow<str> = if s.contains('\0') { Cow::Owned(s.replace('\0', "")) } else { Cow::Borrowed(s) };
+                let text: Cow<str> = if self.may_contain_nul(s) {
+                    Cow::Owned(s.replace('\0', ""))
+                } else {
+                    Cow::Borrowed(s)
+                };
                 if text.is_empty() {
                     return None;
                 }
@@ -1889,7 +1904,11 @@ impl TreeBuilder {
     fn foreign_content<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
         match tok {
             Tok::Text(s) => {
-                let text: Cow<str> = if s.contains('\0') { Cow::Owned(s.replace('\0', "\u{FFFD}")) } else { Cow::Borrowed(s) };
+                let text: Cow<str> = if self.may_contain_nul(s) {
+                    Cow::Owned(s.replace('\0', "\u{FFFD}"))
+                } else {
+                    Cow::Borrowed(s)
+                };
                 if s.chars().any(|c| !is_ws(c) && c != '\0') {
                     self.frameset_ok = false;
                 }

@@ -174,6 +174,11 @@ impl Document {
         }
     }
 
+    /// Vrai si `text` est un morceau de la page d'origine (pas une copie).
+    pub(crate) fn is_from_source(&self, text: &str) -> bool {
+        self.span_of(text).is_some()
+    }
+
     /// Si `text` est un morceau de la page d'origine, sa plage (en octets).
     fn span_of(&self, text: &str) -> Option<(u32, u32)> {
         let base = self.source.as_ptr() as usize;

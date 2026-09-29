@@ -1,7 +1,8 @@
-//! Programme à lancer sous un profileur : parse la page "blog" en boucle
+//! Programme à lancer sous un profileur : parse une page en boucle
 //! (tokenizer + construction du DOM).
 //!
-//!   ./profiling/profile.sh parse-v0 profile_parse
+//!   ./profiling/profile.sh parse-v0 profile_parse            (page blog)
+//!   DOC=texte ./profiling/profile.sh texte-v0 profile_parse  (page texte)
 
 #[path = "../benches/docs/mod.rs"]
 mod docs;
@@ -10,8 +11,11 @@ use std::hint::black_box;
 use std::time::Instant;
 
 fn main() {
-    let html = docs::blog_page(1500);
-    let iterations = 500;
+    let (html, iterations) = match std::env::var("DOC").as_deref() {
+        Ok("texte") => (docs::text_heavy_page(700), 20_000),
+        Ok("balises") => (docs::tag_heavy_page(8000), 300),
+        _ => (docs::blog_page(1500), 500),
+    };
     let start = Instant::now();
     let mut nodes = 0;
     for _ in 0..iterations {
