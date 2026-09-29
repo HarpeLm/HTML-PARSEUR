@@ -299,31 +299,24 @@ impl<'a> Tokenizer<'a> {
                 .iter()
                 .position(|&b| !is_ident_byte(b))
                 .unwrap_or(self.input.len() - self.pos);
-            if run > 0 {
-                if let Some(s) = &mut owned {
-                    s.push_str(&self.input[self.pos..self.pos + run]);
-                }
-                self.pos += run;
-                continue;
+            if let Some(s) = &mut owned {
+                s.push_str(&self.input[self.pos..self.pos + run]);
             }
-            match self.peek() {
-                Some(c) if is_ident_char(c) => {
-                    self.consume();
-                    if let Some(s) = &mut owned {
-                        s.push(c);
-                    }
-                }
-                Some('\\') if is_valid_escape(Some('\\'), self.peek_nth(1)) => {
-                    // Un échappement : on passe en String (copie du début déjà lu).
-                    let mut s = owned
-                        .take()
-                        .unwrap_or_else(|| self.input[start..self.pos].to_string());
-                    self.pos += 1; // le '\'
-                    s.push(self.consume_escape());
-                    owned = Some(s);
-                }
-                _ => break,
+            self.pos += run;
+            // Tous les caractères d'identifiant sont couverts par la table : seul
+            // un échappement ('\') peut prolonger l'identifiant.
+            if self.input.as_bytes().get(self.pos) != Some(&b'\\')
+                || !is_valid_escape(Some('\\'), self.peek_nth(1))
+            {
+                break;
             }
+            // Un échappement : on passe en String (copie du début déjà lu).
+            let mut s = owned
+                .take()
+                .unwrap_or_else(|| self.input[start..self.pos].to_string());
+            self.pos += 1; // le '\'
+            s.push(self.consume_escape());
+            owned = Some(s);
         }
         match owned {
             Some(s) => Cow::Owned(s),

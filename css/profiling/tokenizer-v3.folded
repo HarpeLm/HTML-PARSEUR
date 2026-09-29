@@ -1,0 +1,20 @@
+profile_css::main 117
+profile_css::main;Tokenizer::consume_ident_like 20
+profile_css::main;Tokenizer::consume_ident_sequence 1
+profile_css::main;Tokenizer::next 441
+profile_css::main;Tokenizer::next;Tokenizer::consume_numeric 6
+profile_css::main;Tokenizer::next;Tokenizer::consume_numeric;Tokenizer::consume_digits 2
+profile_css::main;Tokenizer::next;Tokenizer::consume_numeric;Tokenizer::consume_ident_sequence 5
+profile_css::main;Tokenizer::next;Tokenizer::consume_numeric;Tokenizer::peek_nth 1
+profile_css::main;Tokenizer::next;Tokenizer::consume_numeric;<f64 as core::str::traits::FromStr>::from_str 1
+profile_css::main;Tokenizer::next;Tokenizer::consume_numeric;<f64 as core::str::traits::FromStr>::from_str;core::num::imp::dec2flt::parse::parse_number 7
+profile_css::main;Tokenizer::next;Tokenizer::consume_ident_like 37
+profile_css::main;Tokenizer::next;Tokenizer::consume_ident_like;<alloc::raw_vec::RawVecInner<_>>::reserve::do_reserve_and_handle::<alloc::alloc::Global>;<alloc::raw_vec::RawVecInner>::finish_grow;_realloc;_malloc_zone_realloc;xzm_malloc_zone_malloc_type_realloc 2
+profile_css::main;Tokenizer::next;Tokenizer::consume_ident_like;<alloc::raw_vec::RawVecInner<_>>::reserve::do_reserve_and_handle::<alloc::alloc::Global>;<alloc::raw_vec::RawVecInner>::finish_grow;_realloc;_malloc_zone_realloc;xzm_malloc_zone_malloc_type_realloc;_xzm_free;mach_absolute_time 3
+profile_css::main;Tokenizer::next;Tokenizer::consume_ident_like;<alloc::raw_vec::RawVecInner<_>>::reserve::do_reserve_and_handle::<alloc::alloc::Global>;<alloc::raw_vec::RawVecInner>::finish_grow;_realloc;xzm_malloc_zone_size 1
+profile_css::main;Tokenizer::next;Tokenizer::consume_ident_like;Tokenizer::consume_ident_sequence 427
+profile_css::main;Tokenizer::next;Tokenizer::consume_ident_sequence 1
+profile_css::main;Tokenizer::next;Tokenizer::peek 1
+profile_css::main;Tokenizer::next;Tokenizer::peek_nth 1
+profile_css::main;Tokenizer::next;lumen_css::tokenizer::starts_ident 1
+profile_css::main;Tokenizer::next;<f64 as core::str::traits::FromStr>::from_str 1
