@@ -1,7 +1,7 @@
 //! Interning des noms de balises.
 //!
-//! Le parser compare des noms de balises en permanence ("y a-t-il un <p> ouvert ?",
-//! "suis-je dans un <table> ?"). Comparer des chaînes à chaque fois serait lent :
+//! Le parser compare des noms de balises en permanence ("y a-t-il un `<p>` ouvert ?",
+//! "suis-je dans un `<table>` ?"). Comparer des chaînes à chaque fois serait lent :
 //! on transforme chaque nom en un petit entier, un `Atom`. Comparer deux atomes
 //! revient à comparer deux `u32`.
 //!
@@ -11,6 +11,8 @@
 
 use std::collections::HashMap;
 
+/// Un nom de balise interné : comparer deux atomes revient à comparer deux `u32`.
+/// Le texte s'obtient avec [`Interner::name`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Atom(u32);
 
@@ -20,7 +22,10 @@ macro_rules! static_atoms {
         #[repr(u32)]
         enum StaticIndex { $($name,)* }
 
-        $(pub const $name: Atom = Atom(StaticIndex::$name as u32);)*
+        $(
+            #[doc = concat!("L'atome de `", $text, "`.")]
+            pub const $name: Atom = Atom(StaticIndex::$name as u32);
+        )*
 
         const STATIC_ATOMS: &[&str] = &[$($text,)*];
     };
@@ -157,7 +162,10 @@ pub struct Interner {
 
 impl Default for Interner {
     fn default() -> Self {
-        let mut interner = Interner { ids: HashMap::new(), names: Vec::new() };
+        let mut interner = Interner {
+            ids: HashMap::new(),
+            names: Vec::new(),
+        };
         for name in STATIC_ATOMS {
             interner.intern(name);
         }

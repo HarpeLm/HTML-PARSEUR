@@ -1,7 +1,12 @@
 [package]
-name = "html-tokenizer"
+name = "html-parseur"
 version = "0.1.0"
 edition = "2024"
+description = "Tokenizer et parser HTML conformes à la spec WHATWG (100 % html5lib et WPT), en Rust, sans dépendance"
+repository = "https://github.com/HarpeLm/HTML-PARSEUR"
+readme = "README.md"
+keywords = ["html", "parser", "tokenizer", "dom", "whatwg"]
+categories = ["parser-implementations", "web-programming"]
 
 [dependencies]
 

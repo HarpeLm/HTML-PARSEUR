@@ -8,8 +8,8 @@
 
 use std::{fs, panic, path::Path};
 
-use html_tokenizer::{InitialState, Token, Tokenizer};
-use serde_json::{json, Map, Value};
+use html_parseur::{InitialState, Token, Tokenizer};
+use serde_json::{Map, Value, json};
 
 /// Convertit nos tokens au format JSON attendu par html5lib-tests.
 fn tokens_to_json(tokens: Vec<Token<'_>>) -> Vec<Value> {
@@ -141,7 +141,10 @@ fn main() {
         let (mut file_pass, mut file_total) = (0, 0);
         for test in tests {
             let (input, expected) = if test["doubleEscaped"].as_bool() == Some(true) {
-                match (unescape(test["input"].as_str().unwrap()), unescape_json(&test["output"])) {
+                match (
+                    unescape(test["input"].as_str().unwrap()),
+                    unescape_json(&test["output"]),
+                ) {
                     (Some(i), Some(o)) => (i, o),
                     _ => {
                         skip += 1; // surrogate isolé : non représentable en Rust
@@ -149,7 +152,10 @@ fn main() {
                     }
                 }
             } else {
-                (test["input"].as_str().unwrap().to_string(), test["output"].clone())
+                (
+                    test["input"].as_str().unwrap().to_string(),
+                    test["output"].clone(),
+                )
             };
             let expected = expected.as_array().unwrap();
             let last_start_tag = test["lastStartTag"].as_str();
@@ -204,9 +210,17 @@ fn main() {
 
     let total = pass + fail + crash;
     if obsolete > 0 {
-        println!("\n📜 obsolètes : {obsolete} (\"<?\" : processing instructions, spec 2026 vérifiée par WPT)");
+        println!(
+            "\n📜 obsolètes : {obsolete} (\"<?\" : processing instructions, spec 2026 vérifiée par WPT)"
+        );
     }
-    let pct = if total > 0 { 100.0 * pass as f64 / total as f64 } else { 0.0 };
-    println!("\n✅ réussis : {pass}   ❌ faux : {fail}   💥 todo!/panic : {crash}   ⏭️  ignorés : {skip}");
+    let pct = if total > 0 {
+        100.0 * pass as f64 / total as f64
+    } else {
+        0.0
+    };
+    println!(
+        "\n✅ réussis : {pass}   ❌ faux : {fail}   💥 todo!/panic : {crash}   ⏭️  ignorés : {skip}"
+    );
     println!("Score : {pass}/{total} ({pct:.1} %)");
 }

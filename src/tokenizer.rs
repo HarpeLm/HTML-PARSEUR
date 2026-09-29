@@ -29,11 +29,17 @@ fn extend_cow<'a>(buf: &mut Cow<'a, str>, input: &'a str, piece: &'a str) {
 /// Par exemple, après `<title>` il passe en RCDATA, après `<script>` en ScriptData.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InitialState {
+    /// Contenu normal.
     Data,
+    /// Texte avec entités, sans balises : `<title>`, `<textarea>`.
     Rcdata,
+    /// Texte brut : `<style>`, `<xmp>`, `<iframe>`, `<noembed>`, `<noframes>`.
     Rawtext,
+    /// Contenu de `<script>`.
     ScriptData,
+    /// Tout le reste de la page est du texte : `<plaintext>`.
     Plaintext,
+    /// Section `<![CDATA[ ... ]]>` (SVG/MathML).
     CdataSection,
 }
 
@@ -126,6 +132,10 @@ enum State {
     NumericCharacterReferenceEnd,
 }
 
+/// Le tokenizer HTML (spec §13.2.5) : un itérateur de [`Token`].
+///
+/// Les textes et les noms des tokens sont empruntés à l'entrée quand c'est
+/// possible (zero-copy), d'où la durée de vie `'a`.
 pub struct Tokenizer<'a> {
     /// L'entrée est empruntée telle quelle : aucune copie.
     input: &'a str,
@@ -158,6 +168,7 @@ pub struct Tokenizer<'a> {
 }
 
 impl<'a> Tokenizer<'a> {
+    /// Un tokenizer qui lit `input`, en commençant dans l'état Data.
     pub fn new(input: &'a str) -> Self {
         Self {
             input,
@@ -194,10 +205,13 @@ impl<'a> Tokenizer<'a> {
         };
     }
 
+    /// Nom de la dernière balise ouvrante, pour reconnaître la balise fermante
+    /// "appropriée" (le `</title>` qui ferme vraiment un `<title>`).
     pub fn set_last_start_tag(&mut self, name: &str) {
         self.last_start_tag = Some(Cow::Owned(name.to_string()));
     }
 
+    /// Autorise les sections `<![CDATA[` (le parser l'active en SVG/MathML).
     pub fn set_cdata_allowed(&mut self, allowed: bool) {
         self.cdata_allowed = allowed;
     }
@@ -306,7 +320,11 @@ impl<'a> Tokenizer<'a> {
     /// la spec dit de garder le premier et d'ignorer les doublons.
     fn finish_attribute(&mut self) {
         if let Some(attr) = self.current_attr.take() {
-            let duplicate = self.current_tag.attributes.iter().any(|a| a.name == attr.name);
+            let duplicate = self
+                .current_tag
+                .attributes
+                .iter()
+                .any(|a| a.name == attr.name);
             if !duplicate {
                 self.current_tag.attributes.push(attr);
             }
@@ -407,15 +425,24 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn doctype_name_push(&mut self, c: char) {
-        self.current_doctype.name.get_or_insert_with(String::new).push(c);
+        self.current_doctype
+            .name
+            .get_or_insert_with(String::new)
+            .push(c);
     }
 
     fn doctype_public_push(&mut self, c: char) {
-        self.current_doctype.public_id.get_or_insert_with(String::new).push(c);
+        self.current_doctype
+            .public_id
+            .get_or_insert_with(String::new)
+            .push(c);
     }
 
     fn doctype_system_push(&mut self, c: char) {
-        self.current_doctype.system_id.get_or_insert_with(String::new).push(c);
+        self.current_doctype
+            .system_id
+            .get_or_insert_with(String::new)
+            .push(c);
     }
 
     /// Démarre une référence de caractère (on vient de lire '&').
@@ -568,7 +595,9 @@ impl<'a> Tokenizer<'a> {
             },
 
             // §13.2.5.9, §13.2.5.12, §13.2.5.15
-            State::RcdataLessThanSign | State::RawtextLessThanSign | State::ScriptDataLessThanSign => {
+            State::RcdataLessThanSign
+            | State::RawtextLessThanSign
+            | State::ScriptDataLessThanSign => {
                 let (text_state, end_tag_open) = match self.state {
                     State::RcdataLessThanSign => (State::Rcdata, State::RcdataEndTagOpen),
                     State::RawtextLessThanSign => (State::Rawtext, State::RawtextEndTagOpen),
@@ -678,7 +707,9 @@ impl<'a> Tokenizer<'a> {
 
             // §13.2.5.20, §13.2.5.21, §13.2.5.22 : dans "<!-- ... -->" d'un script.
             // Les trois états ne diffèrent que par le nombre de '-' déjà vus.
-            State::ScriptDataEscaped | State::ScriptDataEscapedDash | State::ScriptDataEscapedDashDash => {
+            State::ScriptDataEscaped
+            | State::ScriptDataEscapedDash
+            | State::ScriptDataEscapedDashDash => {
                 let dashes = match self.state {
                     State::ScriptDataEscaped => 0,
                     State::ScriptDataEscapedDash => 1,
@@ -738,7 +769,11 @@ impl<'a> Tokenizer<'a> {
                 };
                 match self.consume() {
                     Some(c @ ('\t' | '\n' | '\x0C' | ' ' | '/' | '>')) => {
-                        self.state = if self.temp_buffer == "script" { if_script } else { otherwise };
+                        self.state = if self.temp_buffer == "script" {
+                            if_script
+                        } else {
+                            otherwise
+                        };
                         self.emit_char(c);
                     }
                     Some(c) if c.is_ascii_alphabetic() => {
@@ -840,7 +875,9 @@ impl<'a> Tokenizer<'a> {
                         self.state = State::AfterAttributeName;
                     }
                     Some('=') => self.state = State::BeforeAttributeValue,
-                    Some(c) if c.is_ascii_uppercase() => self.push_attr_name(c.to_ascii_lowercase()),
+                    Some(c) if c.is_ascii_uppercase() => {
+                        self.push_attr_name(c.to_ascii_lowercase())
+                    }
                     Some('\0') => self.push_attr_name('\u{FFFD}'),
                     Some(c) => self.push_attr_name(c),
                 }
@@ -982,7 +1019,6 @@ impl<'a> Tokenizer<'a> {
             // Ajoutées à la spec en 2026. Règles déduites des tests WPT
             // (processing-instructions.dat) : si la cible est invalide ou commence
             // par "xml", on retombe sur l'ancien comportement (commentaire bogus).
-
             State::ProcessingInstructionStart => match self.consume() {
                 Some(c) if c.is_ascii_alphabetic() || c == '_' => {
                     self.pi_target.clear();
@@ -995,9 +1031,12 @@ impl<'a> Tokenizer<'a> {
             },
 
             State::ProcessingInstructionTarget => match self.consume() {
-                Some(c) if c.is_ascii_alphanumeric() || c == '-' || c == '_' => self.pi_target.push(c),
+                Some(c) if c.is_ascii_alphanumeric() || c == '-' || c == '_' => {
+                    self.pi_target.push(c)
+                }
                 Some(c @ ('\t' | '\n' | '\x0C' | ' ' | '>' | '?')) => {
-                    if self.pi_target.len() >= 3 && self.pi_target[..3].eq_ignore_ascii_case("xml") {
+                    if self.pi_target.len() >= 3 && self.pi_target[..3].eq_ignore_ascii_case("xml")
+                    {
                         return self.pi_to_bogus_comment();
                     }
                     match c {
@@ -1471,7 +1510,11 @@ impl<'a> Tokenizer<'a> {
                         // Les noms d'entités sont en ASCII : len octets = len caractères.
                         let matched = &self.input[self.pos..self.pos + len];
                         let ends_with_semicolon = matched.ends_with(';');
-                        let next = self.input.as_bytes().get(self.pos + len).map(|&b| b as char);
+                        let next = self
+                            .input
+                            .as_bytes()
+                            .get(self.pos + len)
+                            .map(|&b| b as char);
                         self.temp_buffer.push_str(matched);
                         self.pos += len;
 
@@ -1553,7 +1596,11 @@ impl<'a> Tokenizer<'a> {
 
             // §13.2.5.78 et §13.2.5.79
             State::HexadecimalCharacterReference | State::DecimalCharacterReference => {
-                let radix = if self.state == State::HexadecimalCharacterReference { 16 } else { 10 };
+                let radix = if self.state == State::HexadecimalCharacterReference {
+                    16
+                } else {
+                    10
+                };
                 match self.consume() {
                     Some(c) if c.is_digit(radix) => {
                         // saturating : "&#99999999999;" ne doit pas faire déborder le u32.
@@ -1573,7 +1620,8 @@ impl<'a> Tokenizer<'a> {
             // §13.2.5.80
             State::NumericCharacterReferenceEnd => {
                 self.temp_buffer.clear();
-                self.temp_buffer.push(numeric_reference_char(self.char_ref_code));
+                self.temp_buffer
+                    .push(numeric_reference_char(self.char_ref_code));
                 self.flush_temp_buffer();
                 self.state = self.return_state;
             }

@@ -15,7 +15,7 @@
 
 use html5ever::interface::tree_builder::{ElementFlags, NodeOrText, QuirksMode, TreeSink};
 use html5ever::tendril::{StrTendril, TendrilSink};
-use html5ever::{parse_document, Attribute, QualName};
+use html5ever::{Attribute, QualName, parse_document};
 use std::borrow::Cow;
 use std::cell::{Cell, RefCell};
 use std::collections::HashSet;
@@ -181,7 +181,7 @@ impl<'arena> Sink<'arena> {
                 self.new_node(NodeData::Text {
                     contents: RefCell::new(text),
                 })
-            },
+            }
             NodeOrText::AppendNode(node) => node,
         };
 

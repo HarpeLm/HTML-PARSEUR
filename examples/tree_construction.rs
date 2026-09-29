@@ -9,8 +9,8 @@ use std::sync::mpsc;
 use std::time::Duration;
 use std::{fs, panic, path::Path, thread};
 
-use html_tokenizer::dom::Namespace;
-use html_tokenizer::{parse_document_with, parse_fragment, ParseOptions};
+use html_parseur::dom::Namespace;
+use html_parseur::{ParseOptions, parse_document_with, parse_fragment};
 
 struct Test {
     data: String,
@@ -58,7 +58,13 @@ fn parse_dat(content: &str) -> Vec<Test> {
     for line in content.split('\n') {
         match line {
             "#data" => {
-                flush(&mut data, &mut document, &mut fragment, &mut script_on, &mut script_off);
+                flush(
+                    &mut data,
+                    &mut document,
+                    &mut fragment,
+                    &mut script_on,
+                    &mut script_off,
+                );
                 section = "data";
             }
             "#errors" | "#new-errors" => section = "errors",
@@ -74,7 +80,13 @@ fn parse_dat(content: &str) -> Vec<Test> {
             },
         }
     }
-    flush(&mut data, &mut document, &mut fragment, &mut script_on, &mut script_off);
+    flush(
+        &mut data,
+        &mut document,
+        &mut fragment,
+        &mut script_on,
+        &mut script_off,
+    );
     tests
 }
 
@@ -115,53 +127,57 @@ fn main() {
                 continue;
             }
             for &scripting in modes {
-            file_total += 1;
-            let options = ParseOptions { scripting };
-            let label = if scripting { " [script-on]" } else { "" };
-            // Chaque test tourne dans son thread, avec un délai maximum : une boucle
-            // infinie dans le parser ne bloque pas tout le banc.
-            let (sender, receiver) = mpsc::channel();
-            let (data, fragment) = (test.data.clone(), test.fragment.clone());
-            thread::spawn(move || {
-                let result = panic::catch_unwind(|| match &fragment {
-                    None => parse_document_with(&data, options).to_test_string(),
-                    Some(context) => {
-                        let (ns, name) = match context.split_once(' ') {
-                            Some(("svg", name)) => (Namespace::Svg, name),
-                            Some(("math", name)) => (Namespace::MathMl, name),
-                            _ => (Namespace::Html, context.as_str()),
-                        };
-                        let (doc, root) = parse_fragment(&data, ns, name, options);
-                        doc.to_test_string_from(root)
-                    }
+                file_total += 1;
+                let options = ParseOptions { scripting };
+                let label = if scripting { " [script-on]" } else { "" };
+                // Chaque test tourne dans son thread, avec un délai maximum : une boucle
+                // infinie dans le parser ne bloque pas tout le banc.
+                let (sender, receiver) = mpsc::channel();
+                let (data, fragment) = (test.data.clone(), test.fragment.clone());
+                thread::spawn(move || {
+                    let result = panic::catch_unwind(|| match &fragment {
+                        None => parse_document_with(&data, options).to_test_string(),
+                        Some(context) => {
+                            let (ns, name) = match context.split_once(' ') {
+                                Some(("svg", name)) => (Namespace::Svg, name),
+                                Some(("math", name)) => (Namespace::MathMl, name),
+                                _ => (Namespace::Html, context.as_str()),
+                            };
+                            let (doc, root) = parse_fragment(&data, ns, name, options);
+                            doc.to_test_string_from(root)
+                        }
+                    });
+                    let _ = sender.send(result);
                 });
-                let _ = sender.send(result);
-            });
-            let Ok(result) = receiver.recv_timeout(Duration::from_secs(2)) else {
-                hang += 1;
-                println!("⏱️  [{name}] {:?}{label} : boucle infinie", test.data);
-                continue;
-            };
-            match result {
-                Ok(got) if got == test.document => {
-                    pass += 1;
-                    file_pass += 1;
-                }
-                Ok(got) => {
-                    fail += 1;
-                    if verbose {
-                        let ctx = test.fragment.as_deref().map(|c| format!(" (fragment dans <{c}>)")).unwrap_or_default();
-                        println!("❌ [{name}] {:?}{ctx}{label}", test.data);
-                        println!("--- attendu\n{}\n--- obtenu\n{}\n", test.document, got);
+                let Ok(result) = receiver.recv_timeout(Duration::from_secs(2)) else {
+                    hang += 1;
+                    println!("⏱️  [{name}] {:?}{label} : boucle infinie", test.data);
+                    continue;
+                };
+                match result {
+                    Ok(got) if got == test.document => {
+                        pass += 1;
+                        file_pass += 1;
+                    }
+                    Ok(got) => {
+                        fail += 1;
+                        if verbose {
+                            let ctx = test
+                                .fragment
+                                .as_deref()
+                                .map(|c| format!(" (fragment dans <{c}>)"))
+                                .unwrap_or_default();
+                            println!("❌ [{name}] {:?}{ctx}{label}", test.data);
+                            println!("--- attendu\n{}\n--- obtenu\n{}\n", test.document, got);
+                        }
+                    }
+                    Err(_) => {
+                        crash += 1;
+                        if verbose {
+                            println!("💥 [{name}] {:?}{label}\n", test.data);
+                        }
                     }
                 }
-                Err(_) => {
-                    crash += 1;
-                    if verbose {
-                        println!("💥 [{name}] {:?}{label}\n", test.data);
-                    }
-                }
-            }
             }
         }
         println!("{name:<44} {file_pass:>4} / {file_total}");
@@ -169,9 +185,17 @@ fn main() {
 
     let total = pass + fail + crash + hang;
     if needs_js > 0 {
-        println!("\n🟨 JS requis : {needs_js} (scripted_*.dat, à reprendre avec un moteur JavaScript)");
+        println!(
+            "\n🟨 JS requis : {needs_js} (scripted_*.dat, à reprendre avec un moteur JavaScript)"
+        );
     }
-    let pct = if total > 0 { 100.0 * pass as f64 / total as f64 } else { 0.0 };
-    println!("\n✅ réussis : {pass}   ❌ faux : {fail}   💥 panic : {crash}   ⏱️  boucles : {hang}");
+    let pct = if total > 0 {
+        100.0 * pass as f64 / total as f64
+    } else {
+        0.0
+    };
+    println!(
+        "\n✅ réussis : {pass}   ❌ faux : {fail}   💥 panic : {crash}   ⏱️  boucles : {hang}"
+    );
     println!("Score : {pass}/{total} ({pct:.1} %)");
 }

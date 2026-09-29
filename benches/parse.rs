@@ -5,7 +5,7 @@
 
 use std::hint::black_box;
 
-use criterion::{criterion_group, criterion_main, BatchSize, Criterion, Throughput};
+use criterion::{BatchSize, Criterion, Throughput, criterion_group, criterion_main};
 use html5ever::tendril::StrTendril;
 
 mod docs;
@@ -13,8 +13,8 @@ mod html5ever_arena;
 
 use docs::{blog_page, tag_heavy_page, text_heavy_page};
 
-fn ours(html: &str) -> html_tokenizer::dom::Document {
-    html_tokenizer::parse_document(html)
+fn ours(html: &str) -> html_parseur::dom::Document {
+    html_parseur::parse_document(html)
 }
 
 fn count_theirs(node: html5ever_arena::Ref<'_>) -> usize {
@@ -27,8 +27,8 @@ fn count_theirs(node: html5ever_arena::Ref<'_>) -> usize {
     count
 }
 
-fn count_ours(doc: &html_tokenizer::dom::Document) -> usize {
-    1 + doc.descendants(html_tokenizer::dom::NodeId::DOCUMENT).count()
+fn count_ours(doc: &html_parseur::dom::Document) -> usize {
+    1 + doc.descendants(html_parseur::dom::NodeId::DOCUMENT).count()
 }
 
 fn bench(c: &mut Criterion) {
@@ -42,13 +42,16 @@ fn bench(c: &mut Criterion) {
         // Vérification : les deux parsers doivent produire le même nombre de nœuds,
         // sinon on ne compare pas le même travail.
         let arena = typed_arena::Arena::new();
-        let (a, b) = (count_ours(&ours(html)), count_theirs(html5ever_arena::parse(html, &arena)));
+        let (a, b) = (
+            count_ours(&ours(html)),
+            count_theirs(html5ever_arena::parse(html, &arena)),
+        );
         assert_eq!(a, b, "{name} : {a} nœuds chez nous, {b} chez html5ever");
         println!("{name} : {a} nœuds dans les deux DOM");
 
         let mut group = c.benchmark_group(format!("parse-{name}"));
         group.throughput(Throughput::Bytes(html.len() as u64));
-        group.bench_function("html-tokenizer", |b| b.iter(|| ours(black_box(html))));
+        group.bench_function("html-parseur", |b| b.iter(|| ours(black_box(html))));
         group.bench_function("html5ever", |b| {
             b.iter(|| {
                 let arena = typed_arena::Arena::new();
@@ -59,10 +62,10 @@ fn bench(c: &mut Criterion) {
 
         // Variantes SANS copie de la page, des deux côtés. La préparation de
         // l'entrée (clone de la String, clone du tendril) n'est pas chronométrée.
-        group.bench_function("html-tokenizer-sans-copie", |b| {
+        group.bench_function("html-parseur-sans-copie", |b| {
             b.iter_batched(
                 || html.clone(),
-                |owned| black_box(html_tokenizer::parse_document_owned(owned)),
+                |owned| black_box(html_parseur::parse_document_owned(owned)),
                 BatchSize::LargeInput,
             )
         });

@@ -1,27 +1,28 @@
 //! Construction de l'arbre DOM à partir des tokens (spec §13.2.6).
 //!
 //! Le parser est lui aussi une machine à états : le "mode d'insertion" (avant
-//! <html>, dans <head>, dans <body>...) décide quoi faire de chaque token. Il
+//! `<html>`, dans `<head>`, dans `<body>`...) décide quoi faire de chaque token. Il
 //! maintient deux structures centrales :
-//! - la PILE des éléments ouverts (`open`) : le chemin depuis <html> jusqu'à
+//! - la PILE des éléments ouverts (`open`) : le chemin depuis `<html>` jusqu'à
 //!   l'élément où on insère ;
-//! - la liste des éléments de FORMATAGE actifs (`formatting`) : les <b>, <i>, <a>...
+//! - la liste des éléments de FORMATAGE actifs (`formatting`) : les `<b>`, `<i>`, `<a>`...
 //!   qu'il faut "rouvrir" quand le HTML est mal imbriqué.
 
 use std::borrow::Cow;
 use std::rc::Rc;
 
 use crate::atoms::{self, Atom};
+use crate::dom::{
+    AttrNamespace, Attribute, Document, Element, Namespace, NodeData, NodeId, QuirksMode,
+};
 use crate::foreign;
-use crate::dom::{AttrNamespace, Attribute, Document, Element, Namespace, NodeData, NodeId, QuirksMode};
 use crate::token::{Doctype, Token};
 use crate::tokenizer::{InitialState, Tokenizer};
 
-/// Parse une page HTML complète et renvoie son DOM.
 /// Options du parser.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct ParseOptions {
-    /// JavaScript activé : change seulement l'interprétation de <noscript>.
+    /// JavaScript activé : change seulement l'interprétation de `<noscript>`.
     pub scripting: bool,
 }
 
@@ -30,6 +31,7 @@ pub fn parse_document(html: &str) -> Document {
     parse_document_with(html, ParseOptions::default())
 }
 
+/// Comme [`parse_document`], avec des options.
 pub fn parse_document_with(html: &str, options: ParseOptions) -> Document {
     // Le document doit garder la page : on en fait une copie.
     parse_document_owned_with(html.to_string(), options)
@@ -41,8 +43,12 @@ pub fn parse_document_owned(html: String) -> Document {
     parse_document_owned_with(html, ParseOptions::default())
 }
 
+/// Comme [`parse_document_owned`], avec des options.
 pub fn parse_document_owned_with(html: String, options: ParseOptions) -> Document {
-    let mut builder = TreeBuilder { scripting: options.scripting, ..TreeBuilder::default() };
+    let mut builder = TreeBuilder {
+        scripting: options.scripting,
+        ..TreeBuilder::default()
+    };
     // Le document garde la page ; le tokenizer lit CE texte-là, pour que les
     // textes empruntés puissent devenir des plages du document.
     let source = Rc::new(html);
@@ -55,16 +61,28 @@ pub fn parse_document_owned_with(html: String, options: ParseOptions) -> Documen
 /// Parse un fragment HTML dans le contexte d'un élément (§13.4), comme le fait
 /// `element.innerHTML = html`. Renvoie le document et le nœud racine dont les
 /// enfants sont le résultat.
-pub fn parse_fragment(html: &str, context_ns: Namespace, context_name: &str, options: ParseOptions) -> (Document, NodeId) {
+pub fn parse_fragment(
+    html: &str,
+    context_ns: Namespace,
+    context_name: &str,
+    options: ParseOptions,
+) -> (Document, NodeId) {
     use atoms::*;
-    let mut builder = TreeBuilder { scripting: options.scripting, ..TreeBuilder::default() };
+    let mut builder = TreeBuilder {
+        scripting: options.scripting,
+        ..TreeBuilder::default()
+    };
     let source = Rc::new(html.to_string());
     builder.doc.set_source(Rc::clone(&source));
     let mut tokenizer = Tokenizer::new(&source);
 
     // L'élément de contexte existe dans le document, mais hors de l'arbre.
     let name = builder.doc.atoms.intern(context_name);
-    let context_tag = TagToken { name, attrs: Vec::new(), self_closing: false };
+    let context_tag = TagToken {
+        name,
+        attrs: Vec::new(),
+        self_closing: false,
+    };
     let context = builder.create_element(context_tag, context_ns);
     builder.context = Some(context);
 
@@ -84,7 +102,14 @@ pub fn parse_fragment(html: &str, context_ns: Namespace, context_name: &str, opt
         }
     }
 
-    let root = builder.create_element(TagToken { name: HTML, attrs: Vec::new(), self_closing: false }, Namespace::Html);
+    let root = builder.create_element(
+        TagToken {
+            name: HTML,
+            attrs: Vec::new(),
+            self_closing: false,
+        },
+        Namespace::Html,
+    );
     builder.doc.append(NodeId::DOCUMENT, root);
     builder.open.push(root);
     if builder.is_html(context, TEMPLATE) {
@@ -183,7 +208,14 @@ fn split_leading_ws(s: &str) -> (&str, &str) {
     s.split_at(n)
 }
 
-const HEADINGS: &[Atom] = &[atoms::H1, atoms::H2, atoms::H3, atoms::H4, atoms::H5, atoms::H6];
+const HEADINGS: &[Atom] = &[
+    atoms::H1,
+    atoms::H2,
+    atoms::H3,
+    atoms::H4,
+    atoms::H5,
+    atoms::H6,
+];
 
 pub struct TreeBuilder {
     doc: Document,
@@ -194,21 +226,21 @@ pub struct TreeBuilder {
     head: Option<NodeId>,
     form: Option<NodeId>,
     frameset_ok: bool,
-    /// Ignorer un '\n' juste après <pre>, <listing>, <textarea>.
+    /// Ignorer un '\n' juste après `<pre>`, `<listing>`, `<textarea>`.
     ignore_lf: bool,
     scripting: bool,
     /// Nouvel état demandé au tokenizer (lu par `parse_document`).
     tokenizer_state: Option<InitialState>,
     /// Actif quand du contenu mal placé dans un tableau doit être "adopté"
-    /// et inséré juste avant le <table> (§13.2.6.1).
+    /// et inséré juste avant le `<table>` (§13.2.6.1).
     foster_parenting: bool,
     /// Texte rencontré directement dans un tableau (mode InTableText).
     pending_table_text: String,
-    /// Pile des modes d'insertion des <template> ouverts (§13.2.4.1).
+    /// Pile des modes d'insertion des `<template>` ouverts (§13.2.4.1).
     template_modes: Vec<Mode>,
     /// Élément de contexte, pour le parsing de fragments (innerHTML).
     context: Option<NodeId>,
-    /// Un <selectedcontent> a été créé : il faudra le remplir en fin de parsing.
+    /// Un `<selectedcontent>` a été créé : il faudra le remplir en fin de parsing.
     saw_selectedcontent: bool,
 }
 
@@ -251,8 +283,12 @@ impl TreeBuilder {
                 // Le texte est emprunté au Cow : on le traite ici directement.
                 return self.process(Tok::Text(text));
             }
-            Token::StartTag(tag) => Tok::Start(self.convert_tag(tag.name, tag.attributes, tag.self_closing)),
-            Token::EndTag(tag) => Tok::End(self.convert_tag(tag.name, tag.attributes, tag.self_closing)),
+            Token::StartTag(tag) => {
+                Tok::Start(self.convert_tag(tag.name, tag.attributes, tag.self_closing))
+            }
+            Token::EndTag(tag) => {
+                Tok::End(self.convert_tag(tag.name, tag.attributes, tag.self_closing))
+            }
             Token::Comment(data) => Tok::Comment(NodeData::Comment(data)),
             Token::ProcessingInstruction { target, data } => {
                 Tok::Comment(NodeData::ProcessingInstruction { target, data })
@@ -274,7 +310,11 @@ impl TreeBuilder {
             name: self.doc.atoms.intern(&name),
             attrs: attributes
                 .into_iter()
-                .map(|a| Attribute { ns: AttrNamespace::None, name: a.name.into_owned(), value: a.value.into_owned() })
+                .map(|a| Attribute {
+                    ns: AttrNamespace::None,
+                    name: a.name.into_owned(),
+                    value: a.value.into_owned(),
+                })
                 .collect(),
             self_closing,
         }
@@ -287,7 +327,11 @@ impl TreeBuilder {
         loop {
             // Le "tree construction dispatcher" (§13.2.6) : règles HTML ou règles
             // du contenu étranger (SVG/MathML) ?
-            let again = if self.use_foreign_rules(&tok) { self.foreign_content(tok) } else { self.dispatch(tok) };
+            let again = if self.use_foreign_rules(&tok) {
+                self.foreign_content(tok)
+            } else {
+                self.dispatch(tok)
+            };
             match again {
                 Some(t) => tok = t,
                 None => break,
@@ -309,14 +353,19 @@ impl TreeBuilder {
     /// produit une copie. Ça évite un second passage sur tout le texte.
     fn may_contain_nul(&self, s: &str) -> bool {
         if self.doc.is_from_source(s) {
-            debug_assert!(!s.contains('\0'), "invariant du tokenizer violé : '\\0' dans un texte emprunté");
+            debug_assert!(
+                !s.contains('\0'),
+                "invariant du tokenizer violé : '\\0' dans un texte emprunté"
+            );
             return false;
         }
         s.contains('\0')
     }
 
     fn current_is_foreign(&self) -> bool {
-        self.adjusted_current().and_then(|n| self.doc.element(n)).is_some_and(|e| e.ns != Namespace::Html)
+        self.adjusted_current()
+            .and_then(|n| self.doc.element(n))
+            .is_some_and(|e| e.ns != Namespace::Html)
     }
 
     fn dispatch<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
@@ -352,26 +401,32 @@ impl TreeBuilder {
     }
 
     fn is_html(&self, id: NodeId, name: Atom) -> bool {
-        self.doc.element(id).is_some_and(|e| e.ns == Namespace::Html && e.name == name)
+        self.doc
+            .element(id)
+            .is_some_and(|e| e.ns == Namespace::Html && e.name == name)
     }
 
     fn is_html_any(&self, id: NodeId, names: &[Atom]) -> bool {
-        self.doc.element(id).is_some_and(|e| e.ns == Namespace::Html && names.contains(&e.name))
+        self.doc
+            .element(id)
+            .is_some_and(|e| e.ns == Namespace::Html && names.contains(&e.name))
     }
 
     /// Catégorie "special" de la spec (§13.2.4.2).
     fn is_special(&self, id: NodeId) -> bool {
         use atoms::*;
-        let Some(e) = self.doc.element(id) else { return false };
+        let Some(e) = self.doc.element(id) else {
+            return false;
+        };
         match e.ns {
             Namespace::Html => [
-                ADDRESS, APPLET, AREA, ARTICLE, ASIDE, BASE, BASEFONT, BGSOUND, BLOCKQUOTE, BODY, BR,
-                BUTTON, CAPTION, CENTER, COL, COLGROUP, DD, DETAILS, DIR, DIV, DL, DT, EMBED,
-                FIELDSET, FIGCAPTION, FIGURE, FOOTER, FORM, FRAME, FRAMESET, H1, H2, H3, H4, H5, H6,
-                HEAD, HEADER, HGROUP, HR, HTML, IFRAME, IMG, INPUT, KEYGEN, LI, LINK, LISTING, MAIN,
-                MARQUEE, MENU, META, NAV, NOEMBED, NOFRAMES, NOSCRIPT, OBJECT, OL, P, PARAM,
-                PLAINTEXT, PRE, SCRIPT, SEARCH, SECTION, SOURCE, STYLE, SUMMARY, TABLE,
-                TBODY, TD, TEMPLATE, TEXTAREA, TFOOT, TH, THEAD, TITLE, TR, TRACK, UL, WBR, XMP,
+                ADDRESS, APPLET, AREA, ARTICLE, ASIDE, BASE, BASEFONT, BGSOUND, BLOCKQUOTE, BODY,
+                BR, BUTTON, CAPTION, CENTER, COL, COLGROUP, DD, DETAILS, DIR, DIV, DL, DT, EMBED,
+                FIELDSET, FIGCAPTION, FIGURE, FOOTER, FORM, FRAME, FRAMESET, H1, H2, H3, H4, H5,
+                H6, HEAD, HEADER, HGROUP, HR, HTML, IFRAME, IMG, INPUT, KEYGEN, LI, LINK, LISTING,
+                MAIN, MARQUEE, MENU, META, NAV, NOEMBED, NOFRAMES, NOSCRIPT, OBJECT, OL, P, PARAM,
+                PLAINTEXT, PRE, SCRIPT, SEARCH, SECTION, SOURCE, STYLE, SUMMARY, TABLE, TBODY, TD,
+                TEMPLATE, TEXTAREA, TFOOT, TH, THEAD, TITLE, TR, TRACK, UL, WBR, XMP,
             ]
             .contains(&e.name),
             Namespace::MathMl => [MI, MO, MN, MS, MTEXT, ANNOTATION_XML].contains(&e.name),
@@ -382,14 +437,17 @@ impl TreeBuilder {
     /// Les éléments qui "arrêtent" la recherche dans une portée (§13.2.4.2).
     fn is_scope_boundary(&self, id: NodeId, scope: Scope) -> bool {
         use atoms::*;
-        let Some(e) = self.doc.element(id) else { return false };
+        let Some(e) = self.doc.element(id) else {
+            return false;
+        };
         if scope == Scope::Table {
             return self.is_html_any(id, &[HTML, TABLE, TEMPLATE]);
         }
         let default = match e.ns {
-            Namespace::Html => {
-                [APPLET, CAPTION, HTML, TABLE, TD, TH, MARQUEE, OBJECT, TEMPLATE].contains(&e.name)
-            }
+            Namespace::Html => [
+                APPLET, CAPTION, HTML, TABLE, TD, TH, MARQUEE, OBJECT, TEMPLATE,
+            ]
+            .contains(&e.name),
             Namespace::MathMl => [MI, MO, MN, MS, MTEXT, ANNOTATION_XML].contains(&e.name),
             Namespace::Svg => [FOREIGN_OBJECT, DESC, TITLE].contains(&e.name),
         };
@@ -449,7 +507,8 @@ impl TreeBuilder {
     fn generate_implied_end_tags(&mut self, except: Option<Atom>) {
         use atoms::*;
         while let Some(&node) = self.open.last() {
-            let implied = self.is_html_any(node, &[DD, DT, LI, OPTGROUP, OPTION, P, RB, RP, RT, RTC]);
+            let implied =
+                self.is_html_any(node, &[DD, DT, LI, OPTGROUP, OPTION, P, RB, RP, RT, RTC]);
             if !implied || except.is_some_and(|name| self.is_html(node, name)) {
                 break;
             }
@@ -461,7 +520,8 @@ impl TreeBuilder {
     fn generate_all_implied_end_tags_thoroughly(&mut self) {
         use atoms::*;
         const THOROUGH: &[Atom] = &[
-            CAPTION, COLGROUP, DD, DT, LI, OPTGROUP, OPTION, P, RB, RP, RT, RTC, TBODY, TD, TFOOT, TH, THEAD, TR,
+            CAPTION, COLGROUP, DD, DT, LI, OPTGROUP, OPTION, P, RB, RP, RT, RTC, TBODY, TD, TFOOT,
+            TH, THEAD, TR,
         ];
         while let Some(&node) = self.open.last() {
             if !self.is_html_any(node, THOROUGH) {
@@ -486,15 +546,18 @@ impl TreeBuilder {
         self.open.iter().any(|&n| self.is_html(n, atoms::TEMPLATE))
     }
 
-    /// Pour les règles de <form> uniquement : l'innerHTML d'un <template> se
+    /// Pour les règles de `<form>` uniquement : l'innerHTML d'un `<template>` se
     /// comporte comme l'intérieur d'un template (vérifié par WPT). Ailleurs,
     /// surtout pas : le template de contexte n'est pas dans la pile et ne doit
     /// jamais être "fermé".
     fn template_on_stack_or_context(&self) -> bool {
-        self.template_on_stack() || self.context.is_some_and(|c| self.is_html(c, atoms::TEMPLATE))
+        self.template_on_stack()
+            || self
+                .context
+                .is_some_and(|c| self.is_html(c, atoms::TEMPLATE))
     }
 
-    /// Fragment dont le contexte est un <select> (innerHTML d'un select).
+    /// Fragment dont le contexte est un `<select>` (innerHTML d'un select).
     fn in_select_fragment(&self) -> bool {
         self.context.is_some_and(|c| self.is_html(c, atoms::SELECT))
     }
@@ -510,7 +573,14 @@ impl TreeBuilder {
             if let Some(t) = last_template {
                 if last_table.is_none_or(|table| t > table) {
                     let template = self.open[t];
-                    return (self.doc.element(template).unwrap().template_contents.unwrap(), None);
+                    return (
+                        self.doc
+                            .element(template)
+                            .unwrap()
+                            .template_contents
+                            .unwrap(),
+                        None,
+                    );
                 }
             }
             let Some(table_index) = last_table else {
@@ -558,7 +628,7 @@ impl TreeBuilder {
         self.insert_element(tag, Namespace::Html)
     }
 
-    /// Élément vide (<br>, <img>...) : inséré puis immédiatement dépilé.
+    /// Élément vide (`<br>`, `<img>`...) : inséré puis immédiatement dépilé.
     fn insert_void(&mut self, tag: TagToken) {
         self.insert_html(tag);
         self.open.pop();
@@ -592,7 +662,7 @@ impl TreeBuilder {
         }
     }
 
-    /// Algorithmes génériques pour <title>/<textarea> (RCDATA) et <style>... (RAWTEXT).
+    /// Algorithmes génériques pour `<title>`/`<textarea>` (RCDATA) et `<style>`... (RAWTEXT).
     fn parse_raw_text(&mut self, tag: TagToken, state: InitialState) {
         self.insert_html(tag);
         self.tokenizer_state = Some(state);
@@ -607,13 +677,16 @@ impl TreeBuilder {
         // marqueur. Sinon, on oublie le plus ancien.
         let same = |entry: &Formatting| match entry {
             Formatting::Element(_, t) => {
-                t.name == tag.name && t.attrs.len() == tag.attrs.len()
+                t.name == tag.name
+                    && t.attrs.len() == tag.attrs.len()
                     && t.attrs.iter().all(|a| tag.attrs.contains(a))
             }
             Formatting::Marker => false,
         };
         let start = self.last_marker_index().map_or(0, |i| i + 1);
-        let matches: Vec<usize> = (start..self.formatting.len()).filter(|&i| same(&self.formatting[i])).collect();
+        let matches: Vec<usize> = (start..self.formatting.len())
+            .filter(|&i| same(&self.formatting[i]))
+            .collect();
         if matches.len() >= 3 {
             self.formatting.remove(matches[0]);
         }
@@ -621,7 +694,9 @@ impl TreeBuilder {
     }
 
     fn last_marker_index(&self) -> Option<usize> {
-        self.formatting.iter().rposition(|f| matches!(f, Formatting::Marker))
+        self.formatting
+            .iter()
+            .rposition(|f| matches!(f, Formatting::Marker))
     }
 
     fn clear_formatting_to_last_marker(&mut self) {
@@ -633,13 +708,15 @@ impl TreeBuilder {
     }
 
     /// Rouvre les éléments de formatage fermés trop tôt : dans `<b>1<p>2`, le "2"
-    /// doit être en gras, donc on recrée un <b> dans le <p>.
+    /// doit être en gras, donc on recrée un `<b>` dans le `<p>`.
     fn reconstruct_formatting(&mut self) {
         let is_open_or_marker = |this: &Self, entry: &Formatting| match entry {
             Formatting::Marker => true,
             Formatting::Element(node, _) => this.open.contains(node),
         };
-        let Some(last) = self.formatting.last() else { return };
+        let Some(last) = self.formatting.last() else {
+            return;
+        };
         if is_open_or_marker(self, last) {
             return;
         }
@@ -650,7 +727,9 @@ impl TreeBuilder {
         }
         // ...puis les recréer dans l'ordre.
         for j in i..self.formatting.len() {
-            let Formatting::Element(_, tag) = &self.formatting[j] else { continue };
+            let Formatting::Element(_, tag) = &self.formatting[j] else {
+                continue;
+            };
             let node = self.insert_html(tag.clone());
             if let Formatting::Element(n, _) = &mut self.formatting[j] {
                 *n = node;
@@ -659,7 +738,8 @@ impl TreeBuilder {
     }
 
     fn remove_from_formatting(&mut self, node: NodeId) {
-        self.formatting.retain(|f| !matches!(f, Formatting::Element(n, _) if *n == node));
+        self.formatting
+            .retain(|f| !matches!(f, Formatting::Element(n, _) if *n == node));
     }
 
     // ───────────── Modes d'insertion ─────────────
@@ -721,13 +801,21 @@ impl TreeBuilder {
                 self.mode = Mode::BeforeHead;
                 None
             }
-            Tok::End(ref tag) if ![atoms::HEAD, atoms::BODY, atoms::HTML, atoms::BR].contains(&tag.name) => None,
+            Tok::End(ref tag)
+                if ![atoms::HEAD, atoms::BODY, atoms::HTML, atoms::BR].contains(&tag.name) =>
+            {
+                None
+            }
             tok => self.before_html_anything_else(tok),
         }
     }
 
     fn before_html_anything_else<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
-        let tag = TagToken { name: atoms::HTML, attrs: Vec::new(), self_closing: false };
+        let tag = TagToken {
+            name: atoms::HTML,
+            attrs: Vec::new(),
+            self_closing: false,
+        };
         let node = self.create_element(tag, Namespace::Html);
         self.doc.append(NodeId::DOCUMENT, node);
         self.open.push(node);
@@ -756,13 +844,21 @@ impl TreeBuilder {
                 self.mode = Mode::InHead;
                 None
             }
-            Tok::End(ref tag) if ![atoms::HEAD, atoms::BODY, atoms::HTML, atoms::BR].contains(&tag.name) => None,
+            Tok::End(ref tag)
+                if ![atoms::HEAD, atoms::BODY, atoms::HTML, atoms::BR].contains(&tag.name) =>
+            {
+                None
+            }
             tok => self.before_head_anything_else(tok),
         }
     }
 
     fn before_head_anything_else<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
-        let tag = TagToken { name: atoms::HEAD, attrs: Vec::new(), self_closing: false };
+        let tag = TagToken {
+            name: atoms::HEAD,
+            attrs: Vec::new(),
+            self_closing: false,
+        };
         self.head = Some(self.insert_html(tag));
         self.mode = Mode::InHead;
         Some(tok)
@@ -797,7 +893,9 @@ impl TreeBuilder {
                 None
             }
             Tok::Start(tag)
-                if tag.name == NOFRAMES || tag.name == STYLE || (tag.name == NOSCRIPT && self.scripting) =>
+                if tag.name == NOFRAMES
+                    || tag.name == STYLE
+                    || (tag.name == NOSCRIPT && self.scripting) =>
             {
                 self.parse_raw_text(tag, InitialState::Rawtext);
                 None
@@ -865,7 +963,9 @@ impl TreeBuilder {
                 self.in_head_noscript_anything_else(Tok::Text(rest))
             }
             Tok::Comment(_) => self.in_head(tok),
-            Tok::Start(ref tag) if [BASEFONT, BGSOUND, LINK, META, NOFRAMES, STYLE].contains(&tag.name) => {
+            Tok::Start(ref tag)
+                if [BASEFONT, BGSOUND, LINK, META, NOFRAMES, STYLE].contains(&tag.name) =>
+            {
                 self.in_head(tok)
             }
             Tok::Start(ref tag) if tag.name == HEAD || tag.name == NOSCRIPT => None,
@@ -912,8 +1012,10 @@ impl TreeBuilder {
                 None
             }
             Tok::Start(ref tag)
-                if [BASE, BASEFONT, BGSOUND, LINK, META, NOFRAMES, SCRIPT, STYLE, TEMPLATE, TITLE]
-                    .contains(&tag.name) =>
+                if [
+                    BASE, BASEFONT, BGSOUND, LINK, META, NOFRAMES, SCRIPT, STYLE, TEMPLATE, TITLE,
+                ]
+                .contains(&tag.name) =>
             {
                 // Élément de <head> trouvé après </head> : on le range quand même dans <head>.
                 let head = self.head.expect("head");
@@ -932,7 +1034,11 @@ impl TreeBuilder {
     }
 
     fn after_head_anything_else<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
-        let tag = TagToken { name: atoms::BODY, attrs: Vec::new(), self_closing: false };
+        let tag = TagToken {
+            name: atoms::BODY,
+            attrs: Vec::new(),
+            self_closing: false,
+        };
         self.insert_html(tag);
         // Spec récente (vérifiée par WPT) : un <body> implicite repart avec
         // frameset-ok à "ok", quoi qu'il se soit passé dans <head>.
@@ -982,11 +1088,15 @@ impl TreeBuilder {
                     self.merge_attributes(html, &tag);
                 }
             }
-            BASE | BASEFONT | BGSOUND | LINK | META | NOFRAMES | SCRIPT | STYLE | TEMPLATE | TITLE => {
+            BASE | BASEFONT | BGSOUND | LINK | META | NOFRAMES | SCRIPT | STYLE | TEMPLATE
+            | TITLE => {
                 return self.in_head(Tok::Start(tag));
             }
             BODY => {
-                if self.open.len() > 1 && self.is_html(self.open[1], BODY) && !self.template_on_stack() {
+                if self.open.len() > 1
+                    && self.is_html(self.open[1], BODY)
+                    && !self.template_on_stack()
+                {
                     self.frameset_ok = false;
                     let body = self.open[1];
                     self.merge_attributes(body, &tag);
@@ -1002,8 +1112,8 @@ impl TreeBuilder {
                 }
             }
             ADDRESS | ARTICLE | ASIDE | BLOCKQUOTE | CENTER | DETAILS | DIALOG | DIR | DIV | DL
-            | FIELDSET | FIGCAPTION | FIGURE | FOOTER | HEADER | HGROUP | MAIN | MENU | NAV | OL | P
-            | SEARCH | SECTION | SUMMARY | UL => {
+            | FIELDSET | FIGCAPTION | FIGURE | FOOTER | HEADER | HGROUP | MAIN | MENU | NAV
+            | OL | P | SEARCH | SECTION | SUMMARY | UL => {
                 self.close_p_if_in_button_scope();
                 self.insert_html(tag);
             }
@@ -1251,9 +1361,9 @@ impl TreeBuilder {
                     return Some(Tok::End(tag));
                 }
             }
-            ADDRESS | ARTICLE | ASIDE | BLOCKQUOTE | BUTTON | CENTER | DETAILS | DIALOG | DIR | DIV
-            | DL | FIELDSET | FIGCAPTION | FIGURE | FOOTER | HEADER | HGROUP | LISTING | MAIN | MENU
-            | NAV | OL | PRE | SEARCH | SECTION | SUMMARY | UL => {
+            ADDRESS | ARTICLE | ASIDE | BLOCKQUOTE | BUTTON | CENTER | DETAILS | DIALOG | DIR
+            | DIV | DL | FIELDSET | FIGCAPTION | FIGURE | FOOTER | HEADER | HGROUP | LISTING
+            | MAIN | MENU | NAV | OL | PRE | SEARCH | SECTION | SUMMARY | UL => {
                 if self.in_scope(name, Scope::Default) {
                     self.generate_implied_end_tags(None);
                     self.pop_until(name);
@@ -1276,7 +1386,11 @@ impl TreeBuilder {
             P => {
                 if !self.in_scope(P, Scope::Button) {
                     // </p> sans <p> ouvert : on crée un <p> vide.
-                    self.insert_html(TagToken { name: P, attrs: Vec::new(), self_closing: false });
+                    self.insert_html(TagToken {
+                        name: P,
+                        attrs: Vec::new(),
+                        self_closing: false,
+                    });
                 }
                 self.close_p();
             }
@@ -1310,7 +1424,11 @@ impl TreeBuilder {
             }
             BR => {
                 // </br> est traité comme <br>.
-                return self.in_body_start_tag(TagToken { name: BR, attrs: Vec::new(), self_closing: false });
+                return self.in_body_start_tag(TagToken {
+                    name: BR,
+                    attrs: Vec::new(),
+                    self_closing: false,
+                });
             }
             _ => self.any_other_end_tag(name),
         }
@@ -1334,14 +1452,16 @@ impl TreeBuilder {
     }
 
     fn formatting_index(&self, node: NodeId) -> Option<usize> {
-        self.formatting.iter().position(|f| matches!(f, Formatting::Element(n, _) if *n == node))
+        self.formatting
+            .iter()
+            .position(|f| matches!(f, Formatting::Element(n, _) if *n == node))
     }
 
     /// L'"adoption agency algorithm" (§13.2.6.4.7) gère le formatage mal imbriqué.
     ///
-    /// Exemple : `<b>1<p>2</b>3</p>`. Quand arrive `</b>`, le <p> (le "furthest
-    /// block") est encore ouvert DANS le <b>. L'algorithme sort le <p> du <b>, et
-    /// crée un nouveau <b> à l'intérieur du <p> pour que "2" reste en gras :
+    /// Exemple : `<b>1<p>2</b>3</p>`. Quand arrive `</b>`, le `<p>` (le "furthest
+    /// block") est encore ouvert DANS le `<b>`. L'algorithme sort le `<p>` du `<b>`, et
+    /// crée un nouveau `<b>` à l'intérieur du `<p>` pour que "2" reste en gras :
     /// `<b>1</b><p><b>2</b>3</p>`.
     fn adoption_agency(&mut self, subject: Atom) {
         // Étape 2 : cas simple, l'élément courant est celui qu'on ferme.
@@ -1355,10 +1475,13 @@ impl TreeBuilder {
         for _ in 0..8 {
             // 4.3 : l'élément de formatage (le dernier de ce nom depuis le dernier marqueur).
             let start = self.last_marker_index().map_or(0, |i| i + 1);
-            let found = (start..self.formatting.len()).rev().find_map(|i| match &self.formatting[i] {
-                Formatting::Element(n, t) if t.name == subject => Some((i, *n, t.clone())),
-                _ => None,
-            });
+            let found =
+                (start..self.formatting.len())
+                    .rev()
+                    .find_map(|i| match &self.formatting[i] {
+                        Formatting::Element(n, t) if t.name == subject => Some((i, *n, t.clone())),
+                        _ => None,
+                    });
             let Some((fe_index, formatting_element, fe_tag)) = found else {
                 return self.any_other_end_tag(subject);
             };
@@ -1374,7 +1497,9 @@ impl TreeBuilder {
             }
 
             // 4.7 : le "furthest block", premier élément special AU-DESSUS de lui dans la pile.
-            let Some(fb_stack) = (fe_stack + 1..self.open.len()).find(|&i| self.is_special(self.open[i])) else {
+            let Some(fb_stack) =
+                (fe_stack + 1..self.open.len()).find(|&i| self.is_special(self.open[i]))
+            else {
                 // 4.8 : pas de furthest block : on ferme simplement jusqu'à l'élément.
                 self.open.truncate(fe_stack);
                 self.formatting.remove(fe_index);
@@ -1412,7 +1537,9 @@ impl TreeBuilder {
                     self.open.remove(node_stack);
                     continue;
                 };
-                let Formatting::Element(_, tag) = &self.formatting[i] else { unreachable!() };
+                let Formatting::Element(_, tag) = &self.formatting[i] else {
+                    unreachable!()
+                };
                 let new_node = self.create_element(tag.clone(), Namespace::Html);
                 if let Formatting::Element(n, _) = &mut self.formatting[i] {
                     *n = new_node;
@@ -1440,7 +1567,8 @@ impl TreeBuilder {
             if old < bookmark {
                 bookmark -= 1;
             }
-            self.formatting.insert(bookmark, Formatting::Element(new_fe, fe_tag));
+            self.formatting
+                .insert(bookmark, Formatting::Element(new_fe, fe_tag));
 
             // 4.19 : et dans la pile, juste au-dessus du furthest block.
             self.open.retain(|&n| n != formatting_element);
@@ -1492,7 +1620,11 @@ impl TreeBuilder {
     }
 
     fn fake_tag(name: Atom) -> TagToken {
-        TagToken { name, attrs: Vec::new(), self_closing: false }
+        TagToken {
+            name,
+            attrs: Vec::new(),
+            self_closing: false,
+        }
     }
 
     /// "Reset the insertion mode appropriately" (§13.2.4.1) : après avoir fermé un
@@ -1506,7 +1638,9 @@ impl TreeBuilder {
                 Some(context) if last => context,
                 _ => self.open[i],
             };
-            let Some(e) = self.doc.element(node) else { continue };
+            let Some(e) = self.doc.element(node) else {
+                continue;
+            };
             if e.ns != Namespace::Html {
                 if last {
                     self.mode = Mode::InBody;
@@ -1526,7 +1660,11 @@ impl TreeBuilder {
                 BODY => Mode::InBody,
                 FRAMESET => Mode::InFrameset,
                 HTML => {
-                    if self.head.is_none() { Mode::BeforeHead } else { Mode::AfterHead }
+                    if self.head.is_none() {
+                        Mode::BeforeHead
+                    } else {
+                        Mode::AfterHead
+                    }
                 }
                 _ if last => Mode::InBody,
                 _ => continue,
@@ -1535,7 +1673,7 @@ impl TreeBuilder {
         }
     }
 
-    /// Fermer la table ouverte (utilisé par </table> et <table> imbriqué).
+    /// Fermer la table ouverte (utilisé par `</table>` et `<table>` imbriqué).
     fn close_table(&mut self) -> bool {
         if !self.in_scope(atoms::TABLE, Scope::Table) {
             return false;
@@ -1549,7 +1687,10 @@ impl TreeBuilder {
     fn in_table<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
         use atoms::*;
         match tok {
-            Tok::Text(_) if self.is_html_any(self.current(), &[TABLE, TBODY, TEMPLATE, TFOOT, THEAD, TR]) => {
+            Tok::Text(_)
+                if self
+                    .is_html_any(self.current(), &[TABLE, TBODY, TEMPLATE, TFOOT, THEAD, TR]) =>
+            {
                 self.pending_table_text.clear();
                 self.original_mode = self.mode;
                 self.mode = Mode::InTableText;
@@ -1592,22 +1733,34 @@ impl TreeBuilder {
                 Some(tok)
             }
             Tok::Start(ref tag) if tag.name == TABLE => {
-                if self.close_table() { Some(tok) } else { None }
+                if self.close_table() {
+                    Some(tok)
+                } else {
+                    None
+                }
             }
             Tok::End(ref tag) if tag.name == TABLE => {
                 self.close_table();
                 None
             }
             Tok::End(ref tag)
-                if [BODY, CAPTION, COL, COLGROUP, HTML, TBODY, TD, TFOOT, TH, THEAD, TR].contains(&tag.name) =>
+                if [
+                    BODY, CAPTION, COL, COLGROUP, HTML, TBODY, TD, TFOOT, TH, THEAD, TR,
+                ]
+                .contains(&tag.name) =>
             {
                 None
             }
-            Tok::Start(ref tag) if [STYLE, SCRIPT, TEMPLATE].contains(&tag.name) => self.in_head(tok),
+            Tok::Start(ref tag) if [STYLE, SCRIPT, TEMPLATE].contains(&tag.name) => {
+                self.in_head(tok)
+            }
             Tok::End(ref tag) if tag.name == TEMPLATE => self.in_head(tok),
             Tok::Start(ref tag)
                 if tag.name == INPUT
-                    && tag.attrs.iter().any(|a| a.name == "type" && a.value.eq_ignore_ascii_case("hidden")) =>
+                    && tag
+                        .attrs
+                        .iter()
+                        .any(|a| a.name == "type" && a.value.eq_ignore_ascii_case("hidden")) =>
             {
                 let Tok::Start(tag) = tok else { unreachable!() };
                 self.insert_void(tag);
@@ -1630,7 +1783,7 @@ impl TreeBuilder {
         }
     }
 
-    /// Contenu mal placé dans un tableau : traité comme dans <body>, mais adopté
+    /// Contenu mal placé dans un tableau : traité comme dans `<body>`, mais adopté
     /// (inséré avant le tableau).
     fn in_table_anything_else<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
         self.foster_parenting = true;
@@ -1642,7 +1795,8 @@ impl TreeBuilder {
     // §13.2.6.4.10
     fn in_table_text<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
         if let Tok::Text(s) = tok {
-            self.pending_table_text.extend(s.chars().filter(|&c| c != '\0'));
+            self.pending_table_text
+                .extend(s.chars().filter(|&c| c != '\0'));
             return None;
         }
         let text = std::mem::take(&mut self.pending_table_text);
@@ -1675,13 +1829,29 @@ impl TreeBuilder {
                 self.close_caption();
                 None
             }
-            Tok::Start(ref tag) if [CAPTION, COL, COLGROUP, TBODY, TD, TFOOT, TH, THEAD, TR].contains(&tag.name) => {
-                if self.close_caption() { Some(tok) } else { None }
+            Tok::Start(ref tag)
+                if [CAPTION, COL, COLGROUP, TBODY, TD, TFOOT, TH, THEAD, TR]
+                    .contains(&tag.name) =>
+            {
+                if self.close_caption() {
+                    Some(tok)
+                } else {
+                    None
+                }
             }
             Tok::End(ref tag) if tag.name == TABLE => {
-                if self.close_caption() { Some(tok) } else { None }
+                if self.close_caption() {
+                    Some(tok)
+                } else {
+                    None
+                }
             }
-            Tok::End(ref tag) if [BODY, COL, COLGROUP, HTML, TBODY, TD, TFOOT, TH, THEAD, TR].contains(&tag.name) => None,
+            Tok::End(ref tag)
+                if [BODY, COL, COLGROUP, HTML, TBODY, TD, TFOOT, TH, THEAD, TR]
+                    .contains(&tag.name) =>
+            {
+                None
+            }
             tok => self.in_body(tok),
         }
     }
@@ -1758,11 +1928,17 @@ impl TreeBuilder {
                 }
                 None
             }
-            Tok::Start(ref tag) if [CAPTION, COL, COLGROUP, TBODY, TFOOT, THEAD].contains(&tag.name) => {
+            Tok::Start(ref tag)
+                if [CAPTION, COL, COLGROUP, TBODY, TFOOT, THEAD].contains(&tag.name) =>
+            {
                 self.close_table_body(tok)
             }
             Tok::End(ref tag) if tag.name == TABLE => self.close_table_body(tok),
-            Tok::End(ref tag) if [BODY, CAPTION, COL, COLGROUP, HTML, TD, TH, TR].contains(&tag.name) => None,
+            Tok::End(ref tag)
+                if [BODY, CAPTION, COL, COLGROUP, HTML, TD, TH, TR].contains(&tag.name) =>
+            {
+                None
+            }
             tok => self.in_table(tok),
         }
     }
@@ -1803,11 +1979,17 @@ impl TreeBuilder {
                 self.close_row();
                 None
             }
-            Tok::Start(ref tag) if [CAPTION, COL, COLGROUP, TBODY, TFOOT, THEAD, TR].contains(&tag.name) => {
+            Tok::Start(ref tag)
+                if [CAPTION, COL, COLGROUP, TBODY, TFOOT, THEAD, TR].contains(&tag.name) =>
+            {
                 if self.close_row() { Some(tok) } else { None }
             }
             Tok::End(ref tag) if tag.name == TABLE => {
-                if self.close_row() { Some(tok) } else { None }
+                if self.close_row() {
+                    Some(tok)
+                } else {
+                    None
+                }
             }
             Tok::End(ref tag) if [TBODY, TFOOT, THEAD].contains(&tag.name) => {
                 if !self.in_scope(tag.name, Scope::Table) {
@@ -1815,7 +1997,11 @@ impl TreeBuilder {
                 }
                 if self.close_row() { Some(tok) } else { None }
             }
-            Tok::End(ref tag) if [BODY, CAPTION, COL, COLGROUP, HTML, TD, TH].contains(&tag.name) => None,
+            Tok::End(ref tag)
+                if [BODY, CAPTION, COL, COLGROUP, HTML, TD, TH].contains(&tag.name) =>
+            {
+                None
+            }
             tok => self.in_table(tok),
         }
     }
@@ -1842,7 +2028,8 @@ impl TreeBuilder {
                 None
             }
             Tok::Start(ref tag)
-                if [CAPTION, COL, COLGROUP, TBODY, TD, TFOOT, TH, THEAD, TR].contains(&tag.name) =>
+                if [CAPTION, COL, COLGROUP, TBODY, TD, TFOOT, TH, THEAD, TR]
+                    .contains(&tag.name) =>
             {
                 if !self.in_scope_any(&[TD, TH], Scope::Table) {
                     return None;
@@ -1866,13 +2053,17 @@ impl TreeBuilder {
 
     fn is_mathml_text_integration_point(&self, node: NodeId) -> bool {
         use atoms::*;
-        self.doc.element(node).is_some_and(|e| e.ns == Namespace::MathMl && [MI, MO, MN, MS, MTEXT].contains(&e.name))
+        self.doc
+            .element(node)
+            .is_some_and(|e| e.ns == Namespace::MathMl && [MI, MO, MN, MS, MTEXT].contains(&e.name))
     }
 
     /// Points où le HTML "reprend ses droits" à l'intérieur du SVG/MathML.
     fn is_html_integration_point(&self, node: NodeId) -> bool {
         use atoms::*;
-        let Some(e) = self.doc.element(node) else { return false };
+        let Some(e) = self.doc.element(node) else {
+            return false;
+        };
         match e.ns {
             Namespace::Svg => [FOREIGN_OBJECT, DESC, TITLE].contains(&e.name),
             Namespace::MathMl => {
@@ -1890,8 +2081,12 @@ impl TreeBuilder {
     /// Le dispatcher (§13.2.6) : faut-il appliquer les règles du contenu étranger ?
     fn use_foreign_rules(&self, tok: &Tok) -> bool {
         use atoms::*;
-        let Some(node) = self.adjusted_current() else { return false };
-        let Some(e) = self.doc.element(node) else { return false };
+        let Some(node) = self.adjusted_current() else {
+            return false;
+        };
+        let Some(e) = self.doc.element(node) else {
+            return false;
+        };
         if e.ns == Namespace::Html || matches!(tok, Tok::Eof) {
             return false;
         }
@@ -1902,7 +2097,10 @@ impl TreeBuilder {
                 _ => {}
             }
         }
-        if e.ns == Namespace::MathMl && e.name == ANNOTATION_XML && matches!(tok, Tok::Start(t) if t.name == SVG) {
+        if e.ns == Namespace::MathMl
+            && e.name == ANNOTATION_XML
+            && matches!(tok, Tok::Start(t) if t.name == SVG)
+        {
             return false;
         }
         if self.is_html_integration_point(node) && matches!(tok, Tok::Start(_) | Tok::Text(_)) {
@@ -1932,9 +2130,15 @@ impl TreeBuilder {
             }
             Tok::Doctype(_) => None,
             Tok::Start(ref tag) if self.breaks_out(tag) => self.break_out_of_foreign(tok),
-            Tok::End(ref tag) if tag.name == atoms::BR || tag.name == atoms::P => self.break_out_of_foreign(tok),
+            Tok::End(ref tag) if tag.name == atoms::BR || tag.name == atoms::P => {
+                self.break_out_of_foreign(tok)
+            }
             Tok::Start(mut tag) => {
-                let ns = self.doc.element(self.adjusted_current().unwrap()).unwrap().ns;
+                let ns = self
+                    .doc
+                    .element(self.adjusted_current().unwrap())
+                    .unwrap()
+                    .ns;
                 if ns == Namespace::MathMl {
                     foreign::adjust_mathml_attributes(&mut tag.attrs);
                 } else {
@@ -1961,13 +2165,20 @@ impl TreeBuilder {
                         return None;
                     }
                     let node = self.open[i];
-                    let name = self.doc.element(node).map(|e| self.doc.atoms.name(e.name).to_ascii_lowercase());
+                    let name = self
+                        .doc
+                        .element(node)
+                        .map(|e| self.doc.atoms.name(e.name).to_ascii_lowercase());
                     if name.as_deref() == Some(wanted.as_str()) {
                         self.open.truncate(i);
                         return None;
                     }
                     i -= 1;
-                    if self.doc.element(self.open[i]).is_some_and(|e| e.ns == Namespace::Html) {
+                    if self
+                        .doc
+                        .element(self.open[i])
+                        .is_some_and(|e| e.ns == Namespace::Html)
+                    {
                         return self.dispatch(Tok::End(tag));
                     }
                 }
@@ -1978,14 +2189,24 @@ impl TreeBuilder {
 
     fn breaks_out(&self, tag: &TagToken) -> bool {
         foreign::breaks_out_of_foreign(self.doc.atoms.name(tag.name))
-            || (tag.name == atoms::FONT && tag.attrs.iter().any(|a| matches!(a.name.as_str(), "color" | "face" | "size")))
+            || (tag.name == atoms::FONT
+                && tag
+                    .attrs
+                    .iter()
+                    .any(|a| matches!(a.name.as_str(), "color" | "face" | "size")))
     }
 
     /// Une balise HTML dans du SVG : on referme le SVG et on la retraite en HTML.
     fn break_out_of_foreign<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
         while let Some(&node) = self.open.last() {
-            let is_html = self.doc.element(node).is_some_and(|e| e.ns == Namespace::Html);
-            if is_html || self.is_mathml_text_integration_point(node) || self.is_html_integration_point(node) {
+            let is_html = self
+                .doc
+                .element(node)
+                .is_some_and(|e| e.ns == Namespace::Html);
+            if is_html
+                || self.is_mathml_text_integration_point(node)
+                || self.is_html_integration_point(node)
+            {
                 break;
             }
             self.open.pop();
@@ -2000,7 +2221,7 @@ impl TreeBuilder {
 
     /// `<selectedcontent>` affiche une copie de l'option sélectionnée.
     ///
-    /// La spec fait cette copie chaque fois qu'une <option> est refermée ; le
+    /// La spec fait cette copie chaque fois qu'une `<option>` est refermée ; le
     /// résultat final est le même que de la faire une fois, à la fin du parsing,
     /// avec l'option sélectionnée à ce moment-là. C'est ce qu'on fait ici (tant
     /// qu'il n'y a pas de JavaScript qui pourrait observer les étapes).
@@ -2010,17 +2231,32 @@ impl TreeBuilder {
             return;
         }
         let selectedcontent = atoms::SELECTEDCONTENT;
-        let selects: Vec<NodeId> = self.doc.descendants(NodeId::DOCUMENT)
+        let selects: Vec<NodeId> = self
+            .doc
+            .descendants(NodeId::DOCUMENT)
             .filter(|&n| self.is_html(n, atoms::SELECT))
             .collect();
         for select in selects {
             let inside: Vec<NodeId> = self.doc.descendants(select).collect();
-            let Some(&target) = inside.iter().find(|&&n| self.is_html(n, selectedcontent)) else { continue };
-            let options: Vec<NodeId> = inside.iter().copied().filter(|&n| self.is_html(n, atoms::OPTION)).collect();
+            let Some(&target) = inside.iter().find(|&&n| self.is_html(n, selectedcontent)) else {
+                continue;
+            };
+            let options: Vec<NodeId> = inside
+                .iter()
+                .copied()
+                .filter(|&n| self.is_html(n, atoms::OPTION))
+                .collect();
             let selected = options
                 .iter()
                 .rev()
-                .find(|&&o| self.doc.element(o).unwrap().attrs.iter().any(|a| a.name == "selected"))
+                .find(|&&o| {
+                    self.doc
+                        .element(o)
+                        .unwrap()
+                        .attrs
+                        .iter()
+                        .any(|a| a.name == "selected")
+                })
                 .or(options.first());
             let Some(&option) = selected else { continue };
             self.doc.remove_children(target);
@@ -2034,7 +2270,7 @@ impl TreeBuilder {
 
     // ───────────── Templates ─────────────
 
-    /// Ferme le <template> courant (sur </template> ou fin de fichier).
+    /// Ferme le `<template>` courant (sur `</template>` ou fin de fichier).
     fn close_template(&mut self) {
         self.generate_all_implied_end_tags_thoroughly();
         self.pop_until(atoms::TEMPLATE);
@@ -2044,7 +2280,7 @@ impl TreeBuilder {
     }
 
     /// Le contenu d'un template change de "nature" selon sa première balise :
-    /// un <tr> fait du template un corps de tableau, un <td> une ligne...
+    /// un `<tr>` fait du template un corps de tableau, un `<td>` une ligne...
     fn switch_template_mode<'t>(&mut self, mode: Mode, tok: Tok<'t>) -> Option<Tok<'t>> {
         self.template_modes.pop();
         self.template_modes.push(mode);
@@ -2058,8 +2294,10 @@ impl TreeBuilder {
         match tok {
             Tok::Text(_) | Tok::Comment(_) | Tok::Doctype(_) => self.in_body(tok),
             Tok::Start(ref tag)
-                if [BASE, BASEFONT, BGSOUND, LINK, META, NOFRAMES, SCRIPT, STYLE, TEMPLATE, TITLE]
-                    .contains(&tag.name) =>
+                if [
+                    BASE, BASEFONT, BGSOUND, LINK, META, NOFRAMES, SCRIPT, STYLE, TEMPLATE, TITLE,
+                ]
+                .contains(&tag.name) =>
             {
                 self.in_head(tok)
             }
@@ -2067,8 +2305,12 @@ impl TreeBuilder {
             Tok::Start(ref tag) if [CAPTION, COLGROUP, TBODY, TFOOT, THEAD].contains(&tag.name) => {
                 self.switch_template_mode(Mode::InTable, tok)
             }
-            Tok::Start(ref tag) if tag.name == COL => self.switch_template_mode(Mode::InColumnGroup, tok),
-            Tok::Start(ref tag) if tag.name == TR => self.switch_template_mode(Mode::InTableBody, tok),
+            Tok::Start(ref tag) if tag.name == COL => {
+                self.switch_template_mode(Mode::InColumnGroup, tok)
+            }
+            Tok::Start(ref tag) if tag.name == TR => {
+                self.switch_template_mode(Mode::InTableBody, tok)
+            }
             Tok::Start(ref tag) if tag.name == TD || tag.name == TH => {
                 self.switch_template_mode(Mode::InRow, tok)
             }
@@ -2301,7 +2543,11 @@ fn quirks_mode_for(d: &Doctype) -> QuirksMode {
         || d.name.as_deref() != Some("html")
         || matches!(
             public.as_deref(),
-            Some("-//w3o//dtd w3 html strict 3.0//en//" | "-/w3c/dtd html 4.0 transitional/en" | "html")
+            Some(
+                "-//w3o//dtd w3 html strict 3.0//en//"
+                    | "-/w3c/dtd html 4.0 transitional/en"
+                    | "html"
+            )
         )
         || system.as_deref() == Some("http://www.ibm.com/data/dtd/v11/ibmxhtml1-transitional.dtd")
         || QUIRKY_PREFIXES.iter().any(|p| pub_starts(p))

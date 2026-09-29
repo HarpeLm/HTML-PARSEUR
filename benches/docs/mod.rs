@@ -64,4 +64,3 @@ pub fn text_heavy_page(paragraphs: usize) -> String {
     }
     s
 }
-

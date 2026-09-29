@@ -55,9 +55,9 @@ fn find_first_of_neon<const N: usize>(haystack: &[u8], stops: &[u8; N]) -> usize
         // NEON n'a pas d'instruction "movemask" comme x86. L'astuce classique :
         // `shrn` décale chaque paire d'octets de 4 bits et garde la moitié basse,
         // ce qui résume les 16 octets en 64 bits (4 bits par octet d'origine).
-        let mask = vget_lane_u64::<0>(vreinterpret_u64_u8(vshrn_n_u16::<4>(
-            vreinterpretq_u16_u8(hits),
-        )));
+        let mask = vget_lane_u64::<0>(vreinterpret_u64_u8(vshrn_n_u16::<4>(vreinterpretq_u16_u8(
+            hits,
+        ))));
 
         if mask != 0 {
             // Le premier bit à 1 donne la position : 4 bits par octet.

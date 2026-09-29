@@ -7,7 +7,7 @@
 use std::cell::Cell;
 use std::hint::black_box;
 
-use criterion::{criterion_group, criterion_main, Criterion, Throughput};
+use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 use html5ever::tendril::StrTendril;
 use html5ever::tokenizer::{
     BufferQueue, Token as H5Token, TokenSink, TokenSinkResult, Tokenizer as H5Tokenizer,
@@ -19,7 +19,7 @@ use docs::{blog_page, tag_heavy_page, text_heavy_page};
 // ───────────── Les deux concurrents ─────────────
 
 fn run_ours(input: &str) -> usize {
-    html_tokenizer::Tokenizer::new(input).count()
+    html_parseur::Tokenizer::new(input).count()
 }
 
 /// html5ever envoie ses tokens à un "sink" : le nôtre se contente de les compter.
@@ -63,7 +63,7 @@ fn bench(c: &mut Criterion) {
         let mut group = c.benchmark_group(*name);
         // Criterion affichera un débit en Mo/s en plus du temps.
         group.throughput(Throughput::Bytes(html.len() as u64));
-        group.bench_function("html-tokenizer", |b| b.iter(|| run_ours(black_box(html))));
+        group.bench_function("html-parseur", |b| b.iter(|| run_ours(black_box(html))));
         group.bench_function("html5ever", |b| b.iter(|| run_html5ever(black_box(html))));
         // Cloner un tendril est gratuit (compteur de références), pas de copie.
         let tendril = StrTendril::from_slice(html);

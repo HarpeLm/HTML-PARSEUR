@@ -17,9 +17,9 @@ SPEED=$(sed -E 's/.*, //' "$TMP/speed.txt")
 inferno-collapse-sample "$TMP/sample.txt" | rustfilt \
   | grep "$EXAMPLE::main" \
   | sed -E "s/^.*($EXAMPLE\`$EXAMPLE::main)/\1/" | sed -E 's/[a-z_]+`//g' \
-  | sed -E 's/<html_tokenizer::tokenizer::Tokenizer as core::iter::traits::iterator::Iterator>::next/Tokenizer::next/g; s/<html_tokenizer::tokenizer::Tokenizer>::/Tokenizer::/g; s/<html_tokenizer::tree_builder::TreeBuilder>::/TreeBuilder::/g; s/<html_tokenizer::dom::Document>::/Document::/g; s/<html_tokenizer::atoms::Interner>::/Interner::/g' \
+  | sed -E 's/<html_parseur::tokenizer::Tokenizer as core::iter::traits::iterator::Iterator>::next/Tokenizer::next/g; s/<html_parseur::tokenizer::Tokenizer>::/Tokenizer::/g; s/<html_parseur::tree_builder::TreeBuilder>::/TreeBuilder::/g; s/<html_parseur::dom::Document>::/Document::/g; s/<html_parseur::atoms::Interner>::/Interner::/g' \
   > "$TMP/stacks.folded"
-inferno-flamegraph --title "html-tokenizer · blog · $NAME ($SPEED)" \
+inferno-flamegraph --title "html-parseur · blog · $NAME ($SPEED)" \
   --subtitle "Largeur = part du temps CPU. Cliquer pour zoomer." \
   --colors rust --width 1400 --countname échantillons \
   < "$TMP/stacks.folded" > "profiling/$NAME.svg"

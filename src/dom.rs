@@ -12,6 +12,7 @@ use std::rc::Rc;
 
 use crate::atoms::{Atom, Interner};
 
+/// Identifiant d'un nœud : son indice dans l'arène du [`Document`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct NodeId(u32);
 
@@ -24,33 +25,49 @@ impl NodeId {
     }
 }
 
+/// Espace de noms d'un élément.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Namespace {
+    /// HTML.
     Html,
+    /// SVG (`<svg>` et son contenu).
     Svg,
+    /// MathML (`<math>` et son contenu).
     MathMl,
 }
 
 /// Espace de noms d'un attribut (seuls les attributs SVG/MathML en ont un).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AttrNamespace {
+    /// Aucun (le cas de tous les attributs HTML).
     None,
+    /// XLink (`xlink:href`...).
     XLink,
+    /// XML (`xml:lang`, `xml:space`).
     Xml,
+    /// XMLNS (`xmlns`, `xmlns:xlink`).
     Xmlns,
 }
 
+/// Un attribut d'élément.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Attribute {
+    /// Espace de noms (seulement pour certains attributs SVG/MathML).
     pub ns: AttrNamespace,
+    /// Nom (en minuscules, sauf attributs SVG comme `viewBox`).
     pub name: String,
+    /// Valeur, entités déjà décodées.
     pub value: String,
 }
 
+/// Un élément (`<div>`, `<svg>`...).
 #[derive(Debug, Clone)]
 pub struct Element {
+    /// Espace de noms.
     pub ns: Namespace,
+    /// Nom interné ; le texte s'obtient avec `doc.atoms.name(element.name)`.
     pub name: Atom,
+    /// Attributs, dans l'ordre de la page (doublons déjà retirés).
     pub attrs: Vec<Attribute>,
     /// Pour `<template>` : le fragment qui contient son contenu.
     pub template_contents: Option<NodeId>,
@@ -63,24 +80,44 @@ pub struct Element {
 /// Un texte transformé (entité `&eacute;`, `\r\n` normalisé...) est une `String`.
 #[derive(Debug, Clone)]
 pub enum TextData {
-    Source { start: u32, end: u32 },
+    /// Une plage (en octets) de la page d'origine.
+    Source {
+        /// Début de la plage.
+        start: u32,
+        /// Fin de la plage (exclue).
+        end: u32,
+    },
+    /// Un texte qui ne figure pas tel quel dans la page.
     Owned(String),
 }
 
+/// Le type d'un nœud et son contenu.
 #[derive(Debug, Clone)]
 pub enum NodeData {
+    /// La racine du document.
     Document,
+    /// Un fragment : le contenu d'un `<template>`.
     DocumentFragment,
+    /// `<!DOCTYPE ...>`.
     Doctype {
+        /// Nom (`html`).
         name: String,
+        /// Identifiant public (vide si absent).
         public_id: String,
+        /// Identifiant système (vide si absent).
         system_id: String,
     },
+    /// Un élément.
     Element(Element),
+    /// Du texte : lire avec [`Document::text`].
     Text(TextData),
+    /// `<!-- commentaire -->`.
     Comment(String),
+    /// `<?cible données?>`.
     ProcessingInstruction {
+        /// La cible.
         target: String,
+        /// Les données.
         data: String,
     },
 }
@@ -91,23 +128,31 @@ pub enum NodeData {
 /// Pour parcourir : `Document::children`, `Document::descendants`.
 #[derive(Debug, Clone)]
 pub struct Node {
+    /// Le parent (`None` pour la racine ou un nœud détaché).
     pub parent: Option<NodeId>,
     pub(crate) first_child: Option<NodeId>,
     pub(crate) last_child: Option<NodeId>,
     pub(crate) prev_sibling: Option<NodeId>,
     pub(crate) next_sibling: Option<NodeId>,
+    /// Le type et le contenu du nœud.
     pub data: NodeData,
 }
 
 /// Le mode de rendu choisi d'après le DOCTYPE (§13.2.6.4.1).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum QuirksMode {
+    /// Mode standard.
     #[default]
     NoQuirks,
+    /// Presque standard (quelques anciens doctypes XHTML).
     LimitedQuirks,
+    /// Mode de compatibilité avec les pages des années 90.
     Quirks,
 }
 
+/// Un document HTML parsé : l'arbre DOM et la page d'origine.
+///
+/// Les nœuds sont rangés dans une arène (`Vec`) et désignés par des [`NodeId`].
 #[derive(Debug, Clone)]
 pub struct Document {
     nodes: Vec<Node>,
@@ -115,7 +160,9 @@ pub struct Document {
     /// `Rc<String>` et pas `Rc<str>` : `Rc::new(page)` ne déplace que la structure
     /// String, alors que `Rc<str>::from(page)` recopierait tout le texte.
     source: Rc<String>,
+    /// La table des noms de balises de ce document.
     pub atoms: Interner,
+    /// Le mode de rendu déduit du DOCTYPE.
     pub quirks_mode: QuirksMode,
 }
 
@@ -133,14 +180,17 @@ impl Default for Document {
 }
 
 impl Document {
+    /// Le nœud `id`.
     pub fn node(&self, id: NodeId) -> &Node {
         &self.nodes[id.index()]
     }
 
+    /// Le nœud `id`, modifiable.
     pub fn node_mut(&mut self, id: NodeId) -> &mut Node {
         &mut self.nodes[id.index()]
     }
 
+    /// L'élément `id` (`None` si ce n'est pas un élément).
     pub fn element(&self, id: NodeId) -> Option<&Element> {
         match &self.node(id).data {
             NodeData::Element(e) => Some(e),
@@ -148,6 +198,7 @@ impl Document {
         }
     }
 
+    /// L'élément `id`, modifiable.
     pub fn element_mut(&mut self, id: NodeId) -> Option<&mut Element> {
         match &mut self.node_mut(id).data {
             NodeData::Element(e) => Some(e),
@@ -220,7 +271,9 @@ impl Document {
     /// Retire un nœud de son parent (le nœud continue d'exister). O(1) : on
     /// raccroche simplement ses deux voisins entre eux.
     pub fn detach(&mut self, child: NodeId) {
-        let Some(parent) = self.node(child).parent else { return };
+        let Some(parent) = self.node(child).parent else {
+            return;
+        };
         let (prev, next) = (self.node(child).prev_sibling, self.node(child).next_sibling);
         match prev {
             Some(p) => self.node_mut(p).next_sibling = next,
@@ -283,10 +336,13 @@ impl Document {
                 match (existing, span) {
                     // Le nouveau morceau suit exactement le précédent dans la page :
                     // on agrandit la plage, toujours sans copie.
-                    (TextData::Source { end, .. }, Some((start, new_end))) if *end == start => *end = new_end,
+                    (TextData::Source { end, .. }, Some((start, new_end))) if *end == start => {
+                        *end = new_end
+                    }
                     (existing, _) => {
                         if let TextData::Source { start, end } = *existing {
-                            *existing = TextData::Owned(source[start as usize..end as usize].to_string());
+                            *existing =
+                                TextData::Owned(source[start as usize..end as usize].to_string());
                         }
                         if let TextData::Owned(s) = existing {
                             s.push_str(text);
@@ -387,7 +443,11 @@ impl Document {
         indent(out, depth);
         match &self.node(id).data {
             NodeData::Document | NodeData::DocumentFragment => out.push_str("#document"),
-            NodeData::Doctype { name, public_id, system_id } => {
+            NodeData::Doctype {
+                name,
+                public_id,
+                system_id,
+            } => {
                 out.push_str("<!DOCTYPE ");
                 out.push_str(name);
                 if !public_id.is_empty() || !system_id.is_empty() {
@@ -462,7 +522,9 @@ mod tests {
     }
 
     fn names(doc: &Document, parent: NodeId) -> Vec<String> {
-        doc.children(parent).map(|c| doc.text(c).unwrap_or("?").to_string()).collect()
+        doc.children(parent)
+            .map(|c| doc.text(c).unwrap_or("?").to_string())
+            .collect()
     }
 
     #[test]
@@ -475,18 +537,28 @@ mod tests {
         doc.insert_text(root, None, &page[0..8]);
         doc.insert_text(root, None, &page[8..]);
         let node = doc.node(root).first_child.unwrap();
-        assert!(matches!(doc.node(node).data, NodeData::Text(TextData::Source { start: 0, end: 16 })));
+        assert!(matches!(
+            doc.node(node).data,
+            NodeData::Text(TextData::Source { start: 0, end: 16 })
+        ));
         // Un texte qui ne vient pas de la page force une copie.
         doc.insert_text(root, None, " !");
         assert_eq!(doc.text(node), Some("Bonjour le monde !"));
-        assert!(matches!(doc.node(node).data, NodeData::Text(TextData::Owned(_))));
+        assert!(matches!(
+            doc.node(node).data,
+            NodeData::Text(TextData::Owned(_))
+        ));
     }
 
     #[test]
     fn liste_chainee_des_enfants() {
         let mut doc = Document::default();
         let root = NodeId::DOCUMENT;
-        let (a, b, c) = (text(&mut doc, "a"), text(&mut doc, "b"), text(&mut doc, "c"));
+        let (a, b, c) = (
+            text(&mut doc, "a"),
+            text(&mut doc, "b"),
+            text(&mut doc, "c"),
+        );
         doc.append(root, a);
         doc.append(root, c);
         doc.insert_before(root, b, Some(c));
@@ -511,7 +583,11 @@ mod tests {
         let mut doc = Document::default();
         let root = NodeId::DOCUMENT;
         let frag = doc.create(NodeData::DocumentFragment);
-        let (a, b, c) = (text(&mut doc, "a"), text(&mut doc, "b"), text(&mut doc, "c"));
+        let (a, b, c) = (
+            text(&mut doc, "a"),
+            text(&mut doc, "b"),
+            text(&mut doc, "c"),
+        );
         doc.append(root, frag);
         doc.append(frag, a);
         doc.append(frag, b);

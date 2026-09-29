@@ -19,8 +19,8 @@ fn main() {
     let start = Instant::now();
     let mut nodes = 0;
     for _ in 0..iterations {
-        let doc = html_tokenizer::parse_document(black_box(&html));
-        nodes += doc.descendants(html_tokenizer::dom::NodeId::DOCUMENT).count();
+        let doc = html_parseur::parse_document(black_box(&html));
+        nodes += doc.descendants(html_parseur::dom::NodeId::DOCUMENT).count();
     }
     let secs = start.elapsed().as_secs_f64();
     let mb = (html.len() * iterations) as f64 / (1024.0 * 1024.0);

@@ -15,7 +15,7 @@ fn main() {
     let start = Instant::now();
     let mut tokens = 0;
     for _ in 0..iterations {
-        tokens += html_tokenizer::Tokenizer::new(black_box(&html)).count();
+        tokens += html_parseur::Tokenizer::new(black_box(&html)).count();
     }
     let secs = start.elapsed().as_secs_f64();
     let mb = (html.len() * iterations) as f64 / (1024.0 * 1024.0);
