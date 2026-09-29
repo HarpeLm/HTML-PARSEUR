@@ -276,6 +276,18 @@ impl<'a> Tokenizer<'a> {
         chunk
     }
 
+    /// Chemin rapide des états de texte : copie (sans copie réelle, zero-copy) tout
+    /// le texte jusqu'au prochain octet de `stops`. Renvoie `true` s'il y en avait.
+    #[inline]
+    fn take_text_chunk<const N: usize>(&mut self, stops: &[u8; N]) -> bool {
+        let chunk = self.take_plain(stops);
+        if chunk.is_empty() {
+            return false;
+        }
+        extend_cow(&mut self.pending_text, self.input, chunk);
+        true
+    }
+
     /// Regarde (sans consommer) si l'entrée continue par `s`, casse ASCII ignorée.
     fn next_is_ignore_case(&self, s: &str) -> bool {
         let rest = self.rest();
@@ -481,9 +493,7 @@ impl<'a> Tokenizer<'a> {
             State::Data => {
                 // Chemin rapide : tout le texte jusqu'au prochain octet spécial est
                 // copié d'un seul coup, sans passer par la machine à états.
-                let chunk = self.take_plain(b"<&\r\0");
-                if !chunk.is_empty() {
-                    extend_cow(&mut self.pending_text, self.input, chunk);
+                if self.take_text_chunk(b"<&\r\0") {
                     return;
                 }
                 match self.consume() {
@@ -565,34 +575,52 @@ impl<'a> Tokenizer<'a> {
             // ───────────── Contenus spéciaux : <title>, <style>, <script>… ─────────────
 
             // §13.2.5.2 (<title>, <textarea> : le texte garde les &entités;)
-            State::Rcdata => match self.consume() {
-                Some('&') => self.start_char_ref(),
-                Some('<') => self.state = State::RcdataLessThanSign,
-                Some('\0') => self.emit_char('\u{FFFD}'),
-                Some(c) => self.emit_char(c),
-                None => self.emit(Token::Eof),
-            },
+            State::Rcdata => {
+                // Chemin rapide : copie en bloc jusqu'au prochain caractère spécial.
+                if self.take_text_chunk(b"<&\r\0") {
+                    return;
+                }
+                match self.consume() {
+                    Some('&') => self.start_char_ref(),
+                    Some('<') => self.state = State::RcdataLessThanSign,
+                    Some('\0') => self.emit_char('\u{FFFD}'),
+                    Some(c) => self.emit_char(c),
+                    None => self.emit(Token::Eof),
+                }
+            }
 
             // §13.2.5.3 et §13.2.5.4 (<style>, <script> : texte brut, pas d'entités)
-            State::Rawtext | State::ScriptData => match self.consume() {
-                Some('<') => {
-                    self.state = if self.state == State::Rawtext {
-                        State::RawtextLessThanSign
-                    } else {
-                        State::ScriptDataLessThanSign
-                    }
+            State::Rawtext | State::ScriptData => {
+                // Chemin rapide : dans un <style> ou un <script>, seul '<' peut
+                // terminer le contenu ; tout le reste est copié en bloc.
+                if self.take_text_chunk(b"<\r\0") {
+                    return;
                 }
-                Some('\0') => self.emit_char('\u{FFFD}'),
-                Some(c) => self.emit_char(c),
-                None => self.emit(Token::Eof),
-            },
+                match self.consume() {
+                    Some('<') => {
+                        self.state = if self.state == State::Rawtext {
+                            State::RawtextLessThanSign
+                        } else {
+                            State::ScriptDataLessThanSign
+                        }
+                    }
+                    Some('\0') => self.emit_char('\u{FFFD}'),
+                    Some(c) => self.emit_char(c),
+                    None => self.emit(Token::Eof),
+                }
+            }
 
             // §13.2.5.5 (<plaintext> : tout le reste du fichier est du texte)
-            State::Plaintext => match self.consume() {
-                Some('\0') => self.emit_char('\u{FFFD}'),
-                Some(c) => self.emit_char(c),
-                None => self.emit(Token::Eof),
-            },
+            State::Plaintext => {
+                if self.take_text_chunk(b"\r\0") {
+                    return;
+                }
+                match self.consume() {
+                    Some('\0') => self.emit_char('\u{FFFD}'),
+                    Some(c) => self.emit_char(c),
+                    None => self.emit(Token::Eof),
+                }
+            }
 
             // §13.2.5.9, §13.2.5.12, §13.2.5.15
             State::RcdataLessThanSign

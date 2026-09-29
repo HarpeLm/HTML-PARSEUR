@@ -1,4 +1,5 @@
-//! Programme à lancer sous un profileur : tokenise la page "blog" en boucle.
+//! Programme à lancer sous un profileur : tokenise une page en boucle.
+//! Par défaut la page "blog" générée ; PAGE=benches/pages/xxx.html pour une vraie page.
 //!
 //!   cargo build --profile profiling --example profile_blog
 //!   samply record target/profiling/examples/profile_blog
@@ -10,8 +11,12 @@ use std::hint::black_box;
 use std::time::Instant;
 
 fn main() {
-    let html = docs::blog_page(1500);
-    let iterations = 300;
+    let html = match std::env::var("PAGE") {
+        Ok(path) => std::fs::read_to_string(&path).expect("page introuvable"),
+        Err(_) => docs::blog_page(1500),
+    };
+    // Assez de tours pour environ 1 Go traité (le profileur a le temps de mesurer).
+    let iterations = (1_000_000_000 / html.len()).max(300);
     let start = Instant::now();
     let mut tokens = 0;
     for _ in 0..iterations {

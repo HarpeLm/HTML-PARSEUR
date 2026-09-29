@@ -161,25 +161,26 @@ streaming, recopie la sortie et ne décode pas les entités du texte ;
 
 | Page | html-parseur | html5ever | html5gum | lol_html |
 |---|---|---|---|---|
-| Wikipédia FR | **359** | 159 | 167 | 290 |
-| Wikipedia EN | **390** | 186 | 182 | 351 |
-| Spec WHATWG | **405** | 209 | 182 | 230 |
-| Doc Rust | **258** | 142 | 146 | 212 |
-| MDN FR | 269 | 191 | 169 | **480** |
+| Wikipédia FR | **359** | 161 | 175 | 297 |
+| Wikipedia EN | **395** | 187 | 191 | 356 |
+| Spec WHATWG | **403** | 212 | 188 | 229 |
+| Doc Rust | **259** | 143 | 152 | 219 |
+| MDN FR | 269 | 189 | 177 | **481** |
 
-Sur MDN, lol_html est nettement devant : 25 % de cette page est un bloc `<style>`,
-et notre tokenizer n'a pas encore de chemin rapide dans ce type de contenu
-(RAWTEXT) : il y avance caractère par caractère.
+Sur MDN, lol_html est nettement devant : la page contient 2 740 entités (surtout
+`&lt;` et `&gt;`, dans des exemples de code). Notre tokenizer les **décode** toutes
+(recherche dans la table des 2 231 entités, puis copie du texte transformé) ;
+lol_html laisse les entités du texte telles quelles.
 
 **Construction du DOM**
 
 | Page | html-parseur | html5ever | tl (non conforme) | Nœuds : nous / tl |
 |---|---|---|---|---|
-| Wikipédia FR | 189 | 139 | 868 | 12 367 / 12 368 |
-| Wikipedia EN | 200 | 152 | 924 | 15 468 / 15 469 |
-| Spec WHATWG | 177 | 153 | 625 | 31 031 / 30 490 |
-| Doc Rust | 142 | 115 | 564 | 38 317 / 39 321 |
-| MDN FR | 168 | 145 | 1 434 | 4 310 / 4 948 |
+| Wikipédia FR | 195 | 138 | 862 | 12 367 / 12 368 |
+| Wikipedia EN | 202 | 152 | 928 | 15 468 / 15 469 |
+| Spec WHATWG | 177 | 152 | 629 | 31 031 / 30 490 |
+| Doc Rust | 144 | 115 | 579 | 38 317 / 39 321 |
+| MDN FR | 192 | 144 | 1 437 | 4 310 / 4 948 |
 
 tl est 3 à 8 fois plus rapide, mais ne produit pas l'arbre qu'un navigateur
 construirait : il ne suit pas les règles de la spec (balises implicites, contenu
