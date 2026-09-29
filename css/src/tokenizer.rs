@@ -408,31 +408,53 @@ impl<'a> Tokenizer<'a> {
         Token::Ident(name)
     }
 
-    /// "Consume a url token" (§4.3.6), après `url(`.
+    /// "Consume a url token" (§4.3.6), après `url(`. La valeur est empruntée à
+    /// la feuille de style, sauf en présence d'échappements.
     fn consume_url(&mut self) -> Token<'a> {
-        while self.peek().is_some_and(is_whitespace) {
-            self.consume();
-        }
-        let mut value = String::new();
+        let skip_ws = |t: &mut Self| {
+            let run = t.input.as_bytes()[t.pos..]
+                .iter()
+                .position(|b| !matches!(b, b' ' | b'\t' | b'\n'))
+                .unwrap_or(t.input.len() - t.pos);
+            t.pos += run;
+        };
+        skip_ws(self);
+        let start = self.pos;
+        let mut owned: Option<String> = None;
+        let value = |t: &Self, owned: Option<String>, end: usize| match owned {
+            Some(s) => Cow::Owned(s),
+            None => Cow::Borrowed(&t.input[start..end]),
+        };
         loop {
+            // Chemin rapide : tout jusqu'au prochain caractère spécial.
+            let run = self.input.as_bytes()[self.pos..]
+                .iter()
+                .position(|&b| {
+                    matches!(b, b')' | b' ' | b'\t' | b'\n' | b'"' | b'\'' | b'(' | b'\\')
+                        || is_non_printable(b as char)
+                })
+                .unwrap_or(self.input.len() - self.pos);
+            if let Some(s) = &mut owned {
+                s.push_str(&self.input[self.pos..self.pos + run]);
+            }
+            self.pos += run;
+            let end = self.pos;
             match self.consume() {
-                Some(')') => return Token::Url(Cow::Owned(value)),
+                Some(')') => return Token::Url(value(self, owned, end)),
                 None => {
                     self.pending_error = Some(TokenError::EofInUrl);
-                    return Token::Url(Cow::Owned(value));
+                    return Token::Url(value(self, owned, end));
                 }
                 Some(c) if is_whitespace(c) => {
-                    while self.peek().is_some_and(is_whitespace) {
-                        self.consume();
-                    }
+                    skip_ws(self);
                     match self.peek() {
                         Some(')') => {
                             self.consume();
-                            return Token::Url(Cow::Owned(value));
+                            return Token::Url(value(self, owned, end));
                         }
                         None => {
                             self.pending_error = Some(TokenError::EofInUrl);
-                            return Token::Url(Cow::Owned(value));
+                            return Token::Url(value(self, owned, end));
                         }
                         _ => {
                             self.consume_bad_url_remnants();
@@ -440,23 +462,18 @@ impl<'a> Tokenizer<'a> {
                         }
                     }
                 }
-                Some('"' | '\'' | '(') => {
+                Some('\\') if is_valid_escape(Some('\\'), self.peek()) => {
+                    let mut s = owned
+                        .take()
+                        .unwrap_or_else(|| self.input[start..end].to_string());
+                    s.push(self.consume_escape());
+                    owned = Some(s);
+                }
+                // '"', '\'', '(', '\' invalide, caractère non imprimable.
+                _ => {
                     self.consume_bad_url_remnants();
                     return Token::BadUrl;
                 }
-                Some(c) if is_non_printable(c) => {
-                    self.consume_bad_url_remnants();
-                    return Token::BadUrl;
-                }
-                Some('\\') => {
-                    if is_valid_escape(Some('\\'), self.peek()) {
-                        value.push(self.consume_escape());
-                    } else {
-                        self.consume_bad_url_remnants();
-                        return Token::BadUrl;
-                    }
-                }
-                Some(c) => value.push(c),
             }
         }
     }
@@ -478,7 +495,17 @@ impl<'a> Tokenizer<'a> {
     fn consume_string(&mut self, ending: char) -> Token<'a> {
         let start = self.pos;
         let mut owned: Option<String> = None;
+        let quote = ending as u8;
         loop {
+            // Chemin rapide : tout jusqu'au guillemet, un '\' ou un retour à la ligne.
+            let run = self.input.as_bytes()[self.pos..]
+                .iter()
+                .position(|&b| b == quote || b == b'\\' || b == b'\n')
+                .unwrap_or(self.input.len() - self.pos);
+            if let Some(s) = &mut owned {
+                s.push_str(&self.input[self.pos..self.pos + run]);
+            }
+            self.pos += run;
             match self.consume() {
                 Some(c) if c == ending => {
                     let value = match owned {
