@@ -3,13 +3,52 @@ use std::collections::VecDeque;
 use crate::char_ref::{longest_named_match, numeric_reference_char};
 use crate::token::{Attribute, Doctype, Tag, Token};
 
+/// Les états dans lesquels le parser peut placer le tokenizer.
+/// Par exemple, après `<title>` il passe en RCDATA, après `<script>` en ScriptData.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum InitialState {
+    Data,
+    Rcdata,
+    Rawtext,
+    ScriptData,
+    Plaintext,
+    CdataSection,
+}
+
 /// Les états de la machine (spec §13.2.5.x). On en ajoutera à chaque étape.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum State {
     Data,
+    Rcdata,
+    Rawtext,
+    ScriptData,
+    Plaintext,
     TagOpen,
     EndTagOpen,
     TagName,
+    RcdataLessThanSign,
+    RcdataEndTagOpen,
+    RcdataEndTagName,
+    RawtextLessThanSign,
+    RawtextEndTagOpen,
+    RawtextEndTagName,
+    ScriptDataLessThanSign,
+    ScriptDataEndTagOpen,
+    ScriptDataEndTagName,
+    ScriptDataEscapeStart,
+    ScriptDataEscapeStartDash,
+    ScriptDataEscaped,
+    ScriptDataEscapedDash,
+    ScriptDataEscapedDashDash,
+    ScriptDataEscapedLessThanSign,
+    ScriptDataEscapedEndTagOpen,
+    ScriptDataEscapedEndTagName,
+    ScriptDataDoubleEscapeStart,
+    ScriptDataDoubleEscaped,
+    ScriptDataDoubleEscapedDash,
+    ScriptDataDoubleEscapedDashDash,
+    ScriptDataDoubleEscapedLessThanSign,
+    ScriptDataDoubleEscapeEnd,
     BeforeAttributeName,
     AttributeName,
     AfterAttributeName,
@@ -47,6 +86,9 @@ enum State {
     DoctypeSystemIdentifierSingleQuoted,
     AfterDoctypeSystemIdentifier,
     BogusDoctype,
+    CdataSection,
+    CdataSectionBracket,
+    CdataSectionEnd,
     CharacterReference,
     NamedCharacterReference,
     AmbiguousAmpersand,
@@ -71,6 +113,12 @@ pub struct Tokenizer {
     return_state: State,
     temp_buffer: String,
     char_ref_code: u32,
+    /// Nom de la dernière balise ouvrante émise : sert à reconnaître la balise
+    /// fermante "appropriée" (le `</script>` qui ferme vraiment le `<script>`).
+    last_start_tag: Option<String>,
+    /// `<![CDATA[` n'est une vraie section CDATA que dans du SVG/MathML.
+    /// C'est le parser qui le sait et qui l'active.
+    cdata_allowed: bool,
     pending: VecDeque<Token>,
     done: bool,
 }
@@ -91,9 +139,31 @@ impl Tokenizer {
             return_state: State::Data,
             temp_buffer: String::new(),
             char_ref_code: 0,
+            last_start_tag: None,
+            cdata_allowed: false,
             pending: VecDeque::new(),
             done: false,
         }
+    }
+
+    /// Change l'état courant (utilisé par le parser et par les tests).
+    pub fn set_state(&mut self, state: InitialState) {
+        self.state = match state {
+            InitialState::Data => State::Data,
+            InitialState::Rcdata => State::Rcdata,
+            InitialState::Rawtext => State::Rawtext,
+            InitialState::ScriptData => State::ScriptData,
+            InitialState::Plaintext => State::Plaintext,
+            InitialState::CdataSection => State::CdataSection,
+        };
+    }
+
+    pub fn set_last_start_tag(&mut self, name: &str) {
+        self.last_start_tag = Some(name.to_string());
+    }
+
+    pub fn set_cdata_allowed(&mut self, allowed: bool) {
+        self.cdata_allowed = allowed;
     }
 
     /// Lit le prochain caractère. `None` = fin de fichier (EOF).
@@ -168,8 +238,27 @@ impl Tokenizer {
         if self.current_tag_is_end {
             self.emit(Token::EndTag(tag));
         } else {
+            self.last_start_tag = Some(tag.name.clone());
             self.emit(Token::StartTag(tag));
         }
+    }
+
+    /// Balise fermante "appropriée" : même nom que la dernière balise ouvrante.
+    fn is_appropriate_end_tag(&self) -> bool {
+        self.current_tag_is_end && self.last_start_tag.as_deref() == Some(&self.current_tag.name)
+    }
+
+    fn emit_str(&mut self, s: &str) {
+        for c in s.chars() {
+            self.emit(Token::Character(c));
+        }
+    }
+
+    /// Pas une balise fermante valide : on rend "</" + les lettres lues comme du texte.
+    fn emit_less_than_slash_and_buffer(&mut self) {
+        self.emit_str("</");
+        let buffer = std::mem::take(&mut self.temp_buffer);
+        self.emit_str(&buffer);
     }
 
     fn emit_comment(&mut self) {
@@ -312,6 +401,273 @@ impl Tokenizer {
                 Some('\0') => self.current_tag.name.push('\u{FFFD}'),
                 Some(c) => self.current_tag.name.push(c),
                 None => self.emit(Token::Eof),
+            },
+
+            // ───────────── Contenus spéciaux : <title>, <style>, <script>… ─────────────
+
+            // §13.2.5.2 (<title>, <textarea> : le texte garde les &entités;)
+            State::Rcdata => match self.consume() {
+                Some('&') => self.start_char_ref(),
+                Some('<') => self.state = State::RcdataLessThanSign,
+                Some('\0') => self.emit(Token::Character('\u{FFFD}')),
+                Some(c) => self.emit(Token::Character(c)),
+                None => self.emit(Token::Eof),
+            },
+
+            // §13.2.5.3 et §13.2.5.4 (<style>, <script> : texte brut, pas d'entités)
+            State::Rawtext | State::ScriptData => match self.consume() {
+                Some('<') => {
+                    self.state = if self.state == State::Rawtext {
+                        State::RawtextLessThanSign
+                    } else {
+                        State::ScriptDataLessThanSign
+                    }
+                }
+                Some('\0') => self.emit(Token::Character('\u{FFFD}')),
+                Some(c) => self.emit(Token::Character(c)),
+                None => self.emit(Token::Eof),
+            },
+
+            // §13.2.5.5 (<plaintext> : tout le reste du fichier est du texte)
+            State::Plaintext => match self.consume() {
+                Some('\0') => self.emit(Token::Character('\u{FFFD}')),
+                Some(c) => self.emit(Token::Character(c)),
+                None => self.emit(Token::Eof),
+            },
+
+            // §13.2.5.9, §13.2.5.12, §13.2.5.15
+            State::RcdataLessThanSign | State::RawtextLessThanSign | State::ScriptDataLessThanSign => {
+                let (text_state, end_tag_open) = match self.state {
+                    State::RcdataLessThanSign => (State::Rcdata, State::RcdataEndTagOpen),
+                    State::RawtextLessThanSign => (State::Rawtext, State::RawtextEndTagOpen),
+                    _ => (State::ScriptData, State::ScriptDataEndTagOpen),
+                };
+                match self.consume() {
+                    Some('/') => {
+                        self.temp_buffer.clear();
+                        self.state = end_tag_open;
+                    }
+                    Some('!') if text_state == State::ScriptData => {
+                        self.emit_str("<!");
+                        self.state = State::ScriptDataEscapeStart;
+                    }
+                    _ => {
+                        self.emit(Token::Character('<'));
+                        self.reconsume();
+                        self.state = text_state;
+                    }
+                }
+            }
+
+            // §13.2.5.10, §13.2.5.13, §13.2.5.16, §13.2.5.24
+            State::RcdataEndTagOpen
+            | State::RawtextEndTagOpen
+            | State::ScriptDataEndTagOpen
+            | State::ScriptDataEscapedEndTagOpen => {
+                let (text_state, end_tag_name) = match self.state {
+                    State::RcdataEndTagOpen => (State::Rcdata, State::RcdataEndTagName),
+                    State::RawtextEndTagOpen => (State::Rawtext, State::RawtextEndTagName),
+                    State::ScriptDataEndTagOpen => (State::ScriptData, State::ScriptDataEndTagName),
+                    _ => (State::ScriptDataEscaped, State::ScriptDataEscapedEndTagName),
+                };
+                match self.consume() {
+                    Some(c) if c.is_ascii_alphabetic() => {
+                        self.new_tag(true);
+                        self.reconsume();
+                        self.state = end_tag_name;
+                    }
+                    _ => {
+                        self.emit_str("</");
+                        self.reconsume();
+                        self.state = text_state;
+                    }
+                }
+            }
+
+            // §13.2.5.11, §13.2.5.14, §13.2.5.17, §13.2.5.25
+            // On lit "</xxx". Si xxx == dernière balise ouvrante, c'est une vraie
+            // balise fermante ; sinon, "</xxx" est simplement du texte.
+            State::RcdataEndTagName
+            | State::RawtextEndTagName
+            | State::ScriptDataEndTagName
+            | State::ScriptDataEscapedEndTagName => {
+                let text_state = match self.state {
+                    State::RcdataEndTagName => State::Rcdata,
+                    State::RawtextEndTagName => State::Rawtext,
+                    State::ScriptDataEndTagName => State::ScriptData,
+                    _ => State::ScriptDataEscaped,
+                };
+                match self.consume() {
+                    Some('\t' | '\n' | '\x0C' | ' ') if self.is_appropriate_end_tag() => {
+                        self.state = State::BeforeAttributeName;
+                    }
+                    Some('/') if self.is_appropriate_end_tag() => {
+                        self.state = State::SelfClosingStartTag;
+                    }
+                    Some('>') if self.is_appropriate_end_tag() => {
+                        self.state = State::Data;
+                        self.emit_current_tag();
+                    }
+                    Some(c) if c.is_ascii_alphabetic() => {
+                        self.current_tag.name.push(c.to_ascii_lowercase());
+                        self.temp_buffer.push(c);
+                    }
+                    _ => {
+                        self.emit_less_than_slash_and_buffer();
+                        self.reconsume();
+                        self.state = text_state;
+                    }
+                }
+            }
+
+            // §13.2.5.18 : "<!-" dans un script
+            State::ScriptDataEscapeStart => match self.consume() {
+                Some('-') => {
+                    self.emit(Token::Character('-'));
+                    self.state = State::ScriptDataEscapeStartDash;
+                }
+                _ => {
+                    self.reconsume();
+                    self.state = State::ScriptData;
+                }
+            },
+
+            // §13.2.5.19 : "<!--" dans un script
+            State::ScriptDataEscapeStartDash => match self.consume() {
+                Some('-') => {
+                    self.emit(Token::Character('-'));
+                    self.state = State::ScriptDataEscapedDashDash;
+                }
+                _ => {
+                    self.reconsume();
+                    self.state = State::ScriptData;
+                }
+            },
+
+            // §13.2.5.20, §13.2.5.21, §13.2.5.22 : dans "<!-- ... -->" d'un script.
+            // Les trois états ne diffèrent que par le nombre de '-' déjà vus.
+            State::ScriptDataEscaped | State::ScriptDataEscapedDash | State::ScriptDataEscapedDashDash => {
+                let dashes = match self.state {
+                    State::ScriptDataEscaped => 0,
+                    State::ScriptDataEscapedDash => 1,
+                    _ => 2,
+                };
+                match self.consume() {
+                    Some('-') => {
+                        self.emit(Token::Character('-'));
+                        self.state = match dashes {
+                            0 => State::ScriptDataEscapedDash,
+                            _ => State::ScriptDataEscapedDashDash,
+                        };
+                    }
+                    Some('<') => self.state = State::ScriptDataEscapedLessThanSign,
+                    Some('>') if dashes == 2 => {
+                        self.emit(Token::Character('>'));
+                        self.state = State::ScriptData;
+                    }
+                    Some('\0') => {
+                        self.emit(Token::Character('\u{FFFD}'));
+                        self.state = State::ScriptDataEscaped;
+                    }
+                    Some(c) => {
+                        self.emit(Token::Character(c));
+                        self.state = State::ScriptDataEscaped;
+                    }
+                    None => self.emit(Token::Eof),
+                }
+            }
+
+            // §13.2.5.23
+            State::ScriptDataEscapedLessThanSign => match self.consume() {
+                Some('/') => {
+                    self.temp_buffer.clear();
+                    self.state = State::ScriptDataEscapedEndTagOpen;
+                }
+                Some(c) if c.is_ascii_alphabetic() => {
+                    self.temp_buffer.clear();
+                    self.emit(Token::Character('<'));
+                    self.reconsume();
+                    self.state = State::ScriptDataDoubleEscapeStart;
+                }
+                _ => {
+                    self.emit(Token::Character('<'));
+                    self.reconsume();
+                    self.state = State::ScriptDataEscaped;
+                }
+            },
+
+            // §13.2.5.26 et §13.2.5.31 : "<script" ou "</script" à l'intérieur d'un
+            // "<!--" de script fait entrer / sortir du mode "double échappé".
+            State::ScriptDataDoubleEscapeStart | State::ScriptDataDoubleEscapeEnd => {
+                let (if_script, otherwise) = if self.state == State::ScriptDataDoubleEscapeStart {
+                    (State::ScriptDataDoubleEscaped, State::ScriptDataEscaped)
+                } else {
+                    (State::ScriptDataEscaped, State::ScriptDataDoubleEscaped)
+                };
+                match self.consume() {
+                    Some(c @ ('\t' | '\n' | '\x0C' | ' ' | '/' | '>')) => {
+                        self.state = if self.temp_buffer == "script" { if_script } else { otherwise };
+                        self.emit(Token::Character(c));
+                    }
+                    Some(c) if c.is_ascii_alphabetic() => {
+                        self.temp_buffer.push(c.to_ascii_lowercase());
+                        self.emit(Token::Character(c));
+                    }
+                    _ => {
+                        self.reconsume();
+                        self.state = otherwise;
+                    }
+                }
+            }
+
+            // §13.2.5.27, §13.2.5.28, §13.2.5.29
+            State::ScriptDataDoubleEscaped
+            | State::ScriptDataDoubleEscapedDash
+            | State::ScriptDataDoubleEscapedDashDash => {
+                let dashes = match self.state {
+                    State::ScriptDataDoubleEscaped => 0,
+                    State::ScriptDataDoubleEscapedDash => 1,
+                    _ => 2,
+                };
+                match self.consume() {
+                    Some('-') => {
+                        self.emit(Token::Character('-'));
+                        self.state = match dashes {
+                            0 => State::ScriptDataDoubleEscapedDash,
+                            _ => State::ScriptDataDoubleEscapedDashDash,
+                        };
+                    }
+                    Some('<') => {
+                        self.emit(Token::Character('<'));
+                        self.state = State::ScriptDataDoubleEscapedLessThanSign;
+                    }
+                    Some('>') if dashes == 2 => {
+                        self.emit(Token::Character('>'));
+                        self.state = State::ScriptData;
+                    }
+                    Some('\0') => {
+                        self.emit(Token::Character('\u{FFFD}'));
+                        self.state = State::ScriptDataDoubleEscaped;
+                    }
+                    Some(c) => {
+                        self.emit(Token::Character(c));
+                        self.state = State::ScriptDataDoubleEscaped;
+                    }
+                    None => self.emit(Token::Eof),
+                }
+            }
+
+            // §13.2.5.30
+            State::ScriptDataDoubleEscapedLessThanSign => match self.consume() {
+                Some('/') => {
+                    self.temp_buffer.clear();
+                    self.emit(Token::Character('/'));
+                    self.state = State::ScriptDataDoubleEscapeEnd;
+                }
+                _ => {
+                    self.reconsume();
+                    self.state = State::ScriptDataDoubleEscaped;
+                }
             },
 
             // §13.2.5.32
@@ -462,9 +818,11 @@ impl Tokenizer {
                 } else if self.next_is_ignore_case("DOCTYPE") {
                     self.pos += 7;
                     self.state = State::Doctype;
+                } else if self.cdata_allowed && self.next_is("[CDATA[") {
+                    self.pos += 7;
+                    self.state = State::CdataSection;
                 } else {
-                    // "[CDATA[" n'est valide qu'en SVG/MathML (décidé par le parser) :
-                    // en HTML c'est un commentaire bogus, comme tout le reste.
+                    // En HTML normal, "<![CDATA[" est un commentaire bogus, comme le reste.
                     self.state = State::BogusComment;
                 }
             }
@@ -817,6 +1175,36 @@ impl Tokenizer {
                     self.emit(Token::Eof);
                 }
                 Some(_) => {}
+            },
+
+            // ───────────── Sections CDATA (SVG/MathML) ─────────────
+
+            // §13.2.5.69
+            State::CdataSection => match self.consume() {
+                Some(']') => self.state = State::CdataSectionBracket,
+                Some(c) => self.emit(Token::Character(c)),
+                None => self.emit(Token::Eof),
+            },
+
+            // §13.2.5.70
+            State::CdataSectionBracket => match self.consume() {
+                Some(']') => self.state = State::CdataSectionEnd,
+                _ => {
+                    self.emit(Token::Character(']'));
+                    self.reconsume();
+                    self.state = State::CdataSection;
+                }
+            },
+
+            // §13.2.5.71
+            State::CdataSectionEnd => match self.consume() {
+                Some(']') => self.emit(Token::Character(']')),
+                Some('>') => self.state = State::Data,
+                _ => {
+                    self.emit_str("]]");
+                    self.reconsume();
+                    self.state = State::CdataSection;
+                }
             },
 
             // ───────────── Références de caractères ─────────────

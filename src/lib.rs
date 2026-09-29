@@ -4,4 +4,4 @@ mod token;
 mod tokenizer;
 
 pub use token::{Attribute, Doctype, Tag, Token};
-pub use tokenizer::Tokenizer;
+pub use tokenizer::{InitialState, Tokenizer};

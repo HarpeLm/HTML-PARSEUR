@@ -3,10 +3,12 @@
 //!   cargo run --example html5lib              -> score par fichier
 //!   cargo run --example html5lib -- test1     -> seulement les fichiers contenant "test1"
 //!   VERBOSE=1 cargo run --example html5lib    -> détail de chaque échec
+//!
+//! Chaque test est lancé dans chacun de ses états initiaux (Data, RCDATA, ...).
 
 use std::{fs, panic, path::Path};
 
-use html_tokenizer::{Token, Tokenizer};
+use html_tokenizer::{InitialState, Token, Tokenizer};
 use serde_json::{json, Map, Value};
 
 /// Convertit nos tokens au format JSON attendu par html5lib-tests.
@@ -54,6 +56,50 @@ fn tokens_to_json(tokens: Vec<Token>) -> Vec<Value> {
     out
 }
 
+/// Les tests "doubleEscaped" écrivent certains caractères sous la forme \uXXXX.
+/// Renvoie None si le texte contient un surrogate isolé (impossible dans une
+/// String Rust, qui est toujours de l'UTF-8 valide).
+fn unescape(s: &str) -> Option<String> {
+    let mut out = String::new();
+    let mut chars = s.chars();
+    while let Some(c) = chars.next() {
+        if c == '\\' {
+            let esc: String = chars.by_ref().take(5).collect(); // "uXXXX"
+            let code = u32::from_str_radix(esc.strip_prefix('u')?, 16).ok()?;
+            out.push(char::from_u32(code)?);
+        } else {
+            out.push(c);
+        }
+    }
+    Some(out)
+}
+
+/// Applique `unescape` à toutes les chaînes d'une valeur JSON.
+fn unescape_json(v: &Value) -> Option<Value> {
+    Some(match v {
+        Value::String(s) => Value::String(unescape(s)?),
+        Value::Array(a) => Value::Array(a.iter().map(unescape_json).collect::<Option<_>>()?),
+        Value::Object(o) => Value::Object(
+            o.iter()
+                .map(|(k, v)| Some((unescape(k)?, unescape_json(v)?)))
+                .collect::<Option<_>>()?,
+        ),
+        other => other.clone(),
+    })
+}
+
+fn initial_state(name: &str) -> InitialState {
+    match name {
+        "Data state" => InitialState::Data,
+        "RCDATA state" => InitialState::Rcdata,
+        "RAWTEXT state" => InitialState::Rawtext,
+        "Script data state" => InitialState::ScriptData,
+        "PLAINTEXT state" => InitialState::Plaintext,
+        "CDATA section state" => InitialState::CdataSection,
+        other => panic!("état initial inconnu : {other}"),
+    }
+}
+
 fn panic_message(err: &Box<dyn std::any::Any + Send>) -> String {
     if let Some(s) = err.downcast_ref::<String>() {
         s.clone()
@@ -91,44 +137,57 @@ fn main() {
 
         let (mut file_pass, mut file_total) = (0, 0);
         for test in tests {
-            // Ignorés pour l'instant : entrées avec surrogates isolés, et états initiaux
-            // autres que "Data state" (RCDATA, RAWTEXT... viendront plus tard).
-            if test["doubleEscaped"].as_bool() == Some(true) {
-                skip += 1;
-                continue;
-            }
-            if let Some(states) = test["initialStates"].as_array() {
-                if !states.iter().any(|s| s == "Data state") {
-                    skip += 1;
-                    continue;
-                }
-            }
-
-            file_total += 1;
-            let input = test["input"].as_str().unwrap();
-            let expected = test["output"].as_array().unwrap();
-            let result = panic::catch_unwind(|| tokens_to_json(Tokenizer::new(input).collect()));
-
-            match result {
-                Ok(got) if &got == expected => {
-                    pass += 1;
-                    file_pass += 1;
-                }
-                Ok(got) => {
-                    fail += 1;
-                    if verbose {
-                        println!("❌ [{name}] {}", test["description"]);
-                        println!("   entrée  : {input:?}");
-                        println!("   attendu : {}", Value::Array(expected.clone()));
-                        println!("   obtenu  : {}\n", Value::Array(got));
+            let (input, expected) = if test["doubleEscaped"].as_bool() == Some(true) {
+                match (unescape(test["input"].as_str().unwrap()), unescape_json(&test["output"])) {
+                    (Some(i), Some(o)) => (i, o),
+                    _ => {
+                        skip += 1; // surrogate isolé : non représentable en Rust
+                        continue;
                     }
                 }
-                Err(err) => {
-                    crash += 1;
-                    if verbose {
-                        println!("💥 [{name}] {}", test["description"]);
-                        println!("   entrée  : {input:?}");
-                        println!("   panic   : {}\n", panic_message(&err));
+            } else {
+                (test["input"].as_str().unwrap().to_string(), test["output"].clone())
+            };
+            let expected = expected.as_array().unwrap();
+            let last_start_tag = test["lastStartTag"].as_str();
+            let states: Vec<&str> = match test["initialStates"].as_array() {
+                Some(list) => list.iter().map(|s| s.as_str().unwrap()).collect(),
+                None => vec!["Data state"],
+            };
+
+            // Un même test est lancé une fois par état de départ.
+            for state_name in states {
+                file_total += 1;
+                let result = panic::catch_unwind(|| {
+                    let mut tokenizer = Tokenizer::new(&input);
+                    tokenizer.set_state(initial_state(state_name));
+                    if let Some(tag) = last_start_tag {
+                        tokenizer.set_last_start_tag(tag);
+                    }
+                    tokens_to_json(tokenizer.collect())
+                });
+
+                match result {
+                    Ok(got) if &got == expected => {
+                        pass += 1;
+                        file_pass += 1;
+                    }
+                    Ok(got) => {
+                        fail += 1;
+                        if verbose {
+                            println!("❌ [{name}] {} ({state_name})", test["description"]);
+                            println!("   entrée  : {input:?}");
+                            println!("   attendu : {}", Value::Array(expected.clone()));
+                            println!("   obtenu  : {}\n", Value::Array(got));
+                        }
+                    }
+                    Err(err) => {
+                        crash += 1;
+                        if verbose {
+                            println!("💥 [{name}] {} ({state_name})", test["description"]);
+                            println!("   entrée  : {input:?}");
+                            println!("   panic   : {}\n", panic_message(&err));
+                        }
                     }
                 }
             }
