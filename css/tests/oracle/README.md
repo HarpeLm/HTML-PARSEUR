@@ -10,6 +10,20 @@ donc lumen-css à un vrai navigateur, Chromium, sur une liste de déclarations.
   date de capture.
 - `capture-chromium.js` : le script de capture.
 
+Même principe pour deux autres briques :
+
+- **Media queries** : `media_cases.json` (les requêtes) et `media_chromium.json`
+  (pour chacune, `matchMedia(q).media` et `matchMedia(q).matches`). La capture
+  enregistre aussi l'**environnement** (taille de la fenêtre, densité de pixels,
+  écran, préférences) : `tests/oracle_media.rs` évalue nos requêtes dans ce même
+  environnement. Certains cas sont pile à la limite de la fenêtre capturée
+  (371 × 987 px, 2 dppx) pour vérifier `<=` et `>=` : si on recapture avec une
+  autre taille, ces cas deviennent moins utiles (sans devenir faux).
+- **`var()`** : `variables_cases.json` donne le style d'un parent et d'un enfant ;
+  `variables_chromium.json` contient les valeurs calculées de l'enfant
+  (`getComputedStyle`). `tests/oracle_variables.rs` les recalcule avec un
+  minimum de cascade (la vraie cascade sera une brique à part).
+
 Le test `tests/oracle_chromium.rs` compare nos résultats à `chromium.json`, sans
 navigateur : `cargo test -p lumen-css --test oracle_chromium`.
 
@@ -20,6 +34,9 @@ navigateur : `cargo test -p lumen-css --test oracle_chromium`.
    `capture-chromium.js`, puis exécuter
    `JSON.stringify(captureLumenOracle(<contenu de cases.json>))`.
 3. Enregistrer le résultat dans `chromium.json`.
+
+Pour les media queries et `var()` : `captureLumenMedia(<media_cases.json>)` et
+`captureLumenVariables(<variables_cases.json>)`, dans le même script.
 
 La référence est celle d'**un** navigateur, à **une** version : si une version
 future de Chromium change sa sérialisation, ou si Firefox et Safari diffèrent, il

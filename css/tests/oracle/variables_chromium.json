@@ -1,0 +1,1046 @@
+{
+  "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Claude/2.9939.2 Chrome/152.0.7977.130 Safari/537.36",
+  "captured": "2026-09-29",
+  "results": [
+    {
+      "parent": "",
+      "style": "--a: 10px",
+      "read": [
+        "--a"
+      ],
+      "computed": {
+        "--a": "10px"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a:  1px   /*x*/ 2px ",
+      "read": [
+        "--a"
+      ],
+      "computed": {
+        "--a": "1px   /*x*/ 2px"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a:1px",
+      "read": [
+        "--a"
+      ],
+      "computed": {
+        "--a": "1px"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: 1PX Red",
+      "read": [
+        "--a"
+      ],
+      "computed": {
+        "--a": "1PX Red"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--A: 1; --a: 2",
+      "read": [
+        "--A",
+        "--a"
+      ],
+      "computed": {
+        "--A": "1",
+        "--a": "2"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: {a:b}",
+      "read": [
+        "--a"
+      ],
+      "computed": {
+        "--a": "{a:b}"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: [1, (2)] f(x)",
+      "read": [
+        "--a"
+      ],
+      "computed": {
+        "--a": "[1, (2)] f(x)"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: ",
+      "read": [
+        "--a"
+      ],
+      "computed": {
+        "--a": ""
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: 1; --a: 2",
+      "read": [
+        "--a"
+      ],
+      "computed": {
+        "--a": "2"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: 1 !important",
+      "read": [
+        "--a"
+      ],
+      "computed": {
+        "--a": "1"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: 1 ! important",
+      "read": [
+        "--a"
+      ],
+      "computed": {
+        "--a": "1"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: 1 !IMPORTANT",
+      "read": [
+        "--a"
+      ],
+      "computed": {
+        "--a": "1"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: 1 !",
+      "read": [
+        "--a"
+      ],
+      "computed": {
+        "--a": ""
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: 1 ! 2",
+      "read": [
+        "--a"
+      ],
+      "computed": {
+        "--a": ""
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: 1 ) 2",
+      "read": [
+        "--a"
+      ],
+      "computed": {
+        "--a": ""
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: 1 ] 2",
+      "read": [
+        "--a"
+      ],
+      "computed": {
+        "--a": ""
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: \"s\" 'q'",
+      "read": [
+        "--a"
+      ],
+      "computed": {
+        "--a": "\"s\" 'q'"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: url(x.png)",
+      "read": [
+        "--a"
+      ],
+      "computed": {
+        "--a": "url(x.png)"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: 'abc",
+      "read": [
+        "--a"
+      ],
+      "computed": {
+        "--a": "'abc"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: (1",
+      "read": [
+        "--a"
+      ],
+      "computed": {
+        "--a": "(1"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: 1; --b: var(--a)",
+      "read": [
+        "--b"
+      ],
+      "computed": {
+        "--b": "1"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: 1px   /*x*/ 2px; --b: var(--a) x",
+      "read": [
+        "--b"
+      ],
+      "computed": {
+        "--b": "1px   /*x*/ 2px x"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--b: var(--zz, fallback  here)",
+      "read": [
+        "--b"
+      ],
+      "computed": {
+        "--b": "fallback  here"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--b: var(--zz)",
+      "read": [
+        "--b"
+      ],
+      "computed": {
+        "--b": ""
+      }
+    },
+    {
+      "parent": "",
+      "style": "--b: var(--zz,)",
+      "read": [
+        "--b"
+      ],
+      "computed": {
+        "--b": ""
+      }
+    },
+    {
+      "parent": "",
+      "style": "--b: a var(--zz,) b",
+      "read": [
+        "--b"
+      ],
+      "computed": {
+        "--b": "a  b"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--b: var(--zz, 1, 2)",
+      "read": [
+        "--b"
+      ],
+      "computed": {
+        "--b": "1, 2"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--b: var(--zz, var(--yy, deep))",
+      "read": [
+        "--b"
+      ],
+      "computed": {
+        "--b": "deep"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: ; --b: var(--a, fb)x",
+      "read": [
+        "--b"
+      ],
+      "computed": {
+        "--b": "x"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: 1; --b: var( --a )",
+      "read": [
+        "--b"
+      ],
+      "computed": {
+        "--b": "1"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: 1; --b: VAR(--a)",
+      "read": [
+        "--b"
+      ],
+      "computed": {
+        "--b": "1"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--A: 1; --b: var(--a, no) var(--A)",
+      "read": [
+        "--b"
+      ],
+      "computed": {
+        "--b": "no 1"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: 1; --b: calc(var(--a) * 2px)",
+      "read": [
+        "--b"
+      ],
+      "computed": {
+        "--b": "calc(1 * 2px)"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: 1; --b: f(g(var(--a)))",
+      "read": [
+        "--b"
+      ],
+      "computed": {
+        "--b": "f(g(1))"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--b: var(a)",
+      "read": [
+        "--b"
+      ],
+      "computed": {
+        "--b": ""
+      }
+    },
+    {
+      "parent": "",
+      "style": "--b: var()",
+      "read": [
+        "--b"
+      ],
+      "computed": {
+        "--b": ""
+      }
+    },
+    {
+      "parent": "",
+      "style": "--b: var(--a x)",
+      "read": [
+        "--b"
+      ],
+      "computed": {
+        "--b": ""
+      }
+    },
+    {
+      "parent": "",
+      "style": "--b: var(--a",
+      "read": [
+        "--b"
+      ],
+      "computed": {
+        "--b": ""
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: 1; --b: var(--a",
+      "read": [
+        "--b"
+      ],
+      "computed": {
+        "--b": "1"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: x; --b: y; --c: var(--a)var(--b)",
+      "read": [
+        "--c"
+      ],
+      "computed": {
+        "--c": "x/**/y"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: 1; --b: px; --c: var(--a)var(--b)",
+      "read": [
+        "--c"
+      ],
+      "computed": {
+        "--c": "1/**/px"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: 1; --c: var(--a)%",
+      "read": [
+        "--c"
+      ],
+      "computed": {
+        "--c": "1/**/%"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: -; --c: var(--a)var(--a)",
+      "read": [
+        "--c"
+      ],
+      "computed": {
+        "--c": "-/**/-"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: /; --b: *; --c: var(--a)var(--b)",
+      "read": [
+        "--c"
+      ],
+      "computed": {
+        "--c": "//**/*"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: a; --c: var(--a)(x)",
+      "read": [
+        "--c"
+      ],
+      "computed": {
+        "--c": "a/**/(x)"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: a; --c: var(--a) var(--a)",
+      "read": [
+        "--c"
+      ],
+      "computed": {
+        "--c": "a a"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: a; --c: var(--a)/**/var(--a)",
+      "read": [
+        "--c"
+      ],
+      "computed": {
+        "--c": "a/**/a"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: #; --c: var(--a)var(--a)",
+      "read": [
+        "--c"
+      ],
+      "computed": {
+        "--c": "##"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: 1; --c: +var(--a)",
+      "read": [
+        "--c"
+      ],
+      "computed": {
+        "--c": "+/**/1"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: 1; --c: .var(--a)",
+      "read": [
+        "--c"
+      ],
+      "computed": {
+        "--c": "./**/1"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: a; --c: @var(--a)",
+      "read": [
+        "--c"
+      ],
+      "computed": {
+        "--c": "@var(--a)"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: 'x'; --c: var(--a)var(--a)",
+      "read": [
+        "--c"
+      ],
+      "computed": {
+        "--c": "'x''x'"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: a; --b: 1; --c: var(--a) var(--b)var(--a)",
+      "read": [
+        "--c"
+      ],
+      "computed": {
+        "--c": "a 1/**/a"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: var(--a)",
+      "read": [
+        "--a"
+      ],
+      "computed": {
+        "--a": ""
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: var(--b); --b: var(--a)",
+      "read": [
+        "--a",
+        "--b"
+      ],
+      "computed": {
+        "--a": "",
+        "--b": ""
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: var(--b, 1); --b: var(--a, 2)",
+      "read": [
+        "--a",
+        "--b"
+      ],
+      "computed": {
+        "--a": "",
+        "--b": ""
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: var(--b); --b: var(--a); --c: var(--a, ok)",
+      "read": [
+        "--a",
+        "--b",
+        "--c"
+      ],
+      "computed": {
+        "--a": "",
+        "--b": "",
+        "--c": "ok"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: var(--m, 1); --m: 2",
+      "read": [
+        "--a"
+      ],
+      "computed": {
+        "--a": "2"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--b: var(--c, 3); --c: var(--d, var(--b)); --d: 4",
+      "read": [
+        "--b",
+        "--c"
+      ],
+      "computed": {
+        "--b": "4",
+        "--c": "4"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--b: var(--c, 3); --c: var(--d, var(--b))",
+      "read": [
+        "--b",
+        "--c"
+      ],
+      "computed": {
+        "--b": "",
+        "--c": ""
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: var(--b); --b: var(--zz, var(--a)); --r: var(--a, ok)",
+      "read": [
+        "--a",
+        "--b",
+        "--r"
+      ],
+      "computed": {
+        "--a": "",
+        "--b": "",
+        "--r": "ok"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: 1; --b: var(--a) var(--a); --c: var(--b) var(--b)",
+      "read": [
+        "--c"
+      ],
+      "computed": {
+        "--c": "1 1 1 1"
+      }
+    },
+    {
+      "parent": "--a: 1",
+      "style": "",
+      "read": [
+        "--a"
+      ],
+      "computed": {
+        "--a": "1"
+      }
+    },
+    {
+      "parent": "--a: 1",
+      "style": "--b: var(--a)",
+      "read": [
+        "--b"
+      ],
+      "computed": {
+        "--b": "1"
+      }
+    },
+    {
+      "parent": "--a: 1",
+      "style": "--a: 2",
+      "read": [
+        "--a"
+      ],
+      "computed": {
+        "--a": "2"
+      }
+    },
+    {
+      "parent": "--a: 1",
+      "style": "--a: var(--missing)",
+      "read": [
+        "--a"
+      ],
+      "computed": {
+        "--a": ""
+      }
+    },
+    {
+      "parent": "--a: 1; --b: var(--a)",
+      "style": "--a: 2",
+      "read": [
+        "--a",
+        "--b"
+      ],
+      "computed": {
+        "--a": "2",
+        "--b": "1"
+      }
+    },
+    {
+      "parent": "--x: P; --y: Q",
+      "style": "--x: initial; --y: inherit; --z: unset; --w: INHERIT",
+      "read": [
+        "--x",
+        "--y",
+        "--z",
+        "--w"
+      ],
+      "computed": {
+        "--x": "",
+        "--y": "Q",
+        "--z": "",
+        "--w": ""
+      }
+    },
+    {
+      "parent": "--x: P",
+      "style": "--x: unset",
+      "read": [
+        "--x"
+      ],
+      "computed": {
+        "--x": "P"
+      }
+    },
+    {
+      "parent": "--x: P",
+      "style": "--x: revert",
+      "read": [
+        "--x"
+      ],
+      "computed": {
+        "--x": "P"
+      }
+    },
+    {
+      "parent": "--x: P",
+      "style": "--x: initial x",
+      "read": [
+        "--x"
+      ],
+      "computed": {
+        "--x": "initial x"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--n: 5; z-index: var(--n)",
+      "read": [
+        "z-index"
+      ],
+      "computed": {
+        "z-index": "5"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--n: 1.5; z-index: var(--n)",
+      "read": [
+        "z-index"
+      ],
+      "computed": {
+        "z-index": "auto"
+      }
+    },
+    {
+      "parent": "",
+      "style": "z-index: var(--n, 7)",
+      "read": [
+        "z-index"
+      ],
+      "computed": {
+        "z-index": "7"
+      }
+    },
+    {
+      "parent": "",
+      "style": "z-index: var(--n)",
+      "read": [
+        "z-index"
+      ],
+      "computed": {
+        "z-index": "auto"
+      }
+    },
+    {
+      "parent": "",
+      "style": "z-index: 3; z-index: var(--n)",
+      "read": [
+        "z-index"
+      ],
+      "computed": {
+        "z-index": "auto"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--o: 0.5; opacity: var(--o)",
+      "read": [
+        "opacity"
+      ],
+      "computed": {
+        "opacity": "0.5"
+      }
+    },
+    {
+      "parent": "",
+      "style": "opacity: var(--o, 25%)",
+      "read": [
+        "opacity"
+      ],
+      "computed": {
+        "opacity": "0.25"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--o: red; opacity: var(--o)",
+      "read": [
+        "opacity"
+      ],
+      "computed": {
+        "opacity": "1"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--d: flex; display: var(--d)",
+      "read": [
+        "display"
+      ],
+      "computed": {
+        "display": "flex"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--d: flex; display: var(--d) var(--d)",
+      "read": [
+        "display"
+      ],
+      "computed": {
+        "display": "inline"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--d: FLEX; display: var(--d)",
+      "read": [
+        "display"
+      ],
+      "computed": {
+        "display": "flex"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--p: relative; position: var(--p)",
+      "read": [
+        "position"
+      ],
+      "computed": {
+        "position": "relative"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--p: nowhere; position: var(--p)",
+      "read": [
+        "position"
+      ],
+      "computed": {
+        "position": "static"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--b: border; box-sizing: var(--b)-box",
+      "read": [
+        "box-sizing"
+      ],
+      "computed": {
+        "box-sizing": "content-box"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--v: hidden; visibility: var(--v)",
+      "read": [
+        "visibility"
+      ],
+      "computed": {
+        "visibility": "hidden"
+      }
+    },
+    {
+      "parent": "visibility: hidden",
+      "style": "visibility: var(--nope)",
+      "read": [
+        "visibility"
+      ],
+      "computed": {
+        "visibility": "hidden"
+      }
+    },
+    {
+      "parent": "visibility: hidden",
+      "style": "z-index: 4; visibility: var(--nope, visible)",
+      "read": [
+        "visibility"
+      ],
+      "computed": {
+        "visibility": "visible"
+      }
+    },
+    {
+      "parent": "--m: 12px",
+      "style": "margin-top: var(--m)",
+      "read": [
+        "margin-top"
+      ],
+      "computed": {
+        "margin-top": "12px"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--m: 10px 20px; margin: var(--m)",
+      "read": [
+        "margin-top",
+        "margin-right",
+        "margin-bottom",
+        "margin-left"
+      ],
+      "computed": {
+        "margin-top": "10px",
+        "margin-right": "20px",
+        "margin-bottom": "10px",
+        "margin-left": "20px"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--m: 10px; margin: var(--m) 5px",
+      "read": [
+        "margin-top",
+        "margin-right",
+        "margin-bottom",
+        "margin-left"
+      ],
+      "computed": {
+        "margin-top": "10px",
+        "margin-right": "5px",
+        "margin-bottom": "10px",
+        "margin-left": "5px"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--m: red; margin: var(--m) 5px",
+      "read": [
+        "margin-top",
+        "margin-right"
+      ],
+      "computed": {
+        "margin-top": "0px",
+        "margin-right": "0px"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--m: 1; margin-top: calc(var(--m) * 10px)",
+      "read": [
+        "margin-top"
+      ],
+      "computed": {
+        "margin-top": "10px"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--m: 10; margin-top: var(--m)px",
+      "read": [
+        "margin-top"
+      ],
+      "computed": {
+        "margin-top": "0px"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--m: 10px; padding-left: var(--m, 3px)",
+      "read": [
+        "padding-left"
+      ],
+      "computed": {
+        "padding-left": "10px"
+      }
+    },
+    {
+      "parent": "",
+      "style": "padding-left: var(--zz, 3px)",
+      "read": [
+        "padding-left"
+      ],
+      "computed": {
+        "padding-left": "3px"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--a: var(--b); --b: var(--a); z-index: var(--a, 9)",
+      "read": [
+        "z-index"
+      ],
+      "computed": {
+        "z-index": "9"
+      }
+    },
+    {
+      "parent": "",
+      "style": "z-index: var(a)",
+      "read": [
+        "z-index"
+      ],
+      "computed": {
+        "z-index": "auto"
+      }
+    },
+    {
+      "parent": "",
+      "style": "z-index: 2; z-index: var(a)",
+      "read": [
+        "z-index"
+      ],
+      "computed": {
+        "z-index": "2"
+      }
+    },
+    {
+      "parent": "",
+      "style": "--f: left; float: var(--f)",
+      "read": [
+        "float"
+      ],
+      "computed": {
+        "float": "left"
+      }
+    }
+  ]
+}

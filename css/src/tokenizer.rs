@@ -5,6 +5,7 @@
 //! erreurs ne font jamais échouer : la spec dit toujours quoi produire.
 
 use std::borrow::Cow;
+use std::ops::Range;
 
 /// Un nombre CSS, avec sa forme écrite d'origine (utile pour les tests et pour
 /// resérialiser à l'identique).
@@ -217,6 +218,17 @@ impl<'a> Tokenizer<'a> {
             pos: 0,
             pending_error: None,
         }
+    }
+
+    /// Le prochain token et sa position (en octets) dans l'entrée, commentaires
+    /// exclus. Sert à `var()`, qui recopie le texte d'origine tel quel.
+    pub fn next_with_span(&mut self) -> Option<(Token<'a>, Range<usize>)> {
+        if self.pending_error.is_none() {
+            self.consume_comments();
+        }
+        let start = self.pos;
+        let token = self.consume_token()?;
+        Some((token, start..self.pos))
     }
 
     /// Le n-ième caractère à venir. Cas rapide : si les octets jusque-là sont de

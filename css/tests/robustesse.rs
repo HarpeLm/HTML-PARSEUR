@@ -140,6 +140,23 @@ const PIECES: &[&str] = &[
     "10px",
     "1.5em",
     "-3vw",
+    "(min-width: 600px)",
+    "(width >= 1px)",
+    "(400px < width <= 800px)",
+    " and ",
+    " or ",
+    "not ",
+    "only screen",
+    "(",
+    "(color)",
+    "(aspect-ratio: 16/9)",
+    "2dppx",
+    "<=",
+    "=",
+    "var(",
+    "var(--a, ",
+    "--a:",
+    "var(--x",
 ];
 
 fn random_css(rng: &mut Rng) -> String {
@@ -186,6 +203,17 @@ fn exercise(input: &str) {
             }
         }
     }
+    // Media queries et var().
+    let media = lumen_css::media::MediaQueryList::parse(&values);
+    let _ = media.to_string();
+    let _ = media.matches(&lumen_css::media::Environment::default());
+    let raw = lumen_css::variables::raw_declarations(&css);
+    let vars = lumen_css::variables::CustomProperties::compute(
+        raw.iter().map(|d| (d.name.as_ref(), d.value)),
+        &Default::default(),
+    );
+    let _ = lumen_css::variables::substitute(&css, &vars);
+    let _ = lumen_css::variables::is_valid_value(&css);
     // Les préludes des règles, comme le ferait un vrai moteur de style.
     for item in Parser::new(&css).parse_stylesheet() {
         if let Item::QualifiedRule(rule) = item

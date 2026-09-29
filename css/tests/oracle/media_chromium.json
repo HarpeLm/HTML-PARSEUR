@@ -1,0 +1,1013 @@
+{
+  "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Claude/2.9939.2 Chrome/152.0.7977.130 Safari/537.36",
+  "captured": "2026-09-29",
+  "environment": {
+    "width": 371,
+    "height": 987,
+    "device_width": 1710,
+    "device_height": 1107,
+    "resolution": 2,
+    "color": 10,
+    "features": {
+      "hover": "hover",
+      "any-hover": "hover",
+      "pointer": "fine",
+      "any-pointer": "fine",
+      "prefers-color-scheme": "light",
+      "prefers-reduced-motion": "no-preference",
+      "prefers-reduced-transparency": "no-preference",
+      "prefers-contrast": "no-preference",
+      "forced-colors": "none",
+      "inverted-colors": null,
+      "scripting": "enabled",
+      "update": "fast",
+      "overflow-block": "scroll",
+      "overflow-inline": "scroll",
+      "color-gamut": "p3",
+      "dynamic-range": "high",
+      "display-mode": "browser"
+    }
+  },
+  "results": [
+    {
+      "query": "screen",
+      "media": "screen",
+      "matches": true
+    },
+    {
+      "query": "SCREEN",
+      "media": "screen",
+      "matches": true
+    },
+    {
+      "query": "print",
+      "media": "print",
+      "matches": false
+    },
+    {
+      "query": "all",
+      "media": "all",
+      "matches": true
+    },
+    {
+      "query": "tv",
+      "media": "tv",
+      "matches": false
+    },
+    {
+      "query": "speech",
+      "media": "speech",
+      "matches": false
+    },
+    {
+      "query": "only screen",
+      "media": "only screen",
+      "matches": true
+    },
+    {
+      "query": "not screen",
+      "media": "not screen",
+      "matches": false
+    },
+    {
+      "query": "not print",
+      "media": "not print",
+      "matches": true
+    },
+    {
+      "query": "only print",
+      "media": "only print",
+      "matches": false
+    },
+    {
+      "query": "screen, print",
+      "media": "screen, print",
+      "matches": true
+    },
+    {
+      "query": "print, screen",
+      "media": "print, screen",
+      "matches": true
+    },
+    {
+      "query": "print, tv",
+      "media": "print, tv",
+      "matches": false
+    },
+    {
+      "query": "screen and (color)",
+      "media": "screen and (color)",
+      "matches": true
+    },
+    {
+      "query": "screen and (min-width:600px)",
+      "media": "screen and (min-width: 600px)",
+      "matches": false
+    },
+    {
+      "query": "screen and (min-width: 300px)",
+      "media": "screen and (min-width: 300px)",
+      "matches": true
+    },
+    {
+      "query": "all and (color)",
+      "media": "(color)",
+      "matches": true
+    },
+    {
+      "query": "not all and (color)",
+      "media": "not all and (color)",
+      "matches": false
+    },
+    {
+      "query": "not print and (color)",
+      "media": "not print and (color)",
+      "matches": true
+    },
+    {
+      "query": "only screen and (max-width: 1000px)",
+      "media": "only screen and (max-width: 1000px)",
+      "matches": true
+    },
+    {
+      "query": "(color)",
+      "media": "(color)",
+      "matches": true
+    },
+    {
+      "query": "(monochrome)",
+      "media": "(monochrome)",
+      "matches": false
+    },
+    {
+      "query": "(color-index)",
+      "media": "(color-index)",
+      "matches": false
+    },
+    {
+      "query": "(grid)",
+      "media": "(grid)",
+      "matches": false
+    },
+    {
+      "query": "(grid: 0)",
+      "media": "(grid: 0)",
+      "matches": true
+    },
+    {
+      "query": "(color: 0)",
+      "media": "(color: 0)",
+      "matches": false
+    },
+    {
+      "query": "(min-color: 1)",
+      "media": "(min-color: 1)",
+      "matches": true
+    },
+    {
+      "query": "(min-color: 8)",
+      "media": "(min-color: 8)",
+      "matches": true
+    },
+    {
+      "query": "(max-color: 8)",
+      "media": "(max-color: 8)",
+      "matches": false
+    },
+    {
+      "query": "(min-width: 0)",
+      "media": "(min-width: 0)",
+      "matches": true
+    },
+    {
+      "query": "(min-width: 300px)",
+      "media": "(min-width: 300px)",
+      "matches": true
+    },
+    {
+      "query": "(min-width: 400px)",
+      "media": "(min-width: 400px)",
+      "matches": false
+    },
+    {
+      "query": "(max-width: 300px)",
+      "media": "(max-width: 300px)",
+      "matches": false
+    },
+    {
+      "query": "(max-width: 400px)",
+      "media": "(max-width: 400px)",
+      "matches": true
+    },
+    {
+      "query": "(min-width: 37.5em)",
+      "media": "(min-width: 37.5em)",
+      "matches": false
+    },
+    {
+      "query": "(max-width: 30rem)",
+      "media": "(max-width: 30rem)",
+      "matches": true
+    },
+    {
+      "query": "(min-width: 3in)",
+      "media": "(min-width: 3in)",
+      "matches": true
+    },
+    {
+      "query": "(min-width: 10cm)",
+      "media": "(min-width: 10cm)",
+      "matches": false
+    },
+    {
+      "query": "(min-width: -100px)",
+      "media": "(min-width: -100px)",
+      "matches": true
+    },
+    {
+      "query": "(min-width: 100)",
+      "media": "(min-width: 100)",
+      "matches": false
+    },
+    {
+      "query": "(min-width: 50%)",
+      "media": "(min-width: 50%)",
+      "matches": false
+    },
+    {
+      "query": "(min-width: auto)",
+      "media": "(min-width: auto)",
+      "matches": false
+    },
+    {
+      "query": "(min-width: calc(100px + 1em))",
+      "media": "(min-width: calc(1em + 100px))",
+      "matches": true
+    },
+    {
+      "query": "(width: calc(100px + 1em))",
+      "media": "(width: calc(1em + 100px))",
+      "matches": false
+    },
+    {
+      "query": "(width: 1e3px)",
+      "media": "(width: 1000px)",
+      "matches": false
+    },
+    {
+      "query": "(width > 1e3px)",
+      "media": "(width > 1000px)",
+      "matches": false
+    },
+    {
+      "query": "(min-height: 500px)",
+      "media": "(min-height: 500px)",
+      "matches": true
+    },
+    {
+      "query": "(max-height: 500px)",
+      "media": "(max-height: 500px)",
+      "matches": false
+    },
+    {
+      "query": "(height > 10000px)",
+      "media": "(height > 10000px)",
+      "matches": false
+    },
+    {
+      "query": "(width>=600px)",
+      "media": "(width >= 600px)",
+      "matches": false
+    },
+    {
+      "query": "(width >= 300px)",
+      "media": "(width >= 300px)",
+      "matches": true
+    },
+    {
+      "query": "(width < 300px)",
+      "media": "(width < 300px)",
+      "matches": false
+    },
+    {
+      "query": "(width <= 400px)",
+      "media": "(width <= 400px)",
+      "matches": true
+    },
+    {
+      "query": "(width = 371px)",
+      "media": "(width = 371px)",
+      "matches": true
+    },
+    {
+      "query": "(300px < width)",
+      "media": "(300px < width)",
+      "matches": true
+    },
+    {
+      "query": "(300px <= width < 400px)",
+      "media": "(300px <= width < 400px)",
+      "matches": true
+    },
+    {
+      "query": "(400px<width<=800px)",
+      "media": "(400px < width <= 800px)",
+      "matches": false
+    },
+    {
+      "query": "(400px > width > 300px)",
+      "media": "(400px > width > 300px)",
+      "matches": true
+    },
+    {
+      "query": "(400px > width < 300px)",
+      "media": "(400px > width < 300px)",
+      "matches": false
+    },
+    {
+      "query": "(width >= 300px < 500px)",
+      "media": "(width >= 300px < 500px)",
+      "matches": false
+    },
+    {
+      "query": "(width => 300px)",
+      "media": "(width => 300px)",
+      "matches": false
+    },
+    {
+      "query": "(width > = 300px)",
+      "media": "(width > = 300px)",
+      "matches": false
+    },
+    {
+      "query": "(min-width > 300px)",
+      "media": "(min-width > 300px)",
+      "matches": false
+    },
+    {
+      "query": "(aspect-ratio:16/9)",
+      "media": "(aspect-ratio: 16 / 9)",
+      "matches": false
+    },
+    {
+      "query": "(aspect-ratio: 16 / 9)",
+      "media": "(aspect-ratio: 16 / 9)",
+      "matches": false
+    },
+    {
+      "query": "(min-aspect-ratio: 1/1)",
+      "media": "(min-aspect-ratio: 1 / 1)",
+      "matches": false
+    },
+    {
+      "query": "(max-aspect-ratio: 1/1)",
+      "media": "(max-aspect-ratio: 1 / 1)",
+      "matches": true
+    },
+    {
+      "query": "(aspect-ratio: 16)",
+      "media": "(aspect-ratio: 16 / 1)",
+      "matches": false
+    },
+    {
+      "query": "(aspect-ratio: 1.5/1)",
+      "media": "(aspect-ratio: 1.5 / 1)",
+      "matches": false
+    },
+    {
+      "query": "(aspect-ratio: 0/1)",
+      "media": "(aspect-ratio: 0 / 1)",
+      "matches": false
+    },
+    {
+      "query": "(aspect-ratio > 1/2)",
+      "media": "(aspect-ratio > 1 / 2)",
+      "matches": false
+    },
+    {
+      "query": "(aspect-ratio: -1/2)",
+      "media": "(aspect-ratio: -1/2)",
+      "matches": false
+    },
+    {
+      "query": "(orientation: portrait)",
+      "media": "(orientation: portrait)",
+      "matches": true
+    },
+    {
+      "query": "(orientation:LANDSCAPE)",
+      "media": "(orientation: landscape)",
+      "matches": false
+    },
+    {
+      "query": "(orientation)",
+      "media": "(orientation)",
+      "matches": true
+    },
+    {
+      "query": "(orientation: sideways)",
+      "media": "(orientation: sideways)",
+      "matches": false
+    },
+    {
+      "query": "(orientation > portrait)",
+      "media": "(orientation > portrait)",
+      "matches": false
+    },
+    {
+      "query": "(resolution:2dppx)",
+      "media": "(resolution: 2dppx)",
+      "matches": true
+    },
+    {
+      "query": "(resolution: 2x)",
+      "media": "(resolution: 2x)",
+      "matches": true
+    },
+    {
+      "query": "(min-resolution: 192dpi)",
+      "media": "(min-resolution: 192dpi)",
+      "matches": true
+    },
+    {
+      "query": "(min-resolution: 1dppx)",
+      "media": "(min-resolution: 1dppx)",
+      "matches": true
+    },
+    {
+      "query": "(max-resolution: 1dppx)",
+      "media": "(max-resolution: 1dppx)",
+      "matches": false
+    },
+    {
+      "query": "(resolution: 75.5906dpcm)",
+      "media": "(resolution: 75.5906dpcm)",
+      "matches": true
+    },
+    {
+      "query": "(resolution > 1x)",
+      "media": "(resolution > 1x)",
+      "matches": true
+    },
+    {
+      "query": "(resolution: 2)",
+      "media": "(resolution: 2)",
+      "matches": false
+    },
+    {
+      "query": "(hover)",
+      "media": "(hover)",
+      "matches": true
+    },
+    {
+      "query": "(hover: hover)",
+      "media": "(hover: hover)",
+      "matches": true
+    },
+    {
+      "query": "(hover: none)",
+      "media": "(hover: none)",
+      "matches": false
+    },
+    {
+      "query": "(any-hover: hover)",
+      "media": "(any-hover: hover)",
+      "matches": true
+    },
+    {
+      "query": "(pointer: fine)",
+      "media": "(pointer: fine)",
+      "matches": true
+    },
+    {
+      "query": "(pointer: coarse)",
+      "media": "(pointer: coarse)",
+      "matches": false
+    },
+    {
+      "query": "(pointer)",
+      "media": "(pointer)",
+      "matches": true
+    },
+    {
+      "query": "(any-pointer: fine)",
+      "media": "(any-pointer: fine)",
+      "matches": true
+    },
+    {
+      "query": "(hover: maybe)",
+      "media": "(hover: maybe)",
+      "matches": false
+    },
+    {
+      "query": "(prefers-color-scheme: dark)",
+      "media": "(prefers-color-scheme: dark)",
+      "matches": false
+    },
+    {
+      "query": "(prefers-color-scheme: light)",
+      "media": "(prefers-color-scheme: light)",
+      "matches": true
+    },
+    {
+      "query": "(prefers-color-scheme)",
+      "media": "(prefers-color-scheme)",
+      "matches": true
+    },
+    {
+      "query": "(prefers-reduced-motion: reduce)",
+      "media": "(prefers-reduced-motion: reduce)",
+      "matches": false
+    },
+    {
+      "query": "(prefers-reduced-motion: no-preference)",
+      "media": "(prefers-reduced-motion: no-preference)",
+      "matches": true
+    },
+    {
+      "query": "(prefers-reduced-motion)",
+      "media": "(prefers-reduced-motion)",
+      "matches": false
+    },
+    {
+      "query": "(prefers-contrast: more)",
+      "media": "(prefers-contrast: more)",
+      "matches": false
+    },
+    {
+      "query": "(prefers-contrast)",
+      "media": "(prefers-contrast)",
+      "matches": false
+    },
+    {
+      "query": "(forced-colors: active)",
+      "media": "(forced-colors: active)",
+      "matches": false
+    },
+    {
+      "query": "(forced-colors)",
+      "media": "(forced-colors)",
+      "matches": false
+    },
+    {
+      "query": "(inverted-colors: none)",
+      "media": "(inverted-colors: none)",
+      "matches": false
+    },
+    {
+      "query": "(scripting: enabled)",
+      "media": "(scripting: enabled)",
+      "matches": true
+    },
+    {
+      "query": "(scripting)",
+      "media": "(scripting)",
+      "matches": true
+    },
+    {
+      "query": "(update: fast)",
+      "media": "(update: fast)",
+      "matches": true
+    },
+    {
+      "query": "(update)",
+      "media": "(update)",
+      "matches": true
+    },
+    {
+      "query": "(overflow-block: scroll)",
+      "media": "(overflow-block: scroll)",
+      "matches": true
+    },
+    {
+      "query": "(overflow-inline: scroll)",
+      "media": "(overflow-inline: scroll)",
+      "matches": true
+    },
+    {
+      "query": "(color-gamut: srgb)",
+      "media": "(color-gamut: srgb)",
+      "matches": true
+    },
+    {
+      "query": "(color-gamut: p3)",
+      "media": "(color-gamut: p3)",
+      "matches": true
+    },
+    {
+      "query": "(color-gamut)",
+      "media": "(color-gamut)",
+      "matches": true
+    },
+    {
+      "query": "(dynamic-range: standard)",
+      "media": "(dynamic-range: standard)",
+      "matches": true
+    },
+    {
+      "query": "(display-mode: browser)",
+      "media": "(display-mode: browser)",
+      "matches": true
+    },
+    {
+      "query": "(unknown-thing)",
+      "media": "(unknown-thing)",
+      "matches": false
+    },
+    {
+      "query": "(unknown-thing: 5px)",
+      "media": "(unknown-thing: 5px)",
+      "matches": false
+    },
+    {
+      "query": "(UNKNOWN: 5PX)",
+      "media": "(UNKNOWN: 5PX)",
+      "matches": false
+    },
+    {
+      "query": "(min-hover: hover)",
+      "media": "(min-hover: hover)",
+      "matches": false
+    },
+    {
+      "query": "(max-orientation: portrait)",
+      "media": "(max-orientation: portrait)",
+      "matches": false
+    },
+    {
+      "query": "not (color)",
+      "media": "not (color)",
+      "matches": false
+    },
+    {
+      "query": "not (unknown)",
+      "media": "not (unknown)",
+      "matches": false
+    },
+    {
+      "query": "not not (color)",
+      "media": "not all",
+      "matches": false
+    },
+    {
+      "query": "(color) and (hover)",
+      "media": "(color) and (hover)",
+      "matches": true
+    },
+    {
+      "query": "(color) and (monochrome)",
+      "media": "(color) and (monochrome)",
+      "matches": false
+    },
+    {
+      "query": "(color) or (monochrome)",
+      "media": "(color) or (monochrome)",
+      "matches": true
+    },
+    {
+      "query": "(monochrome) or (grid)",
+      "media": "(monochrome) or (grid)",
+      "matches": false
+    },
+    {
+      "query": "(color) and (hover) or (grid)",
+      "media": "not all",
+      "matches": false
+    },
+    {
+      "query": "(color) or (unknown)",
+      "media": "(color) or (unknown)",
+      "matches": true
+    },
+    {
+      "query": "(monochrome) or (unknown)",
+      "media": "(monochrome) or (unknown)",
+      "matches": false
+    },
+    {
+      "query": "(color) and (unknown)",
+      "media": "(color) and (unknown)",
+      "matches": false
+    },
+    {
+      "query": "((color))",
+      "media": "((color))",
+      "matches": true
+    },
+    {
+      "query": "((width > 1px) and (not (color)))",
+      "media": "((width > 1px) and (not (color)))",
+      "matches": false
+    },
+    {
+      "query": "((color) or (grid)) and (hover)",
+      "media": "((color) or (grid)) and (hover)",
+      "matches": true
+    },
+    {
+      "query": "(not (monochrome)) and (color)",
+      "media": "(not (monochrome)) and (color)",
+      "matches": true
+    },
+    {
+      "query": "screen and not (monochrome)",
+      "media": "screen and not (monochrome)",
+      "matches": true
+    },
+    {
+      "query": "screen and (color) and (hover)",
+      "media": "screen and (color) and (hover)",
+      "matches": true
+    },
+    {
+      "query": "screen and (color) or (hover)",
+      "media": "not all",
+      "matches": false
+    },
+    {
+      "query": "screen and (not (color))",
+      "media": "screen and (not (color))",
+      "matches": false
+    },
+    {
+      "query": "not screen and (monochrome)",
+      "media": "not screen and (monochrome)",
+      "matches": true
+    },
+    {
+      "query": "only (color)",
+      "media": "not all",
+      "matches": false
+    },
+    {
+      "query": "not only screen",
+      "media": "not all",
+      "matches": false
+    },
+    {
+      "query": "only not screen",
+      "media": "not all",
+      "matches": false
+    },
+    {
+      "query": "screen and",
+      "media": "not all",
+      "matches": false
+    },
+    {
+      "query": "and",
+      "media": "not all",
+      "matches": false
+    },
+    {
+      "query": "or",
+      "media": "not all",
+      "matches": false
+    },
+    {
+      "query": "not",
+      "media": "not all",
+      "matches": false
+    },
+    {
+      "query": "only",
+      "media": "not all",
+      "matches": false
+    },
+    {
+      "query": "foo bar",
+      "media": "not all",
+      "matches": false
+    },
+    {
+      "query": "screen print",
+      "media": "not all",
+      "matches": false
+    },
+    {
+      "query": "screen, foo bar, print",
+      "media": "screen, not all, print",
+      "matches": true
+    },
+    {
+      "query": "(color), foo bar",
+      "media": "(color), not all",
+      "matches": true
+    },
+    {
+      "query": ",",
+      "media": "not all, not all",
+      "matches": false
+    },
+    {
+      "query": "screen,",
+      "media": "screen, not all",
+      "matches": true
+    },
+    {
+      "query": "",
+      "media": "",
+      "matches": true
+    },
+    {
+      "query": "   ",
+      "media": "",
+      "matches": true
+    },
+    {
+      "query": "foo(bar)",
+      "media": "foo(bar)",
+      "matches": false
+    },
+    {
+      "query": "not foo(bar)",
+      "media": "not foo(bar)",
+      "matches": false
+    },
+    {
+      "query": "(color) and foo(bar)",
+      "media": "(color) and foo(bar)",
+      "matches": false
+    },
+    {
+      "query": "[color]",
+      "media": "not all",
+      "matches": false
+    },
+    {
+      "query": "{color}",
+      "media": "not all",
+      "matches": false
+    },
+    {
+      "query": "(color",
+      "media": "(color)",
+      "matches": true
+    },
+    {
+      "query": "screen and (color",
+      "media": "screen and (color)",
+      "matches": true
+    },
+    {
+      "query": "(max-width: 400px) and (min-width: 300px)",
+      "media": "(max-width: 400px) and (min-width: 300px)",
+      "matches": true
+    },
+    {
+      "query": "screen and (-webkit-min-device-pixel-ratio: 2)",
+      "media": "screen and (-webkit-min-device-pixel-ratio: 2)",
+      "matches": true
+    },
+    {
+      "query": "(-webkit-device-pixel-ratio: 2)",
+      "media": "(-webkit-device-pixel-ratio: 2)",
+      "matches": true
+    },
+    {
+      "query": "(device-width: 1710px)",
+      "media": "(device-width: 1710px)",
+      "matches": true
+    },
+    {
+      "query": "(min-device-width: 1000px)",
+      "media": "(min-device-width: 1000px)",
+      "matches": true
+    },
+    {
+      "query": "(device-aspect-ratio: 1710/1107)",
+      "media": "(device-aspect-ratio: 1710 / 1107)",
+      "matches": true
+    },
+    {
+      "query": "(min-width: 300px) and (max-width: 400px), print",
+      "media": "(min-width: 300px) and (max-width: 400px), print",
+      "matches": true
+    },
+    {
+      "query": "not all",
+      "media": "not all",
+      "matches": false
+    },
+    {
+      "query": "not all, all",
+      "media": "not all, all",
+      "matches": true
+    },
+    {
+      "query": "layer",
+      "media": "not all",
+      "matches": false
+    },
+    {
+      "query": "screen and layer",
+      "media": "not all",
+      "matches": false
+    },
+    {
+      "query": "(max-width: 371px)",
+      "media": "(max-width: 371px)",
+      "matches": true
+    },
+    {
+      "query": "(min-width: 371px)",
+      "media": "(min-width: 371px)",
+      "matches": true
+    },
+    {
+      "query": "(width <= 371px)",
+      "media": "(width <= 371px)",
+      "matches": true
+    },
+    {
+      "query": "(width >= 371px)",
+      "media": "(width >= 371px)",
+      "matches": true
+    },
+    {
+      "query": "(width < 371px)",
+      "media": "(width < 371px)",
+      "matches": false
+    },
+    {
+      "query": "(width > 371px)",
+      "media": "(width > 371px)",
+      "matches": false
+    },
+    {
+      "query": "(371px >= width)",
+      "media": "(371px >= width)",
+      "matches": true
+    },
+    {
+      "query": "(371px > width)",
+      "media": "(371px > width)",
+      "matches": false
+    },
+    {
+      "query": "(371px <= width <= 371px)",
+      "media": "(371px <= width <= 371px)",
+      "matches": true
+    },
+    {
+      "query": "(max-height: 987px)",
+      "media": "(max-height: 987px)",
+      "matches": true
+    },
+    {
+      "query": "(min-height: 988px)",
+      "media": "(min-height: 988px)",
+      "matches": false
+    },
+    {
+      "query": "(max-resolution: 2dppx)",
+      "media": "(max-resolution: 2dppx)",
+      "matches": true
+    },
+    {
+      "query": "(min-resolution: 2x)",
+      "media": "(min-resolution: 2x)",
+      "matches": true
+    },
+    {
+      "query": "(resolution < 2dppx)",
+      "media": "(resolution < 2dppx)",
+      "matches": false
+    },
+    {
+      "query": "(resolution >= 192dpi)",
+      "media": "(resolution >= 192dpi)",
+      "matches": true
+    },
+    {
+      "query": "(max-aspect-ratio: 371/987)",
+      "media": "(max-aspect-ratio: 371 / 987)",
+      "matches": true
+    },
+    {
+      "query": "(aspect-ratio = 371/987)",
+      "media": "(aspect-ratio = 371 / 987)",
+      "matches": true
+    },
+    {
+      "query": "(min-color: 10)",
+      "media": "(min-color: 10)",
+      "matches": true
+    },
+    {
+      "query": "(max-color: 10)",
+      "media": "(max-color: 10)",
+      "matches": true
+    },
+    {
+      "query": "(color > 10)",
+      "media": "(color > 10)",
+      "matches": false
+    },
+    {
+      "query": "(max-device-width: 1710px)",
+      "media": "(max-device-width: 1710px)",
+      "matches": true
+    }
+  ]
+}

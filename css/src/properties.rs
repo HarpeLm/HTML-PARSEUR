@@ -280,3 +280,42 @@ pub fn parse_property(name: &str, value: &[ComponentValue]) -> Option<Vec<Longha
         _ => longhand(&name, &values).map(|l| vec![l]),
     }
 }
+
+/// La valeur initiale d'une propriété longue (celle qu'elle prend sans
+/// déclaration, ou avec `initial`).
+pub fn initial_value(name: &str) -> Option<SpecifiedValue> {
+    use SpecifiedValue::Keyword;
+    let zero = || {
+        SpecifiedValue::LengthPercentage(LengthPercentage::Length(crate::values::Length {
+            value: 0.0,
+            unit: "px",
+        }))
+    };
+    Some(match name {
+        "margin-top" | "margin-right" | "margin-bottom" | "margin-left" => zero(),
+        "padding-top" | "padding-right" | "padding-bottom" | "padding-left" => zero(),
+        "top" | "right" | "bottom" | "left" | "width" | "height" => Keyword("auto"),
+        "min-width" | "min-height" => Keyword("auto"),
+        "max-width" | "max-height" => Keyword("none"),
+        "display" => Keyword("inline"),
+        "position" => Keyword("static"),
+        "float" => Keyword("none"),
+        "box-sizing" => Keyword("content-box"),
+        "visibility" => Keyword("visible"),
+        "opacity" => SpecifiedValue::Number(1.0),
+        "font-size" => Keyword("medium"),
+        "font-weight" => Keyword("normal"),
+        "line-height" => Keyword("normal"),
+        "z-index" => Keyword("auto"),
+        _ => return None,
+    })
+}
+
+/// La propriété est héritée : sans déclaration (ou avec `unset`), elle prend la
+/// valeur du parent plutôt que sa valeur initiale.
+pub fn is_inherited(name: &str) -> bool {
+    matches!(
+        name,
+        "visibility" | "font-size" | "font-weight" | "line-height"
+    )
+}

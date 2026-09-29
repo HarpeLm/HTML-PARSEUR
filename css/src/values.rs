@@ -71,6 +71,12 @@ fn length_unit(unit: &str) -> Option<(&'static str, Option<f64>)> {
     })
 }
 
+/// Pixels par unité, pour les unités absolues (`in` -> 96) ; `None` pour les
+/// unités relatives (`em`, `vw`...) et inconnues.
+pub(crate) fn px_per_unit(unit: &str) -> Option<f64> {
+    length_unit(unit)?.1
+}
+
 /// Une longueur : `10px`, `1.5em`, `3vw`.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Length {

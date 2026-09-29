@@ -39,6 +39,114 @@ pub enum ComponentValue<'a> {
     },
 }
 
+impl ComponentValue<'_> {
+    /// Réécrit la valeur en CSS (sans échapper les identifiants : suffisant pour
+    /// resérialiser ce qui vient du parser, comme les parties inconnues d'une
+    /// media query).
+    pub fn to_css(&self) -> String {
+        let mut out = String::new();
+        self.write_css(&mut out);
+        out
+    }
+
+    fn write_css(&self, out: &mut String) {
+        match self {
+            ComponentValue::Token(t) => write_token(t, out),
+            ComponentValue::Block { kind, contents } => {
+                let (open, close) = match kind {
+                    BlockKind::Curly => ('{', '}'),
+                    BlockKind::Square => ('[', ']'),
+                    BlockKind::Paren => ('(', ')'),
+                };
+                out.push(open);
+                contents.iter().for_each(|v| v.write_css(out));
+                out.push(close);
+            }
+            ComponentValue::Function { name, arguments } => {
+                out.push_str(name);
+                out.push('(');
+                arguments.iter().for_each(|v| v.write_css(out));
+                out.push(')');
+            }
+        }
+    }
+}
+
+fn write_token(t: &Token, out: &mut String) {
+    use std::fmt::Write;
+    match t {
+        Token::Ident(s) => out.push_str(s),
+        Token::Function(s) => {
+            out.push_str(s);
+            out.push('(');
+        }
+        Token::AtKeyword(s) => {
+            out.push('@');
+            out.push_str(s);
+        }
+        Token::Hash { value, .. } => {
+            out.push('#');
+            out.push_str(value);
+        }
+        Token::String(s) => {
+            out.push('"');
+            for c in s.chars() {
+                match c {
+                    '"' | '\\' => {
+                        out.push('\\');
+                        out.push(c);
+                    }
+                    '\n' => out.push_str("\\a "),
+                    c => out.push(c),
+                }
+            }
+            out.push('"');
+        }
+        Token::BadString => out.push('"'),
+        Token::Url(s) => {
+            out.push_str("url(");
+            out.push_str(s);
+            out.push(')');
+        }
+        Token::BadUrl => out.push_str("url()"),
+        Token::Delim(c) => out.push(*c),
+        Token::Number(n) => out.push_str(n.repr),
+        Token::Percentage(n) => {
+            out.push_str(n.repr);
+            out.push('%');
+        }
+        Token::Dimension { number, unit } => {
+            out.push_str(number.repr);
+            out.push_str(unit);
+        }
+        Token::UnicodeRange { start, end } if start == end => {
+            let _ = write!(out, "U+{start:X}");
+        }
+        Token::UnicodeRange { start, end } => {
+            let _ = write!(out, "U+{start:X}-{end:X}");
+        }
+        Token::IncludeMatch => out.push_str("~="),
+        Token::DashMatch => out.push_str("|="),
+        Token::PrefixMatch => out.push_str("^="),
+        Token::SuffixMatch => out.push_str("$="),
+        Token::SubstringMatch => out.push_str("*="),
+        Token::Column => out.push_str("||"),
+        Token::Whitespace => out.push(' '),
+        Token::Cdo => out.push_str("<!--"),
+        Token::Cdc => out.push_str("-->"),
+        Token::Colon => out.push(':'),
+        Token::Semicolon => out.push(';'),
+        Token::Comma => out.push(','),
+        Token::OpenSquare => out.push('['),
+        Token::CloseSquare => out.push(']'),
+        Token::OpenParen => out.push('('),
+        Token::CloseParen => out.push(')'),
+        Token::OpenCurly => out.push('{'),
+        Token::CloseCurly => out.push('}'),
+        Token::Error(_) => {}
+    }
+}
+
 /// Erreur d'un "parse a component value" (§5.3.9).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ParseError {

@@ -11,6 +11,13 @@ Parser CSS écrit en Rust, de zéro, en suivant les specs
   (via le trait `selectors::Element`).
 - **Couleurs** (CSS Color 4 et 5) : mots-clés, `#hex`, `rgb()`, `hsl()`, `hwb()`,
   `lab()`, `lch()`, `oklab()`, `oklch()`, `color()`, `device-cmyk()`, `light-dark()`.
+- **Valeurs et propriétés** : longueurs, pourcentages, `calc()`, et un premier
+  ensemble de propriétés (boîte, position, affichage, police), raccourcis compris.
+- **Media queries** (Media Queries 4 et 5) : types, `and` / `or` / `not`,
+  syntaxe d'intervalle `(400px < width <= 800px)`, logique à trois valeurs,
+  évaluation dans un environnement (taille, densité, préférences).
+- **Propriétés personnalisées et `var()`** : substitution avec replis, cycles,
+  héritage, `initial` / `inherit` / `unset`.
 - **Aucune dépendance** à l'exécution.
 
 ## Utilisation
@@ -35,8 +42,12 @@ for item in Parser::new(&css).parse_stylesheet() {
 | [css-parsing-tests](https://github.com/SimonSapin/css-parsing-tests) (syntaxe, `An+B`, couleurs) | **8 338 / 8 338** |
 | Sélecteurs : test différentiel contre le moteur de Servo (via `scraper`), 5 vraies pages | **1 825 comparaisons, 0 différence** |
 | Spécificité : exemples de la spec Selectors 4 | 13 / 13 |
+| Propriétés : valeurs sérialisées comparées à Chromium 152 (`tests/oracle_chromium.rs`) | **133 / 133** |
+| Media queries : sérialisation et évaluation comparées à Chromium 152 (`tests/oracle_media.rs`) | **196 / 196** |
+| `var()` : valeurs calculées comparées à `getComputedStyle` de Chromium 152 (`tests/oracle_variables.rs`) | **120 / 120** (100 cas) |
 | Robustesse : CSS aléatoire (`tests/robustesse.rs`) | **2 000 000 feuilles, 0 panique** |
 
+Les comparaisons avec Chromium sont expliquées dans [tests/oracle](tests/oracle/README.md).
 Pas encore traitées : les feuilles de style en octets (encodages, 28 tests). La
 fonction `rgb()` n'étant couverte par aucun fichier de la suite, elle a ses propres
 tests unitaires.

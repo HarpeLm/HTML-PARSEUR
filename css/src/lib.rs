@@ -18,6 +18,7 @@
 
 mod an_plus_b;
 mod color;
+pub mod media;
 mod named_colors;
 mod parser;
 pub mod properties;
@@ -25,6 +26,7 @@ mod rules;
 pub mod selectors;
 mod tokenizer;
 pub mod values;
+pub mod variables;
 
 pub use an_plus_b::parse_an_plus_b;
 pub use color::{Color, LabSpace, parse_color};
