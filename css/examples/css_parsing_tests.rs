@@ -6,7 +6,8 @@
 use std::{fs, panic, path::Path};
 
 use lumen_css::{
-    BlockKind, ComponentValue, Numeric, ParseError, Parser, Token, TokenError, preprocess,
+    AtRule, BlockKind, ComponentValue, Declaration, Item, Numeric, ParseError, Parser,
+    QualifiedRule, Token, TokenError, preprocess,
 };
 use serde_json::{Value, json};
 
@@ -77,6 +78,44 @@ fn to_json(value: &ComponentValue) -> Value {
     }
 }
 
+fn list_json(values: &[ComponentValue]) -> Value {
+    Value::Array(values.iter().map(to_json).collect())
+}
+
+fn declaration_json(d: &Declaration) -> Value {
+    json!(["declaration", d.name, list_json(&d.value), d.important])
+}
+
+fn item_json(item: &Item) -> Value {
+    match item {
+        Item::Declaration(d) => declaration_json(d),
+        Item::AtRule(AtRule {
+            name,
+            prelude,
+            block,
+        }) => {
+            json!([
+                "at-rule",
+                name,
+                list_json(prelude),
+                block.as_ref().map(|b| list_json(b))
+            ])
+        }
+        Item::QualifiedRule(QualifiedRule { prelude, block }) => {
+            json!(["qualified rule", list_json(prelude), list_json(block)])
+        }
+        Item::Invalid => json!(["error", "invalid"]),
+    }
+}
+
+fn error_json(e: ParseError) -> Value {
+    match e {
+        ParseError::Empty => json!(["error", "empty"]),
+        ParseError::ExtraInput => json!(["error", "extra-input"]),
+        ParseError::Invalid => json!(["error", "invalid"]),
+    }
+}
+
 /// Les nombres sont comparés par leur valeur : 0 et 0.0 sont égaux.
 fn normalize(v: &Value) -> Value {
     match v {
@@ -100,9 +139,32 @@ fn run(file: &str, input: &str) -> Option<Value> {
         ),
         "one_component_value" => match parser.parse_component_value() {
             Ok(value) => to_json(&value),
-            Err(ParseError::Empty) => json!(["error", "empty"]),
-            Err(ParseError::ExtraInput) => json!(["error", "extra-input"]),
+            Err(e) => error_json(e),
         },
+        "one_declaration" => match parser.parse_declaration() {
+            Ok(d) => declaration_json(&d),
+            Err(e) => error_json(e),
+        },
+        "one_rule" => match parser.parse_rule() {
+            Ok(item) => item_json(&item),
+            Err(e) => error_json(e),
+        },
+        "declaration_list" => Value::Array(
+            parser
+                .parse_declaration_list()
+                .iter()
+                .map(item_json)
+                .collect(),
+        ),
+        "blocks_contents" => Value::Array(
+            parser
+                .parse_block_contents()
+                .iter()
+                .map(item_json)
+                .collect(),
+        ),
+        "rule_list" => Value::Array(parser.parse_rule_list().iter().map(item_json).collect()),
+        "stylesheet" => Value::Array(parser.parse_stylesheet().iter().map(item_json).collect()),
         _ => return None,
     })
 }

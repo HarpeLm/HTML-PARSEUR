@@ -4,6 +4,7 @@
 use std::borrow::Cow;
 use std::iter::Peekable;
 
+use crate::rules::{Cursor, Declaration, Item, consume_declaration};
 use crate::tokenizer::{Token, Tokenizer};
 
 /// Le type d'un bloc.
@@ -45,6 +46,8 @@ pub enum ParseError {
     Empty,
     /// Quelque chose après la valeur attendue.
     ExtraInput,
+    /// L'entrée n'est pas une règle / une déclaration valide.
+    Invalid,
 }
 
 /// Le parser : une source de tokens avec un token d'avance.
@@ -122,5 +125,53 @@ impl<'a> Parser<'a> {
             None => Ok(value),
             Some(_) => Err(ParseError::ExtraInput),
         }
+    }
+
+    /// "Parse a stylesheet" (§5.3.3) : les règles d'une feuille de style.
+    pub fn parse_stylesheet(&mut self) -> Vec<Item<'a>> {
+        Cursor::new(self.parse_component_value_list()).consume_rule_list(true)
+    }
+
+    /// "Parse a list of rules" (§5.3.4), par exemple le contenu d'un `@media`.
+    pub fn parse_rule_list(&mut self) -> Vec<Item<'a>> {
+        Cursor::new(self.parse_component_value_list()).consume_rule_list(false)
+    }
+
+    /// "Parse a list of declarations" (§5.3.8), par exemple un attribut `style`.
+    pub fn parse_declaration_list(&mut self) -> Vec<Item<'a>> {
+        Cursor::new(self.parse_component_value_list()).consume_declaration_list()
+    }
+
+    /// "Parse a block's contents" : déclarations et règles imbriquées (CSS nesting).
+    pub fn parse_block_contents(&mut self) -> Vec<Item<'a>> {
+        Cursor::new(self.parse_component_value_list()).consume_block_contents()
+    }
+
+    /// "Parse a rule" (§5.3.5) : exactement une règle.
+    pub fn parse_rule(&mut self) -> Result<Item<'a>, ParseError> {
+        let mut cursor = Cursor::new(self.parse_component_value_list());
+        cursor.skip_whitespace();
+        if cursor.at_end() {
+            return Err(ParseError::Empty);
+        }
+        let item = cursor.consume_one_rule().ok_or(ParseError::Invalid)?;
+        cursor.skip_whitespace();
+        if !cursor.at_end() {
+            return Err(ParseError::ExtraInput);
+        }
+        Ok(item)
+    }
+
+    /// "Parse a declaration" (§5.3.7) : exactement une déclaration (la valeur va
+    /// jusqu'à la fin de l'entrée).
+    pub fn parse_declaration(&mut self) -> Result<Declaration<'a>, ParseError> {
+        let values = self.parse_component_value_list();
+        let first = values
+            .iter()
+            .position(|v| !matches!(v, ComponentValue::Token(Token::Whitespace)));
+        let Some(first) = first else {
+            return Err(ParseError::Empty);
+        };
+        consume_declaration(values[first..].to_vec()).ok_or(ParseError::Invalid)
     }
 }

@@ -17,7 +17,9 @@
 #![warn(missing_docs)]
 
 mod parser;
+mod rules;
 mod tokenizer;
 
 pub use parser::{BlockKind, ComponentValue, ParseError, Parser};
+pub use rules::{AtRule, Declaration, Item, QualifiedRule};
 pub use tokenizer::{Numeric, Token, TokenError, Tokenizer, preprocess};
