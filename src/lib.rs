@@ -10,4 +10,4 @@ mod tree_builder;
 
 pub use token::{Attribute, Doctype, Tag, Token};
 pub use tokenizer::{InitialState, Tokenizer};
-pub use tree_builder::parse_document;
+pub use tree_builder::{parse_document, parse_document_with, parse_fragment, ParseOptions};

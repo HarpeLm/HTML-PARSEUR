@@ -17,9 +17,71 @@ use crate::token::{Doctype, Token};
 use crate::tokenizer::{InitialState, Tokenizer};
 
 /// Parse une page HTML complète et renvoie son DOM.
+/// Options du parser.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct ParseOptions {
+    /// JavaScript activé : change seulement l'interprétation de <noscript>.
+    pub scripting: bool,
+}
+
+/// Parse une page HTML complète et renvoie son DOM.
 pub fn parse_document(html: &str) -> Document {
-    let mut builder = TreeBuilder::default();
+    parse_document_with(html, ParseOptions::default())
+}
+
+pub fn parse_document_with(html: &str, options: ParseOptions) -> Document {
+    let mut builder = TreeBuilder { scripting: options.scripting, ..TreeBuilder::default() };
     let mut tokenizer = Tokenizer::new(html);
+    run(&mut builder, &mut tokenizer);
+    builder.doc
+}
+
+/// Parse un fragment HTML dans le contexte d'un élément (§13.4), comme le fait
+/// `element.innerHTML = html`. Renvoie le document et le nœud racine dont les
+/// enfants sont le résultat.
+pub fn parse_fragment(html: &str, context_ns: Namespace, context_name: &str, options: ParseOptions) -> (Document, NodeId) {
+    use atoms::*;
+    let mut builder = TreeBuilder { scripting: options.scripting, ..TreeBuilder::default() };
+    let mut tokenizer = Tokenizer::new(html);
+
+    // L'élément de contexte existe dans le document, mais hors de l'arbre.
+    let name = builder.doc.atoms.intern(context_name);
+    let context_tag = TagToken { name, attrs: Vec::new(), self_closing: false };
+    let context = builder.create_element(&context_tag, context_ns);
+    builder.context = Some(context);
+
+    // L'état de départ du tokenizer dépend du contexte : dans un <title>, tout
+    // est du texte, etc.
+    if context_ns == Namespace::Html {
+        let state = match name {
+            TITLE | TEXTAREA => Some(InitialState::Rcdata),
+            STYLE | XMP | IFRAME | NOEMBED | NOFRAMES => Some(InitialState::Rawtext),
+            SCRIPT => Some(InitialState::ScriptData),
+            NOSCRIPT if builder.scripting => Some(InitialState::Rawtext),
+            PLAINTEXT => Some(InitialState::Plaintext),
+            _ => None,
+        };
+        if let Some(state) = state {
+            tokenizer.set_state(state);
+        }
+    }
+
+    let root = builder.create_element(&TagToken { name: HTML, attrs: Vec::new(), self_closing: false }, Namespace::Html);
+    builder.doc.append(NodeId::DOCUMENT, root);
+    builder.open.push(root);
+    if builder.is_html(context, TEMPLATE) {
+        builder.template_modes.push(Mode::InTemplate);
+    }
+    builder.reset_insertion_mode();
+    if builder.is_html(context, FORM) {
+        builder.form = Some(context);
+    }
+
+    run(&mut builder, &mut tokenizer);
+    (builder.doc, root)
+}
+
+fn run(builder: &mut TreeBuilder, tokenizer: &mut Tokenizer<'_>) {
     loop {
         // <![CDATA[ n'est une section CDATA que dans du SVG/MathML.
         tokenizer.set_cdata_allowed(builder.current_is_foreign());
@@ -31,7 +93,6 @@ pub fn parse_document(html: &str) -> Document {
         }
     }
     builder.fill_selectedcontent();
-    builder.doc
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -127,6 +188,8 @@ pub struct TreeBuilder {
     pending_table_text: String,
     /// Pile des modes d'insertion des <template> ouverts (§13.2.4.1).
     template_modes: Vec<Mode>,
+    /// Élément de contexte, pour le parsing de fragments (innerHTML).
+    context: Option<NodeId>,
 }
 
 impl Default for TreeBuilder {
@@ -146,6 +209,7 @@ impl Default for TreeBuilder {
             foster_parenting: false,
             pending_table_text: String::new(),
             template_modes: Vec::new(),
+            context: None,
         }
     }
 }
@@ -210,8 +274,17 @@ impl TreeBuilder {
         }
     }
 
+    /// "Adjusted current node" : dans un fragment, tant que seule la racine est
+    /// ouverte, c'est l'élément de contexte qui compte.
+    fn adjusted_current(&self) -> Option<NodeId> {
+        match (self.context, self.open.len()) {
+            (Some(context), 1) => Some(context),
+            _ => self.open.last().copied(),
+        }
+    }
+
     fn current_is_foreign(&self) -> bool {
-        self.open.last().and_then(|&n| self.doc.element(n)).is_some_and(|e| e.ns != Namespace::Html)
+        self.adjusted_current().and_then(|n| self.doc.element(n)).is_some_and(|e| e.ns != Namespace::Html)
     }
 
     fn dispatch<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
@@ -379,6 +452,19 @@ impl TreeBuilder {
 
     fn template_on_stack(&self) -> bool {
         self.open.iter().any(|&n| self.is_html(n, atoms::TEMPLATE))
+    }
+
+    /// Pour les règles de <form> uniquement : l'innerHTML d'un <template> se
+    /// comporte comme l'intérieur d'un template (vérifié par WPT). Ailleurs,
+    /// surtout pas : le template de contexte n'est pas dans la pile et ne doit
+    /// jamais être "fermé".
+    fn template_on_stack_or_context(&self) -> bool {
+        self.template_on_stack() || self.context.is_some_and(|c| self.is_html(c, atoms::TEMPLATE))
+    }
+
+    /// Fragment dont le contexte est un <select> (innerHTML d'un select).
+    fn in_select_fragment(&self) -> bool {
+        self.context.is_some_and(|c| self.is_html(c, atoms::SELECT))
     }
 
     /// L'endroit où insérer un nouveau nœud (§13.2.6.1) : (parent, avant quel nœud).
@@ -894,12 +980,12 @@ impl TreeBuilder {
                 self.frameset_ok = false;
             }
             FORM => {
-                if self.form.is_some() && !self.template_on_stack() {
+                if self.form.is_some() && !self.template_on_stack_or_context() {
                     return None;
                 }
                 self.close_p_if_in_button_scope();
                 let node = self.insert_html(&tag);
-                if !self.template_on_stack() {
+                if !self.template_on_stack_or_context() {
                     self.form = Some(node);
                 }
             }
@@ -980,6 +1066,9 @@ impl TreeBuilder {
             INPUT => {
                 if self.in_scope(SELECT, Scope::Default) {
                     self.pop_until(SELECT);
+                } else if self.in_select_fragment() {
+                    // Pas de <input> dans un <select> : ignoré.
+                    return None;
                 }
                 self.reconstruct_formatting();
                 self.insert_void(&tag);
@@ -1029,6 +1118,9 @@ impl TreeBuilder {
                 // ferme le premier au lieu de s'imbriquer.
                 if self.in_scope(SELECT, Scope::Default) {
                     self.pop_until(SELECT);
+                    return None;
+                }
+                if self.in_select_fragment() {
                     return None;
                 }
                 self.reconstruct_formatting();
@@ -1123,7 +1215,7 @@ impl TreeBuilder {
                 }
             }
             FORM => {
-                if self.template_on_stack() {
+                if self.template_on_stack_or_context() {
                     if self.in_scope(FORM, Scope::Default) {
                         self.generate_implied_end_tags(None);
                         self.pop_until(FORM);
@@ -1361,8 +1453,12 @@ impl TreeBuilder {
     fn reset_insertion_mode(&mut self) {
         use atoms::*;
         for i in (0..self.open.len()).rev() {
-            let node = self.open[i];
             let last = i == 0;
+            // Fragment : arrivé en bas de la pile, on regarde l'élément de contexte.
+            let node = match self.context {
+                Some(context) if last => context,
+                _ => self.open[i],
+            };
             let Some(e) = self.doc.element(node) else { continue };
             if e.ns != Namespace::Html {
                 if last {
@@ -1471,7 +1567,7 @@ impl TreeBuilder {
                 None
             }
             Tok::Start(tag) if tag.name == FORM => {
-                let in_template = self.template_on_stack();
+                let in_template = self.template_on_stack_or_context();
                 if self.form.is_some() && !in_template {
                     return None;
                 }
@@ -1747,7 +1843,7 @@ impl TreeBuilder {
     /// Le dispatcher (§13.2.6) : faut-il appliquer les règles du contenu étranger ?
     fn use_foreign_rules(&self, tok: &Tok) -> bool {
         use atoms::*;
-        let Some(&node) = self.open.last() else { return false };
+        let Some(node) = self.adjusted_current() else { return false };
         let Some(e) = self.doc.element(node) else { return false };
         if e.ns == Namespace::Html || matches!(tok, Tok::Eof) {
             return false;
@@ -1787,7 +1883,7 @@ impl TreeBuilder {
             Tok::Start(ref tag) if self.breaks_out(tag) => self.break_out_of_foreign(tok),
             Tok::End(ref tag) if tag.name == atoms::BR || tag.name == atoms::P => self.break_out_of_foreign(tok),
             Tok::Start(mut tag) => {
-                let ns = self.doc.element(self.current()).unwrap().ns;
+                let ns = self.doc.element(self.adjusted_current().unwrap()).unwrap().ns;
                 if ns == Namespace::MathMl {
                     foreign::adjust_mathml_attributes(&mut tag.attrs);
                 } else {
@@ -1842,7 +1938,10 @@ impl TreeBuilder {
             }
             self.open.pop();
         }
-        Some(tok)
+        // Retraiter avec les règles HTML du mode courant, SANS repasser par le
+        // dispatcher : dans un fragment dont le contexte est un <svg>, le dispatcher
+        // renverrait sinon le token au SVG, indéfiniment.
+        self.dispatch(tok)
     }
 
     // ───────────── <select> personnalisable ─────────────
@@ -1952,7 +2051,10 @@ impl TreeBuilder {
             Tok::Doctype(_) => None,
             Tok::Start(ref tag) if tag.name == atoms::HTML => self.in_body(tok),
             Tok::End(ref tag) if tag.name == atoms::HTML => {
-                self.mode = Mode::AfterAfterBody;
+                // Dans un fragment, </html> est ignoré (on reste dans la racine).
+                if self.context.is_none() {
+                    self.mode = Mode::AfterAfterBody;
+                }
                 None
             }
             Tok::Eof => None,
