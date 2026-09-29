@@ -345,7 +345,8 @@ impl StyleEngine {
             }
             let is_root = parent.is_none();
             let ctx = Context {
-                env: self.env.clone(),
+                viewport_width: self.env.width,
+                viewport_height: self.env.height,
                 root_font_size,
                 is_root,
                 parent_is_flex_or_grid: parent.as_ref().is_some_and(|p| {

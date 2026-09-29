@@ -8,7 +8,6 @@
 use std::fmt;
 use std::rc::Rc;
 
-use lumen_css::media::Environment;
 use lumen_css::properties::{SpecifiedValue, initial_value, is_inherited};
 use lumen_css::values::{LengthPercentage, format_number};
 use lumen_css::variables::CustomProperties;
@@ -234,10 +233,12 @@ pub enum Cascaded {
 }
 
 /// Le contexte de calcul : la fenêtre et la racine du document.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Context {
-    /// L'environnement (taille de la fenêtre pour `vw`/`vh`).
-    pub env: Environment,
+    /// La largeur de la fenêtre, en px (pour `vw`).
+    pub viewport_width: f64,
+    /// La hauteur de la fenêtre, en px (pour `vh`).
+    pub viewport_height: f64,
     /// La taille de police de l'élément racine (pour `rem`).
     pub root_font_size: f64,
     /// L'élément est la racine du document (`<html>`).
@@ -248,7 +249,7 @@ pub struct Context {
 
 /// Une longueur en px. `em_base` : la taille de police de référence.
 fn length_px(value: f64, unit: &str, em_base: f64, ctx: &Context) -> f64 {
-    let (w, h) = (ctx.env.width / 100.0, ctx.env.height / 100.0);
+    let (w, h) = (ctx.viewport_width / 100.0, ctx.viewport_height / 100.0);
     value
         * match unit {
             "px" => 1.0,
