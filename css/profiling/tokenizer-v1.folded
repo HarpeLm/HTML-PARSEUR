@@ -1,0 +1,29 @@
+profile_css::main 89
+profile_css::main;_free 1
+profile_css::main;Tokenizer::consume_numeric 2
+profile_css::main;Tokenizer::consume_ident_like 24
+profile_css::main;Tokenizer::consume_ident_sequence 2
+profile_css::main;Tokenizer::next 419
+profile_css::main;Tokenizer::next;Tokenizer::consume_numeric 10
+profile_css::main;Tokenizer::next;Tokenizer::consume_numeric;Tokenizer::consume_digits 7
+profile_css::main;Tokenizer::next;Tokenizer::consume_numeric;Tokenizer::consume_digits;Tokenizer::consume 2
+profile_css::main;Tokenizer::next;Tokenizer::consume_numeric;Tokenizer::consume_ident_sequence 8
+profile_css::main;Tokenizer::next;Tokenizer::consume_numeric;Tokenizer::consume 2
+profile_css::main;Tokenizer::next;Tokenizer::consume_numeric;Tokenizer::peek_nth 1
+profile_css::main;Tokenizer::next;Tokenizer::consume_numeric;<f64 as core::str::traits::FromStr>::from_str 4
+profile_css::main;Tokenizer::next;Tokenizer::consume_numeric;<f64 as core::str::traits::FromStr>::from_str;core::num::imp::dec2flt::parse::parse_number 6
+profile_css::main;Tokenizer::next;Tokenizer::consume_ident_like 46
+profile_css::main;Tokenizer::next;Tokenizer::consume_ident_like;<alloc::raw_vec::RawVecInner<_>>::reserve::do_reserve_and_handle::<alloc::alloc::Global> 1
+profile_css::main;Tokenizer::next;Tokenizer::consume_ident_like;<alloc::raw_vec::RawVecInner<_>>::reserve::do_reserve_and_handle::<alloc::alloc::Global>;<alloc::raw_vec::RawVecInner>::finish_grow;_realloc;_malloc_zone_realloc;xzm_malloc_zone_malloc_type_realloc 1
+profile_css::main;Tokenizer::next;Tokenizer::consume_ident_like;<alloc::raw_vec::RawVecInner<_>>::reserve::do_reserve_and_handle::<alloc::alloc::Global>;<alloc::raw_vec::RawVecInner>::finish_grow;_realloc;_malloc_zone_realloc;xzm_malloc_zone_malloc_type_realloc;DYLD-STUB$$_platform_memmove 1
+profile_css::main;Tokenizer::next;Tokenizer::consume_ident_like;<alloc::raw_vec::RawVecInner<_>>::reserve::do_reserve_and_handle::<alloc::alloc::Global>;<alloc::raw_vec::RawVecInner>::finish_grow;_realloc;_malloc_zone_realloc;xzm_malloc_zone_malloc_type_realloc;_xzm_free 1
+profile_css::main;Tokenizer::next;Tokenizer::consume_ident_like;<alloc::raw_vec::RawVecInner<_>>::reserve::do_reserve_and_handle::<alloc::alloc::Global>;<alloc::raw_vec::RawVecInner>::finish_grow;_realloc;_malloc_zone_realloc;xzm_malloc_zone_malloc_type_realloc;_xzm_free;mach_absolute_time 3
+profile_css::main;Tokenizer::next;Tokenizer::consume_ident_like;<alloc::raw_vec::RawVecInner<_>>::reserve::do_reserve_and_handle::<alloc::alloc::Global>;<alloc::raw_vec::RawVecInner>::finish_grow;_realloc;_malloc_zone_realloc;xzm_malloc_zone_malloc_type_realloc;_platform_memmove 1
+profile_css::main;Tokenizer::next;Tokenizer::consume_ident_like;Tokenizer::consume_ident_sequence 587
+profile_css::main;Tokenizer::next;Tokenizer::consume_ident_like;Tokenizer::consume 14
+profile_css::main;Tokenizer::next;Tokenizer::consume_ident_sequence 2
+profile_css::main;Tokenizer::next;Tokenizer::peek 2
+profile_css::main;Tokenizer::next;Tokenizer::consume 2
+profile_css::main;Tokenizer::next;Tokenizer::peek_nth 1
+profile_css::main;Tokenizer::next;lumen_css::tokenizer::starts_ident 2
+profile_css::main;Tokenizer::next;<f64 as core::str::traits::FromStr>::from_str 1

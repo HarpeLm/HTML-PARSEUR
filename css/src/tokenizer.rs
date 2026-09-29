@@ -144,10 +144,23 @@ fn is_ident_char(c: char) -> bool {
     is_ident_start(c) || c.is_ascii_digit() || c == '-'
 }
 
-/// Octet d'identifiant : [a-zA-Z0-9_-], ou n'importe quel octet d'un caractère non-ASCII.
+/// Table des octets d'identifiant : [a-zA-Z0-9_-], et tout octet >= 0x80 (qui
+/// appartient forcément à un caractère non-ASCII). Calculée à la compilation :
+/// le test coûte une seule lecture en mémoire au lieu de plusieurs comparaisons.
+const IDENT_BYTES: [bool; 256] = {
+    let mut table = [false; 256];
+    let mut b = 0;
+    while b < 256 {
+        let c = b as u8;
+        table[b] = c.is_ascii_alphanumeric() || c == b'_' || c == b'-' || c >= 0x80;
+        b += 1;
+    }
+    table
+};
+
 #[inline]
 fn is_ident_byte(b: u8) -> bool {
-    b.is_ascii_alphanumeric() || b == b'_' || b == b'-' || b >= 0x80
+    IDENT_BYTES[b as usize]
 }
 
 fn is_whitespace(c: char) -> bool {
