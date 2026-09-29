@@ -129,6 +129,17 @@ const PIECES: &[&str] = &[
     "-1e308",
     "1e308",
     "/",
+    "calc(1px + 2%)",
+    "calc(",
+    " * ",
+    " / ",
+    "0",
+    "-0",
+    "1e999px",
+    "auto",
+    "10px",
+    "1.5em",
+    "-3vw",
 ];
 
 fn random_css(rng: &mut Rng) -> String {
@@ -158,6 +169,23 @@ fn exercise(input: &str) {
         let _ = color.to_css_color5();
     }
     let _ = parse_selector_list(&values);
+    for property in [
+        "margin",
+        "padding",
+        "width",
+        "max-height",
+        "display",
+        "opacity",
+        "font-weight",
+        "line-height",
+        "z-index",
+    ] {
+        if let Some(longhands) = lumen_css::properties::parse_property(property, &values) {
+            for (_, value) in longhands {
+                let _ = value.to_string();
+            }
+        }
+    }
     // Les préludes des règles, comme le ferait un vrai moteur de style.
     for item in Parser::new(&css).parse_stylesheet() {
         if let Item::QualifiedRule(rule) = item

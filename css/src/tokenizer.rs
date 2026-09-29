@@ -352,7 +352,12 @@ impl<'a> Tokenizer<'a> {
             }
         }
         let repr = &self.input[start..self.pos];
-        let value = repr.parse::<f64>().unwrap_or(0.0);
+        // `1e999` dépasse le plus grand nombre représentable : on le borne au plus
+        // grand nombre fini, comme le prévoit CSS Values ("clamped").
+        let value = repr
+            .parse::<f64>()
+            .unwrap_or(0.0)
+            .clamp(-f64::MAX, f64::MAX);
         Numeric {
             repr,
             value,

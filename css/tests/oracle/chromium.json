@@ -1,0 +1,1078 @@
+{
+ "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Claude/2.9939.2 Chrome/152.0.7977.130 Safari/537.36",
+ "captured": "2026-09-29",
+ "results": [
+  {
+   "property": "margin",
+   "value": "10px",
+   "valid": true,
+   "longhands": {
+    "margin-top": "10px",
+    "margin-right": "10px",
+    "margin-bottom": "10px",
+    "margin-left": "10px"
+   }
+  },
+  {
+   "property": "margin",
+   "value": "10px auto",
+   "valid": true,
+   "longhands": {
+    "margin-top": "10px",
+    "margin-right": "auto",
+    "margin-bottom": "10px",
+    "margin-left": "auto"
+   }
+  },
+  {
+   "property": "margin",
+   "value": "1em 2% 3vw",
+   "valid": true,
+   "longhands": {
+    "margin-top": "1em",
+    "margin-right": "2%",
+    "margin-bottom": "3vw",
+    "margin-left": "2%"
+   }
+  },
+  {
+   "property": "margin",
+   "value": "1px 2px 3px 4px",
+   "valid": true,
+   "longhands": {
+    "margin-top": "1px",
+    "margin-right": "2px",
+    "margin-bottom": "3px",
+    "margin-left": "4px"
+   }
+  },
+  {
+   "property": "margin",
+   "value": "0",
+   "valid": true,
+   "longhands": {
+    "margin-top": "0px",
+    "margin-right": "0px",
+    "margin-bottom": "0px",
+    "margin-left": "0px"
+   }
+  },
+  {
+   "property": "margin",
+   "value": "-5px",
+   "valid": true,
+   "longhands": {
+    "margin-top": "-5px",
+    "margin-right": "-5px",
+    "margin-bottom": "-5px",
+    "margin-left": "-5px"
+   }
+  },
+  {
+   "property": "margin",
+   "value": "auto",
+   "valid": true,
+   "longhands": {
+    "margin-top": "auto",
+    "margin-right": "auto",
+    "margin-bottom": "auto",
+    "margin-left": "auto"
+   }
+  },
+  {
+   "property": "margin",
+   "value": "AUTO",
+   "valid": true,
+   "longhands": {
+    "margin-top": "auto",
+    "margin-right": "auto",
+    "margin-bottom": "auto",
+    "margin-left": "auto"
+   }
+  },
+  {
+   "property": "margin",
+   "value": "1px 2px 3px 4px 5px",
+   "valid": false,
+   "longhands": {}
+  },
+  {
+   "property": "margin",
+   "value": "",
+   "valid": false,
+   "longhands": {}
+  },
+  {
+   "property": "margin",
+   "value": "red",
+   "valid": false,
+   "longhands": {}
+  },
+  {
+   "property": "margin",
+   "value": "10",
+   "valid": false,
+   "longhands": {}
+  },
+  {
+   "property": "margin",
+   "value": "1.5em",
+   "valid": true,
+   "longhands": {
+    "margin-top": "1.5em",
+    "margin-right": "1.5em",
+    "margin-bottom": "1.5em",
+    "margin-left": "1.5em"
+   }
+  },
+  {
+   "property": "margin",
+   "value": "0.5rem 1rem",
+   "valid": true,
+   "longhands": {
+    "margin-top": "0.5rem",
+    "margin-right": "1rem",
+    "margin-bottom": "0.5rem",
+    "margin-left": "1rem"
+   }
+  },
+  {
+   "property": "margin",
+   "value": "calc(10px + 5px)",
+   "valid": true,
+   "longhands": {
+    "margin-top": "calc(15px)",
+    "margin-right": "calc(15px)",
+    "margin-bottom": "calc(15px)",
+    "margin-left": "calc(15px)"
+   }
+  },
+  {
+   "property": "margin",
+   "value": "calc(50% - 2em) auto",
+   "valid": true,
+   "longhands": {
+    "margin-top": "calc(50% - 2em)",
+    "margin-right": "auto",
+    "margin-bottom": "calc(50% - 2em)",
+    "margin-left": "auto"
+   }
+  },
+  {
+   "property": "margin-top",
+   "value": "12px",
+   "valid": true,
+   "longhands": {
+    "margin-top": "12px"
+   }
+  },
+  {
+   "property": "margin-top",
+   "value": "-1.25em",
+   "valid": true,
+   "longhands": {
+    "margin-top": "-1.25em"
+   }
+  },
+  {
+   "property": "margin-top",
+   "value": "auto",
+   "valid": true,
+   "longhands": {
+    "margin-top": "auto"
+   }
+  },
+  {
+   "property": "margin-top",
+   "value": "12px 13px",
+   "valid": false,
+   "longhands": {}
+  },
+  {
+   "property": "margin-left",
+   "value": "25%",
+   "valid": true,
+   "longhands": {
+    "margin-left": "25%"
+   }
+  },
+  {
+   "property": "margin-right",
+   "value": "calc(100% - 20px)",
+   "valid": true,
+   "longhands": {
+    "margin-right": "calc(100% - 20px)"
+   }
+  },
+  {
+   "property": "padding",
+   "value": "10px",
+   "valid": true,
+   "longhands": {
+    "padding-top": "10px",
+    "padding-right": "10px",
+    "padding-bottom": "10px",
+    "padding-left": "10px"
+   }
+  },
+  {
+   "property": "padding",
+   "value": "5px 10px",
+   "valid": true,
+   "longhands": {
+    "padding-top": "5px",
+    "padding-right": "10px",
+    "padding-bottom": "5px",
+    "padding-left": "10px"
+   }
+  },
+  {
+   "property": "padding",
+   "value": "1px 2px 3px",
+   "valid": true,
+   "longhands": {
+    "padding-top": "1px",
+    "padding-right": "2px",
+    "padding-bottom": "3px",
+    "padding-left": "2px"
+   }
+  },
+  {
+   "property": "padding",
+   "value": "1px 2px 3px 4px",
+   "valid": true,
+   "longhands": {
+    "padding-top": "1px",
+    "padding-right": "2px",
+    "padding-bottom": "3px",
+    "padding-left": "4px"
+   }
+  },
+  {
+   "property": "padding",
+   "value": "0",
+   "valid": true,
+   "longhands": {
+    "padding-top": "0px",
+    "padding-right": "0px",
+    "padding-bottom": "0px",
+    "padding-left": "0px"
+   }
+  },
+  {
+   "property": "padding",
+   "value": "-1px",
+   "valid": false,
+   "longhands": {}
+  },
+  {
+   "property": "padding",
+   "value": "auto",
+   "valid": false,
+   "longhands": {}
+  },
+  {
+   "property": "padding",
+   "value": "2vh 3vmin",
+   "valid": true,
+   "longhands": {
+    "padding-top": "2vh",
+    "padding-right": "3vmin",
+    "padding-bottom": "2vh",
+    "padding-left": "3vmin"
+   }
+  },
+  {
+   "property": "padding-top",
+   "value": "1ex",
+   "valid": true,
+   "longhands": {
+    "padding-top": "1ex"
+   }
+  },
+  {
+   "property": "padding-bottom",
+   "value": "3ch",
+   "valid": true,
+   "longhands": {
+    "padding-bottom": "3ch"
+   }
+  },
+  {
+   "property": "padding-left",
+   "value": "calc(1px - 2px)",
+   "valid": true,
+   "longhands": {
+    "padding-left": "calc(-1px)"
+   }
+  },
+  {
+   "property": "width",
+   "value": "100px",
+   "valid": true,
+   "longhands": {
+    "width": "100px"
+   }
+  },
+  {
+   "property": "width",
+   "value": "50%",
+   "valid": true,
+   "longhands": {
+    "width": "50%"
+   }
+  },
+  {
+   "property": "width",
+   "value": "auto",
+   "valid": true,
+   "longhands": {
+    "width": "auto"
+   }
+  },
+  {
+   "property": "width",
+   "value": "-10px",
+   "valid": false,
+   "longhands": {}
+  },
+  {
+   "property": "width",
+   "value": "0",
+   "valid": true,
+   "longhands": {
+    "width": "0px"
+   }
+  },
+  {
+   "property": "width",
+   "value": "min-content",
+   "valid": true,
+   "longhands": {
+    "width": "min-content"
+   }
+  },
+  {
+   "property": "width",
+   "value": "max-content",
+   "valid": true,
+   "longhands": {
+    "width": "max-content"
+   }
+  },
+  {
+   "property": "width",
+   "value": "fit-content",
+   "valid": true,
+   "longhands": {
+    "width": "fit-content"
+   }
+  },
+  {
+   "property": "width",
+   "value": "calc(10px + 5px)",
+   "valid": true,
+   "longhands": {
+    "width": "calc(15px)"
+   }
+  },
+  {
+   "property": "width",
+   "value": "calc(50% - 2em)",
+   "valid": true,
+   "longhands": {
+    "width": "calc(50% - 2em)"
+   }
+  },
+  {
+   "property": "width",
+   "value": "calc(2 * 10px)",
+   "valid": true,
+   "longhands": {
+    "width": "calc(20px)"
+   }
+  },
+  {
+   "property": "width",
+   "value": "calc(10px * 2 + 1em)",
+   "valid": true,
+   "longhands": {
+    "width": "calc(1em + 20px)"
+   }
+  },
+  {
+   "property": "width",
+   "value": "calc(100% / 3)",
+   "valid": true,
+   "longhands": {
+    "width": "calc(33.3333%)"
+   }
+  },
+  {
+   "property": "width",
+   "value": "calc(10px + 5)",
+   "valid": false,
+   "longhands": {}
+  },
+  {
+   "property": "width",
+   "value": "calc(10px * 1px)",
+   "valid": false,
+   "longhands": {}
+  },
+  {
+   "property": "width",
+   "value": "calc( 1px + 2px )",
+   "valid": true,
+   "longhands": {
+    "width": "calc(3px)"
+   }
+  },
+  {
+   "property": "width",
+   "value": "CALC(1px + 2px)",
+   "valid": true,
+   "longhands": {
+    "width": "calc(3px)"
+   }
+  },
+  {
+   "property": "width",
+   "value": "calc(1em + 2px + 3em)",
+   "valid": true,
+   "longhands": {
+    "width": "calc(4em + 2px)"
+   }
+  },
+  {
+   "property": "width",
+   "value": "calc(2px - 3px)",
+   "valid": true,
+   "longhands": {
+    "width": "calc(-1px)"
+   }
+  },
+  {
+   "property": "width",
+   "value": "calc(10%)",
+   "valid": true,
+   "longhands": {
+    "width": "calc(10%)"
+   }
+  },
+  {
+   "property": "width",
+   "value": "calc(1in + 1cm)",
+   "valid": true,
+   "longhands": {
+    "width": "calc(133.795px)"
+   }
+  },
+  {
+   "property": "width",
+   "value": "10PX",
+   "valid": true,
+   "longhands": {
+    "width": "10px"
+   }
+  },
+  {
+   "property": "width",
+   "value": "1e2px",
+   "valid": true,
+   "longhands": {
+    "width": "100px"
+   }
+  },
+  {
+   "property": "width",
+   "value": "1.5px",
+   "valid": true,
+   "longhands": {
+    "width": "1.5px"
+   }
+  },
+  {
+   "property": "width",
+   "value": "0.1px",
+   "valid": true,
+   "longhands": {
+    "width": "0.1px"
+   }
+  },
+  {
+   "property": "width",
+   "value": "100",
+   "valid": false,
+   "longhands": {}
+  },
+  {
+   "property": "width",
+   "value": "none",
+   "valid": false,
+   "longhands": {}
+  },
+  {
+   "property": "height",
+   "value": "20em",
+   "valid": true,
+   "longhands": {
+    "height": "20em"
+   }
+  },
+  {
+   "property": "height",
+   "value": "auto",
+   "valid": true,
+   "longhands": {
+    "height": "auto"
+   }
+  },
+  {
+   "property": "height",
+   "value": "75%",
+   "valid": true,
+   "longhands": {
+    "height": "75%"
+   }
+  },
+  {
+   "property": "min-width",
+   "value": "0",
+   "valid": true,
+   "longhands": {
+    "min-width": "0px"
+   }
+  },
+  {
+   "property": "min-width",
+   "value": "auto",
+   "valid": true,
+   "longhands": {
+    "min-width": "auto"
+   }
+  },
+  {
+   "property": "min-width",
+   "value": "10px",
+   "valid": true,
+   "longhands": {
+    "min-width": "10px"
+   }
+  },
+  {
+   "property": "min-height",
+   "value": "5vh",
+   "valid": true,
+   "longhands": {
+    "min-height": "5vh"
+   }
+  },
+  {
+   "property": "max-width",
+   "value": "none",
+   "valid": true,
+   "longhands": {
+    "max-width": "none"
+   }
+  },
+  {
+   "property": "max-width",
+   "value": "800px",
+   "valid": true,
+   "longhands": {
+    "max-width": "800px"
+   }
+  },
+  {
+   "property": "max-width",
+   "value": "auto",
+   "valid": false,
+   "longhands": {}
+  },
+  {
+   "property": "max-height",
+   "value": "100%",
+   "valid": true,
+   "longhands": {
+    "max-height": "100%"
+   }
+  },
+  {
+   "property": "top",
+   "value": "0",
+   "valid": true,
+   "longhands": {
+    "top": "0px"
+   }
+  },
+  {
+   "property": "top",
+   "value": "-10px",
+   "valid": true,
+   "longhands": {
+    "top": "-10px"
+   }
+  },
+  {
+   "property": "top",
+   "value": "auto",
+   "valid": true,
+   "longhands": {
+    "top": "auto"
+   }
+  },
+  {
+   "property": "left",
+   "value": "50%",
+   "valid": true,
+   "longhands": {
+    "left": "50%"
+   }
+  },
+  {
+   "property": "right",
+   "value": "calc(10px + 1em)",
+   "valid": true,
+   "longhands": {
+    "right": "calc(1em + 10px)"
+   }
+  },
+  {
+   "property": "bottom",
+   "value": "2rem",
+   "valid": true,
+   "longhands": {
+    "bottom": "2rem"
+   }
+  },
+  {
+   "property": "display",
+   "value": "block",
+   "valid": true,
+   "longhands": {
+    "display": "block"
+   }
+  },
+  {
+   "property": "display",
+   "value": "inline",
+   "valid": true,
+   "longhands": {
+    "display": "inline"
+   }
+  },
+  {
+   "property": "display",
+   "value": "inline-block",
+   "valid": true,
+   "longhands": {
+    "display": "inline-block"
+   }
+  },
+  {
+   "property": "display",
+   "value": "none",
+   "valid": true,
+   "longhands": {
+    "display": "none"
+   }
+  },
+  {
+   "property": "display",
+   "value": "flex",
+   "valid": true,
+   "longhands": {
+    "display": "flex"
+   }
+  },
+  {
+   "property": "display",
+   "value": "inline-flex",
+   "valid": true,
+   "longhands": {
+    "display": "inline-flex"
+   }
+  },
+  {
+   "property": "display",
+   "value": "grid",
+   "valid": true,
+   "longhands": {
+    "display": "grid"
+   }
+  },
+  {
+   "property": "display",
+   "value": "contents",
+   "valid": true,
+   "longhands": {
+    "display": "contents"
+   }
+  },
+  {
+   "property": "display",
+   "value": "list-item",
+   "valid": true,
+   "longhands": {
+    "display": "list-item"
+   }
+  },
+  {
+   "property": "display",
+   "value": "table",
+   "valid": true,
+   "longhands": {
+    "display": "table"
+   }
+  },
+  {
+   "property": "display",
+   "value": "table-cell",
+   "valid": true,
+   "longhands": {
+    "display": "table-cell"
+   }
+  },
+  {
+   "property": "display",
+   "value": "flow-root",
+   "valid": true,
+   "longhands": {
+    "display": "flow-root"
+   }
+  },
+  {
+   "property": "display",
+   "value": "BLOCK",
+   "valid": true,
+   "longhands": {
+    "display": "block"
+   }
+  },
+  {
+   "property": "display",
+   "value": "blocky",
+   "valid": false,
+   "longhands": {}
+  },
+  {
+   "property": "display",
+   "value": "block inline",
+   "valid": false,
+   "longhands": {}
+  },
+  {
+   "property": "position",
+   "value": "static",
+   "valid": true,
+   "longhands": {
+    "position": "static"
+   }
+  },
+  {
+   "property": "position",
+   "value": "relative",
+   "valid": true,
+   "longhands": {
+    "position": "relative"
+   }
+  },
+  {
+   "property": "position",
+   "value": "absolute",
+   "valid": true,
+   "longhands": {
+    "position": "absolute"
+   }
+  },
+  {
+   "property": "position",
+   "value": "fixed",
+   "valid": true,
+   "longhands": {
+    "position": "fixed"
+   }
+  },
+  {
+   "property": "position",
+   "value": "sticky",
+   "valid": true,
+   "longhands": {
+    "position": "sticky"
+   }
+  },
+  {
+   "property": "position",
+   "value": "center",
+   "valid": false,
+   "longhands": {}
+  },
+  {
+   "property": "float",
+   "value": "left",
+   "valid": true,
+   "longhands": {
+    "float": "left"
+   }
+  },
+  {
+   "property": "float",
+   "value": "none",
+   "valid": true,
+   "longhands": {
+    "float": "none"
+   }
+  },
+  {
+   "property": "float",
+   "value": "middle",
+   "valid": false,
+   "longhands": {}
+  },
+  {
+   "property": "box-sizing",
+   "value": "border-box",
+   "valid": true,
+   "longhands": {
+    "box-sizing": "border-box"
+   }
+  },
+  {
+   "property": "box-sizing",
+   "value": "content-box",
+   "valid": true,
+   "longhands": {
+    "box-sizing": "content-box"
+   }
+  },
+  {
+   "property": "visibility",
+   "value": "hidden",
+   "valid": true,
+   "longhands": {
+    "visibility": "hidden"
+   }
+  },
+  {
+   "property": "visibility",
+   "value": "collapse",
+   "valid": true,
+   "longhands": {
+    "visibility": "collapse"
+   }
+  },
+  {
+   "property": "opacity",
+   "value": "0.5",
+   "valid": true,
+   "longhands": {
+    "opacity": "0.5"
+   }
+  },
+  {
+   "property": "opacity",
+   "value": "50%",
+   "valid": true,
+   "longhands": {
+    "opacity": "0.5"
+   }
+  },
+  {
+   "property": "opacity",
+   "value": "2",
+   "valid": true,
+   "longhands": {
+    "opacity": "2"
+   }
+  },
+  {
+   "property": "opacity",
+   "value": "-1",
+   "valid": true,
+   "longhands": {
+    "opacity": "-1"
+   }
+  },
+  {
+   "property": "opacity",
+   "value": "red",
+   "valid": false,
+   "longhands": {}
+  },
+  {
+   "property": "font-size",
+   "value": "16px",
+   "valid": true,
+   "longhands": {
+    "font-size": "16px"
+   }
+  },
+  {
+   "property": "font-size",
+   "value": "1.2em",
+   "valid": true,
+   "longhands": {
+    "font-size": "1.2em"
+   }
+  },
+  {
+   "property": "font-size",
+   "value": "120%",
+   "valid": true,
+   "longhands": {
+    "font-size": "120%"
+   }
+  },
+  {
+   "property": "font-size",
+   "value": "large",
+   "valid": true,
+   "longhands": {
+    "font-size": "large"
+   }
+  },
+  {
+   "property": "font-size",
+   "value": "xx-small",
+   "valid": true,
+   "longhands": {
+    "font-size": "xx-small"
+   }
+  },
+  {
+   "property": "font-size",
+   "value": "smaller",
+   "valid": true,
+   "longhands": {
+    "font-size": "smaller"
+   }
+  },
+  {
+   "property": "font-size",
+   "value": "-1px",
+   "valid": false,
+   "longhands": {}
+  },
+  {
+   "property": "font-weight",
+   "value": "bold",
+   "valid": true,
+   "longhands": {
+    "font-weight": "bold"
+   }
+  },
+  {
+   "property": "font-weight",
+   "value": "normal",
+   "valid": true,
+   "longhands": {
+    "font-weight": "normal"
+   }
+  },
+  {
+   "property": "font-weight",
+   "value": "700",
+   "valid": true,
+   "longhands": {
+    "font-weight": "700"
+   }
+  },
+  {
+   "property": "font-weight",
+   "value": "450",
+   "valid": true,
+   "longhands": {
+    "font-weight": "450"
+   }
+  },
+  {
+   "property": "font-weight",
+   "value": "bolder",
+   "valid": true,
+   "longhands": {
+    "font-weight": "bolder"
+   }
+  },
+  {
+   "property": "font-weight",
+   "value": "1001",
+   "valid": false,
+   "longhands": {}
+  },
+  {
+   "property": "font-weight",
+   "value": "0",
+   "valid": false,
+   "longhands": {}
+  },
+  {
+   "property": "line-height",
+   "value": "normal",
+   "valid": true,
+   "longhands": {
+    "line-height": "normal"
+   }
+  },
+  {
+   "property": "line-height",
+   "value": "1.5",
+   "valid": true,
+   "longhands": {
+    "line-height": "1.5"
+   }
+  },
+  {
+   "property": "line-height",
+   "value": "20px",
+   "valid": true,
+   "longhands": {
+    "line-height": "20px"
+   }
+  },
+  {
+   "property": "line-height",
+   "value": "150%",
+   "valid": true,
+   "longhands": {
+    "line-height": "150%"
+   }
+  },
+  {
+   "property": "line-height",
+   "value": "-1",
+   "valid": false,
+   "longhands": {}
+  },
+  {
+   "property": "z-index",
+   "value": "10",
+   "valid": true,
+   "longhands": {
+    "z-index": "10"
+   }
+  },
+  {
+   "property": "z-index",
+   "value": "-5",
+   "valid": true,
+   "longhands": {
+    "z-index": "-5"
+   }
+  },
+  {
+   "property": "z-index",
+   "value": "auto",
+   "valid": true,
+   "longhands": {
+    "z-index": "auto"
+   }
+  },
+  {
+   "property": "z-index",
+   "value": "1.5",
+   "valid": false,
+   "longhands": {}
+  }
+ ]
+}
