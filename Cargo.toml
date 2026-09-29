@@ -5,6 +5,9 @@ edition = "2024"
 description = "Tokenizer et parser HTML conformes à la spec WHATWG (100 % html5lib et WPT), en Rust, sans dépendance"
 repository = "https://github.com/HarpeLm/HTML-PARSEUR"
 readme = "README.md"
+license = "MIT OR Apache-2.0"
+# Données de test et profils : utiles au développement, pas au paquet publié.
+exclude = ["html5lib-tests", "wpt-tests", "profiling"]
 keywords = ["html", "parser", "tokenizer", "dom", "whatwg"]
 categories = ["parser-implementations", "web-programming"]
 

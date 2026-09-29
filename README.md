@@ -199,3 +199,13 @@ profiling/            script de profilage et historique des flame graphs
 - `benches/html5ever_arena/` reprend l'exemple `arena.rs` de
   [html5ever](https://github.com/servo/html5ever) (MIT / Apache-2.0), uniquement
   pour les benchmarks.
+
+## Licence
+
+Au choix :
+
+- licence Apache, version 2.0 ([LICENSE-APACHE](LICENSE-APACHE)) ;
+- licence MIT ([LICENSE-MIT](LICENSE-MIT)).
+
+Sauf mention contraire, toute contribution proposée pour inclusion dans ce projet
+est placée sous cette même double licence, sans condition supplémentaire.
