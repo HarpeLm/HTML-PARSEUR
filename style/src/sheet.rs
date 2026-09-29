@@ -7,9 +7,11 @@
 use std::ops::Range;
 
 use lumen_css::media::{Environment, MediaQueryList};
-use lumen_css::properties::parse_property;
+use lumen_css::properties::{Longhand, parse_property};
 use lumen_css::selectors::{SelectorList, parse_selector_list};
-use lumen_css::variables::{is_custom_property, raw_declarations};
+use lumen_css::variables::{
+    contains_var, css_wide_keyword, is_custom_property, is_valid_value, raw_declarations,
+};
 use lumen_css::{BlockKind, ComponentValue, Parser, Token, Tokenizer, preprocess};
 
 /// `propriété: valeur [!important]`, la valeur gardée en texte.
@@ -22,6 +24,50 @@ pub struct Declaration {
     pub value: String,
     /// `!important`.
     pub important: bool,
+    /// La valeur analysée une fois, à la lecture de la feuille.
+    pub parsed: Parsed,
+}
+
+/// Ce que donne la valeur d'une déclaration, analysée une fois pour toutes
+/// (et non pour chaque élément auquel la règle s'applique).
+#[derive(Debug, Clone, PartialEq)]
+pub enum Parsed {
+    /// `--nom: ...` : une propriété personnalisée (son texte suffit).
+    Custom,
+    /// Les propriétés longues définies et leur valeur.
+    Longhands(Vec<Longhand>),
+    /// `initial`, `inherit`, `unset`... pour ces propriétés longues.
+    Keyword(&'static str, Vec<&'static str>),
+    /// La valeur contient `var()` : elle dépend de l'élément, on la substitue
+    /// au moment du calcul. Les propriétés longues visées.
+    Var(Vec<&'static str>),
+    /// Ignorée : valeur invalide, ou propriété que Lumen ne calcule pas encore.
+    Ignored,
+}
+
+/// Analyse une déclaration.
+fn analyze(name: &str, value: &str) -> Parsed {
+    if is_custom_property(name) {
+        return Parsed::Custom;
+    }
+    let targets = crate::computed::longhands(name);
+    if targets.is_empty() {
+        return Parsed::Ignored;
+    }
+    if let Some(keyword) = css_wide_keyword(value) {
+        return Parsed::Keyword(keyword, targets);
+    }
+    if contains_var(value) {
+        return if is_valid_value(value) {
+            Parsed::Var(targets)
+        } else {
+            Parsed::Ignored
+        };
+    }
+    match parse_property(name, &Parser::new(value).parse_component_value_list()) {
+        Some(longhands) => Parsed::Longhands(longhands),
+        None => Parsed::Ignored,
+    }
 }
 
 /// `sélecteurs { déclarations }`.
@@ -61,14 +107,18 @@ pub fn parse_style_attribute(text: &str) -> Vec<Declaration> {
 fn declarations(block: &str) -> Vec<Declaration> {
     raw_declarations(block)
         .into_iter()
-        .map(|d| Declaration {
-            name: if is_custom_property(&d.name) {
+        .map(|d| {
+            let name = if is_custom_property(&d.name) {
                 d.name.into_owned()
             } else {
                 d.name.to_ascii_lowercase()
-            },
-            value: d.value.to_string(),
-            important: d.important,
+            };
+            Declaration {
+                parsed: analyze(&name, d.value),
+                name,
+                value: d.value.to_string(),
+                important: d.important,
+            }
         })
         .collect()
 }

@@ -15,14 +15,11 @@ use html_parseur::dom::{AttrNamespace, Document, Namespace, NodeData, NodeId};
 use lumen_css::media::{Environment, MediaQueryList};
 use lumen_css::properties::parse_property;
 use lumen_css::selectors::{Element, Specificity};
-use lumen_css::variables::{
-    CustomProperties, contains_var, css_wide_keyword, is_custom_property, is_valid_value,
-    substitute,
-};
+use lumen_css::variables::{CustomProperties, substitute};
 use lumen_css::{Parser, preprocess};
 
-use crate::computed::{Cascaded, ComputedStyle, Context, PROPERTIES, compute, longhands};
-use crate::sheet::{Declaration, Stylesheet, parse_style_attribute};
+use crate::computed::{Cascaded, ComputedStyle, Context, PROPERTIES, compute, property_index};
+use crate::sheet::{Declaration, Parsed, Stylesheet, parse_style_attribute};
 
 // ───────────── Le DOM vu par les sélecteurs ─────────────
 
@@ -437,7 +434,7 @@ impl StyleEngine {
         let custom = CustomProperties::compute(
             declarations
                 .iter()
-                .filter(|(_, d)| is_custom_property(&d.name))
+                .filter(|(_, d)| d.parsed == Parsed::Custom)
                 .map(|(_, d)| (d.name.as_str(), d.value.as_str())),
             parent_custom,
         );
@@ -448,49 +445,46 @@ impl StyleEngine {
 
         // La déclaration gagnante de chaque propriété longue (la dernière).
         let mut cascaded = vec![Cascaded::None; PROPERTIES.len()];
-        for (_, d) in declarations
-            .iter()
-            .filter(|(_, d)| !is_custom_property(&d.name))
-        {
-            let targets = longhands(&d.name);
-            if targets.is_empty() {
-                continue; // propriété que Lumen ne calcule pas encore
+        let mut set = |name: &str, value: Cascaded| {
+            if let Some(i) = property_index(name) {
+                cascaded[i] = value;
             }
-            let values: Vec<(&'static str, Cascaded)> = if let Some(k) = css_wide_keyword(&d.value)
-            {
-                let keyword = match k {
-                    "initial" => Cascaded::Initial,
-                    "inherit" => Cascaded::Inherit,
-                    _ => Cascaded::Unset,
-                };
-                targets.iter().map(|t| (*t, keyword.clone())).collect()
-            } else if contains_var(&d.value) {
-                if !is_valid_value(&d.value) {
-                    continue;
+        };
+        for (_, d) in &declarations {
+            match &d.parsed {
+                Parsed::Custom | Parsed::Ignored => {}
+                Parsed::Longhands(longhands) => {
+                    for (name, value) in longhands {
+                        set(name, Cascaded::Value(value.clone()));
+                    }
                 }
-                // Invalide après substitution : `unset` (décidé au calcul).
-                let substituted = substitute(&d.value, &custom).and_then(|text| {
-                    parse_property(&d.name, &Parser::new(&text).parse_component_value_list())
-                });
-                match substituted {
-                    Some(longs) => longs
-                        .into_iter()
-                        .map(|(n, v)| (n, Cascaded::Value(v)))
-                        .collect(),
-                    None => targets.iter().map(|t| (*t, Cascaded::Unset)).collect(),
+                Parsed::Keyword(keyword, targets) => {
+                    let keyword = match *keyword {
+                        "initial" => Cascaded::Initial,
+                        "inherit" => Cascaded::Inherit,
+                        _ => Cascaded::Unset,
+                    };
+                    for name in targets {
+                        set(name, keyword.clone());
+                    }
                 }
-            } else {
-                match parse_property(&d.name, &Parser::new(&d.value).parse_component_value_list()) {
-                    Some(longs) => longs
-                        .into_iter()
-                        .map(|(n, v)| (n, Cascaded::Value(v)))
-                        .collect(),
-                    None => continue, // invalide : la déclaration est ignorée
-                }
-            };
-            for (name, value) in values {
-                if let Some(i) = crate::computed::property_index(name) {
-                    cascaded[i] = value;
+                Parsed::Var(targets) => {
+                    let substituted = substitute(&d.value, &custom).and_then(|text| {
+                        parse_property(&d.name, &Parser::new(&text).parse_component_value_list())
+                    });
+                    match substituted {
+                        Some(longhands) => {
+                            for (name, value) in longhands {
+                                set(name, Cascaded::Value(value));
+                            }
+                        }
+                        // Invalide après substitution : `unset`.
+                        None => {
+                            for name in targets {
+                                set(name, Cascaded::Unset);
+                            }
+                        }
+                    }
                 }
             }
         }
