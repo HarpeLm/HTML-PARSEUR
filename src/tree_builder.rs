@@ -46,6 +46,7 @@ enum Mode {
     InTableBody,
     InRow,
     InCell,
+    InTemplate,
     AfterBody,
     InFrameset,
     AfterFrameset,
@@ -118,6 +119,8 @@ pub struct TreeBuilder {
     foster_parenting: bool,
     /// Texte rencontré directement dans un tableau (mode InTableText).
     pending_table_text: String,
+    /// Pile des modes d'insertion des <template> ouverts (§13.2.4.1).
+    template_modes: Vec<Mode>,
 }
 
 impl Default for TreeBuilder {
@@ -136,6 +139,7 @@ impl Default for TreeBuilder {
             tokenizer_state: None,
             foster_parenting: false,
             pending_table_text: String::new(),
+            template_modes: Vec::new(),
         }
     }
 }
@@ -208,6 +212,7 @@ impl TreeBuilder {
             Mode::InTableBody => self.in_table_body(tok),
             Mode::InRow => self.in_row(tok),
             Mode::InCell => self.in_cell(tok),
+            Mode::InTemplate => self.in_template(tok),
             Mode::AfterBody => self.after_body(tok),
             Mode::InFrameset => self.in_frameset(tok),
             Mode::AfterFrameset => self.after_frameset(tok),
@@ -322,6 +327,20 @@ impl TreeBuilder {
         while let Some(&node) = self.open.last() {
             let implied = self.is_html_any(node, &[DD, DT, LI, OPTGROUP, OPTION, P, RB, RP, RT, RTC]);
             if !implied || except.is_some_and(|name| self.is_html(node, name)) {
+                break;
+            }
+            self.open.pop();
+        }
+    }
+
+    /// Version "exhaustive" : ferme aussi les éléments de tableau (§13.2.6.3).
+    fn generate_all_implied_end_tags_thoroughly(&mut self) {
+        use atoms::*;
+        const THOROUGH: &[Atom] = &[
+            CAPTION, COLGROUP, DD, DT, LI, OPTGROUP, OPTION, P, RB, RP, RT, RTC, TBODY, TD, TFOOT, TH, THEAD, TR,
+        ];
+        while let Some(&node) = self.open.last() {
+            if !self.is_html_any(node, THOROUGH) {
                 break;
             }
             self.open.pop();
@@ -655,21 +674,19 @@ impl TreeBuilder {
                 self.mode = Mode::AfterHead;
                 None
             }
-            Tok::Start(ref tag) if tag.name == TEMPLATE => {
-                // Templates : étape suivante. Pour l'instant, un élément normal.
-                let Tok::Start(tag) = tok else { unreachable!() };
+            Tok::Start(tag) if tag.name == TEMPLATE => {
                 self.insert_html(&tag);
                 self.formatting.push(Formatting::Marker);
                 self.frameset_ok = false;
+                self.mode = Mode::InTemplate;
+                self.template_modes.push(Mode::InTemplate);
                 None
             }
             Tok::End(tag) if tag.name == TEMPLATE => {
                 if !self.template_on_stack() {
                     return None;
                 }
-                self.generate_implied_end_tags(None);
-                self.pop_until(TEMPLATE);
-                self.clear_formatting_to_last_marker();
+                self.close_template();
                 None
             }
             Tok::Start(ref tag) if tag.name == HEAD => None,
@@ -775,6 +792,9 @@ impl TreeBuilder {
     fn after_head_anything_else<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
         let tag = TagToken { name: atoms::BODY, attrs: Vec::new(), self_closing: false };
         self.insert_html(&tag);
+        // Spec récente (vérifiée par WPT) : un <body> implicite repart avec
+        // frameset-ok à "ok", quoi qu'il se soit passé dans <head>.
+        self.frameset_ok = true;
         self.mode = Mode::InBody;
         Some(tok)
     }
@@ -801,6 +821,7 @@ impl TreeBuilder {
             Tok::Doctype(_) => None,
             Tok::Start(tag) => self.in_body_start_tag(tag),
             Tok::End(tag) => self.in_body_end_tag(tag),
+            Tok::Eof if !self.template_modes.is_empty() => self.in_template(Tok::Eof),
             Tok::Eof => None, // fin du document : on arrête.
         }
     }
@@ -1309,6 +1330,7 @@ impl TreeBuilder {
                 COLGROUP => Mode::InColumnGroup,
                 TABLE => Mode::InTable,
                 HEAD if !last => Mode::InHead,
+                TEMPLATE => *self.template_modes.last().expect("mode de template"),
                 BODY => Mode::InBody,
                 FRAMESET => Mode::InFrameset,
                 HTML => {
@@ -1400,10 +1422,14 @@ impl TreeBuilder {
                 None
             }
             Tok::Start(tag) if tag.name == FORM => {
-                if self.template_on_stack() || self.form.is_some() {
+                let in_template = self.template_on_stack();
+                if self.form.is_some() && !in_template {
                     return None;
                 }
-                self.form = Some(self.insert_html(&tag));
+                let node = self.insert_html(&tag);
+                if !in_template {
+                    self.form = Some(node);
+                }
                 self.open.pop();
                 None
             }
@@ -1641,6 +1667,58 @@ impl TreeBuilder {
                 Some(tok)
             }
             tok => self.in_body(tok),
+        }
+    }
+
+    // ───────────── Templates ─────────────
+
+    /// Ferme le <template> courant (sur </template> ou fin de fichier).
+    fn close_template(&mut self) {
+        self.generate_all_implied_end_tags_thoroughly();
+        self.pop_until(atoms::TEMPLATE);
+        self.clear_formatting_to_last_marker();
+        self.template_modes.pop();
+        self.reset_insertion_mode();
+    }
+
+    /// Le contenu d'un template change de "nature" selon sa première balise :
+    /// un <tr> fait du template un corps de tableau, un <td> une ligne...
+    fn switch_template_mode<'t>(&mut self, mode: Mode, tok: Tok<'t>) -> Option<Tok<'t>> {
+        self.template_modes.pop();
+        self.template_modes.push(mode);
+        self.mode = mode;
+        Some(tok)
+    }
+
+    // §13.2.6.4.18
+    fn in_template<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
+        use atoms::*;
+        match tok {
+            Tok::Text(_) | Tok::Comment(_) | Tok::Doctype(_) => self.in_body(tok),
+            Tok::Start(ref tag)
+                if [BASE, BASEFONT, BGSOUND, LINK, META, NOFRAMES, SCRIPT, STYLE, TEMPLATE, TITLE]
+                    .contains(&tag.name) =>
+            {
+                self.in_head(tok)
+            }
+            Tok::End(ref tag) if tag.name == TEMPLATE => self.in_head(tok),
+            Tok::Start(ref tag) if [CAPTION, COLGROUP, TBODY, TFOOT, THEAD].contains(&tag.name) => {
+                self.switch_template_mode(Mode::InTable, tok)
+            }
+            Tok::Start(ref tag) if tag.name == COL => self.switch_template_mode(Mode::InColumnGroup, tok),
+            Tok::Start(ref tag) if tag.name == TR => self.switch_template_mode(Mode::InTableBody, tok),
+            Tok::Start(ref tag) if tag.name == TD || tag.name == TH => {
+                self.switch_template_mode(Mode::InRow, tok)
+            }
+            Tok::Start(_) => self.switch_template_mode(Mode::InBody, tok),
+            Tok::End(_) => None,
+            Tok::Eof => {
+                if !self.template_on_stack() {
+                    return None;
+                }
+                self.close_template();
+                Some(Tok::Eof)
+            }
         }
     }
 
