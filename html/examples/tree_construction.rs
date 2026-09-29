@@ -95,7 +95,8 @@ fn main() {
     let verbose = std::env::var("VERBOSE").is_ok();
     panic::set_hook(Box::new(|_| {}));
 
-    let dir = Path::new("wpt-tests/html/syntax/parsing/resources");
+    // Chemin relatif au crate : fonctionne depuis la racine du workspace ou depuis html/.
+    let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("wpt-tests/html/syntax/parsing/resources");
     let mut files: Vec<_> = fs::read_dir(dir)
         .expect("tests introuvables : lance d'abord ./tools/fetch_wpt_tests.sh")
         .filter_map(|e| e.ok().map(|e| e.path()))

@@ -4,11 +4,15 @@
 #   ./profiling/profile.sh parse-v0 profile_parse   (tokenizer + DOM)
 # Nécessite : cargo install inferno rustfilt
 set -e
+# On se place dans le dossier du crate (html/), quel que soit le dossier courant.
+cd "$(dirname "$0")/.."
+# Dans un workspace, les binaires compilés sont dans le target/ de la racine.
+TARGET=$(cargo metadata --format-version 1 --no-deps | python3 -c 'import json,sys; print(json.load(sys.stdin)["target_directory"])')
 NAME=${1:-blog}
 EXAMPLE=${2:-profile_blog}
 TMP=$(mktemp -d)
 cargo build -q --profile profiling --example "$EXAMPLE"
-./target/profiling/examples/"$EXAMPLE" > "$TMP/speed.txt" &
+"$TARGET"/profiling/examples/"$EXAMPLE" > "$TMP/speed.txt" &
 PID=$!
 sleep 0.3
 sample $PID 3 1 -mayDie -file "$TMP/sample.txt" > /dev/null 2>&1

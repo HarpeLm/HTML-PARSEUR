@@ -4,9 +4,12 @@
     python3 tools/gen_entities.py
 """
 import json
+import pathlib
 import urllib.request
 
 URL = "https://html.spec.whatwg.org/entities.json"
+# Chemin relatif au script : fonctionne quel que soit le dossier courant.
+OUT = pathlib.Path(__file__).resolve().parent.parent / "src" / "entities.rs"
 
 
 def rust_str(s: str) -> str:
@@ -27,7 +30,7 @@ with urllib.request.urlopen(URL) as resp:
 # Clés sans le '&' initial, triées pour permettre la recherche dichotomique.
 entries = sorted((name[1:], value["characters"]) for name, value in data.items())
 
-with open("src/entities.rs", "w") as f:
+with open(OUT, "w") as f:
     f.write("// Fichier généré par tools/gen_entities.py. Ne pas modifier à la main.\n")
     f.write(f"// Source : {URL} ({len(entries)} entités)\n\n")
     f.write("/// (nom sans '&', caractères de remplacement), trié par nom.\n")
@@ -36,4 +39,4 @@ with open("src/entities.rs", "w") as f:
         f.write(f"    ({rust_str(name)}, {rust_str(chars)}),\n")
     f.write("];\n")
 
-print(f"src/entities.rs : {len(entries)} entités")
+print(f"{OUT} : {len(entries)} entités")

@@ -126,7 +126,8 @@ fn main() {
     let verbose = std::env::var("VERBOSE").is_ok();
     panic::set_hook(Box::new(|_| {})); // on affiche nous-mêmes les panics
 
-    let dir = Path::new("html5lib-tests/tokenizer");
+    // Chemin relatif au crate : fonctionne depuis la racine du workspace ou depuis html/.
+    let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("html5lib-tests/tokenizer");
     let mut files: Vec<_> = fs::read_dir(dir)
         .expect("dossier html5lib-tests introuvable : fais le git clone d'abord")
         .filter_map(|e| e.ok().map(|e| e.path()))

@@ -1,0 +1,40 @@
+[package]
+name = "html-parseur"
+version = "0.1.0"
+edition = "2024"
+description = "Tokenizer et parser HTML conformes à la spec WHATWG (100 % html5lib et WPT), en Rust, sans dépendance"
+repository = "https://github.com/HarpeLm/HTML-PARSEUR"
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+# Données de test, profils et pages réelles (sous leurs propres licences) :
+# utiles au développement, pas au paquet publié.
+exclude = ["html5lib-tests", "wpt-tests", "profiling", "benches/pages"]
+keywords = ["html", "parser", "tokenizer", "dom", "whatwg"]
+categories = ["parser-implementations", "web-programming"]
+
+[dependencies]
+
+[dev-dependencies]
+criterion = "0.8.2"
+html5ever = "0.40.1"
+html5gum = "0.8.4"
+lol_html = "3.0.1"
+serde_json = "1.0.151"
+tl = "0.7.8"
+typed-arena = "2"
+
+[[bench]]
+name = "tokenize"
+harness = false
+
+[[bench]]
+name = "parse"
+harness = false
+
+[[bench]]
+name = "vraies_pages"
+harness = false
+
+[[bench]]
+name = "autres_parseurs"
+harness = false

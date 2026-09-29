@@ -2,8 +2,10 @@
 # Récupère UNIQUEMENT les tests de construction d'arbre de WPT (web-platform-tests)
 # dans wpt-tests/ (ignoré par git). Le reste de WPT fait plusieurs Go.
 #
-#   ./tools/fetch_wpt_tests.sh
+#   ./tools/fetch_wpt_tests.sh     (depuis n'importe quel dossier)
 set -e
+# On se place dans le dossier du crate (html/), quel que soit le dossier courant.
+cd "$(dirname "$0")/.."
 DIR=wpt-tests
 if [ ! -d "$DIR/.git" ]; then
   git clone --filter=blob:none --no-checkout --depth 1 \
