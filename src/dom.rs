@@ -187,6 +187,27 @@ impl Document {
         self.node_mut(to).children.extend(children);
     }
 
+    /// Tous les descendants de `root`, dans l'ordre du document (sans `root`).
+    pub fn descendants(&self, root: NodeId) -> impl Iterator<Item = NodeId> + '_ {
+        let mut stack: Vec<NodeId> = self.node(root).children.iter().rev().copied().collect();
+        std::iter::from_fn(move || {
+            let node = stack.pop()?;
+            stack.extend(self.node(node).children.iter().rev());
+            Some(node)
+        })
+    }
+
+    /// Copie profonde d'un nœud et de ses descendants (la copie est détachée).
+    pub fn clone_subtree(&mut self, id: NodeId) -> NodeId {
+        let data = self.node(id).data.clone();
+        let copy = self.create(data);
+        for child in self.node(id).children.clone() {
+            let child_copy = self.clone_subtree(child);
+            self.append(copy, child_copy);
+        }
+        copy
+    }
+
     /// Sérialise l'arbre au format des tests html5lib/WPT :
     ///
     /// ```text

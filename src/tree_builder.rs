@@ -30,6 +30,7 @@ pub fn parse_document(html: &str) -> Document {
             tokenizer.set_state(state);
         }
     }
+    builder.fill_selectedcontent();
     builder.doc
 }
 
@@ -260,7 +261,7 @@ impl TreeBuilder {
                 FIELDSET, FIGCAPTION, FIGURE, FOOTER, FORM, FRAME, FRAMESET, H1, H2, H3, H4, H5, H6,
                 HEAD, HEADER, HGROUP, HR, HTML, IFRAME, IMG, INPUT, KEYGEN, LI, LINK, LISTING, MAIN,
                 MARQUEE, MENU, META, NAV, NOEMBED, NOFRAMES, NOSCRIPT, OBJECT, OL, P, PARAM,
-                PLAINTEXT, PRE, SCRIPT, SEARCH, SECTION, SELECT, SOURCE, STYLE, SUMMARY, TABLE,
+                PLAINTEXT, PRE, SCRIPT, SEARCH, SECTION, SOURCE, STYLE, SUMMARY, TABLE,
                 TBODY, TD, TEMPLATE, TEXTAREA, TFOOT, TH, THEAD, TITLE, TR, TRACK, UL, WBR, XMP,
             ]
             .contains(&e.name),
@@ -973,6 +974,9 @@ impl TreeBuilder {
                 self.frameset_ok = false;
             }
             INPUT => {
+                if self.in_scope(SELECT, Scope::Default) {
+                    self.pop_until(SELECT);
+                }
                 self.reconstruct_formatting();
                 self.insert_void(&tag);
                 let hidden = tag
@@ -986,6 +990,9 @@ impl TreeBuilder {
             PARAM | SOURCE | TRACK => self.insert_void(&tag),
             HR => {
                 self.close_p_if_in_button_scope();
+                if self.in_scope(SELECT, Scope::Default) {
+                    self.generate_implied_end_tags(None);
+                }
                 self.insert_void(&tag);
                 self.frameset_ok = false;
             }
@@ -1014,12 +1021,29 @@ impl TreeBuilder {
             NOEMBED => self.parse_raw_text(&tag, InitialState::Rawtext),
             NOSCRIPT if self.scripting => self.parse_raw_text(&tag, InitialState::Rawtext),
             SELECT => {
+                // Nouvelle spec du <select> (2025) : un <select> dans un <select>
+                // ferme le premier au lieu de s'imbriquer.
+                if self.in_scope(SELECT, Scope::Default) {
+                    self.pop_until(SELECT);
+                    return None;
+                }
                 self.reconstruct_formatting();
                 self.insert_html(&tag);
                 self.frameset_ok = false;
             }
-            OPTGROUP | OPTION => {
-                if self.is_html(self.current(), OPTION) {
+            OPTION => {
+                if self.in_scope(SELECT, Scope::Default) {
+                    self.generate_implied_end_tags(Some(OPTGROUP));
+                } else if self.is_html(self.current(), OPTION) {
+                    self.open.pop();
+                }
+                self.reconstruct_formatting();
+                self.insert_html(&tag);
+            }
+            OPTGROUP => {
+                if self.in_scope(SELECT, Scope::Default) {
+                    self.generate_implied_end_tags(None);
+                } else if self.is_html(self.current(), OPTION) {
                     self.open.pop();
                 }
                 self.reconstruct_formatting();
@@ -1815,6 +1839,39 @@ impl TreeBuilder {
             self.open.pop();
         }
         Some(tok)
+    }
+
+    // ───────────── <select> personnalisable ─────────────
+
+    /// `<selectedcontent>` affiche une copie de l'option sélectionnée.
+    ///
+    /// La spec fait cette copie chaque fois qu'une <option> est refermée ; le
+    /// résultat final est le même que de la faire une fois, à la fin du parsing,
+    /// avec l'option sélectionnée à ce moment-là. C'est ce qu'on fait ici (tant
+    /// qu'il n'y a pas de JavaScript qui pourrait observer les étapes).
+    fn fill_selectedcontent(&mut self) {
+        let selectedcontent = self.doc.atoms.intern("selectedcontent");
+        let selects: Vec<NodeId> = self.doc.descendants(NodeId::DOCUMENT)
+            .filter(|&n| self.is_html(n, atoms::SELECT))
+            .collect();
+        for select in selects {
+            let inside: Vec<NodeId> = self.doc.descendants(select).collect();
+            let Some(&target) = inside.iter().find(|&&n| self.is_html(n, selectedcontent)) else { continue };
+            let options: Vec<NodeId> = inside.iter().copied().filter(|&n| self.is_html(n, atoms::OPTION)).collect();
+            let selected = options
+                .iter()
+                .rev()
+                .find(|&&o| self.doc.element(o).unwrap().attrs.iter().any(|a| a.name == "selected"))
+                .or(options.first());
+            let Some(&option) = selected else { continue };
+            for child in std::mem::take(&mut self.doc.node_mut(target).children) {
+                self.doc.node_mut(child).parent = None;
+            }
+            for child in self.doc.node(option).children.clone() {
+                let copy = self.doc.clone_subtree(child);
+                self.doc.append(target, copy);
+            }
+        }
     }
 
     // ───────────── Templates ─────────────
