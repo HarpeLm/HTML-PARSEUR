@@ -1976,10 +1976,9 @@ impl TreeBuilder {
                 .find(|&&o| self.doc.element(o).unwrap().attrs.iter().any(|a| a.name == "selected"))
                 .or(options.first());
             let Some(&option) = selected else { continue };
-            for child in std::mem::take(&mut self.doc.node_mut(target).children) {
-                self.doc.node_mut(child).parent = None;
-            }
-            for child in self.doc.node(option).children.clone() {
+            self.doc.remove_children(target);
+            let children: Vec<NodeId> = self.doc.children(option).collect();
+            for child in children {
                 let copy = self.doc.clone_subtree(child);
                 self.doc.append(target, copy);
             }
