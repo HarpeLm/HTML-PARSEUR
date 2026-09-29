@@ -6,4 +6,10 @@ edition = "2024"
 [dependencies]
 
 [dev-dependencies]
+criterion = "0.8.2"
+html5ever = "0.40.1"
 serde_json = "1.0.151"
+
+[[bench]]
+name = "tokenize"
+harness = false
