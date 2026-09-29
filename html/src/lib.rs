@@ -4,7 +4,7 @@
 //! [WHATWG](https://html.spec.whatwg.org/multipage/parsing.html) : 100 % des tests
 //! html5lib (tokenizer) et WPT (construction de l'arbre). Aucune dépendance.
 //!
-//! C'est la première brique d'un navigateur web écrit de zéro.
+//! C'est la première brique de Lumen, un navigateur web écrit de zéro.
 //!
 //! ## Parser une page
 //!

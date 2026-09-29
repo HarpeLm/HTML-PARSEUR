@@ -2,7 +2,7 @@
 
 Tokenizer et parser HTML écrits en Rust, de zéro, en suivant la
 [spec WHATWG](https://html.spec.whatwg.org/multipage/parsing.html).
-C'est la première brique d'un navigateur web.
+C'est la première brique de [Lumen](../README.md), un navigateur web écrit de zéro.
 
 - **100 % conforme** : tous les tests officiels du tokenizer
   ([html5lib-tests](https://github.com/html5lib/html5lib-tests)) et de la
@@ -88,7 +88,7 @@ Mis de côté, et affiché comme tel par les bancs de test :
 
 ## Tests
 
-Ce crate fait partie du workspace [navigateur](../README.md). Les commandes
+Ce crate fait partie du workspace [Lumen](../README.md). Les commandes
 fonctionnent depuis la racine du workspace comme depuis `html/`.
 
 ```bash

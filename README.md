@@ -1,4 +1,4 @@
-# navigateur
+# Lumen
 
 Un navigateur web écrit de zéro en Rust, brique par brique. Chaque brique est un
 crate de ce workspace, testé contre les suites officielles (html5lib, WPT…) puis

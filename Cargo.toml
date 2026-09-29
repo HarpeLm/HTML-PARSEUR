@@ -1,4 +1,4 @@
-# Le navigateur : un workspace Cargo, une brique par crate.
+# Lumen, un navigateur web : un workspace Cargo, une brique par crate.
 [workspace]
 members = ["html"]
 resolver = "3"
