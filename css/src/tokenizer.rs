@@ -144,6 +144,12 @@ fn is_ident_char(c: char) -> bool {
     is_ident_start(c) || c.is_ascii_digit() || c == '-'
 }
 
+/// Octet d'identifiant : [a-zA-Z0-9_-], ou n'importe quel octet d'un caractère non-ASCII.
+#[inline]
+fn is_ident_byte(b: u8) -> bool {
+    b.is_ascii_alphanumeric() || b == b'_' || b == b'-' || b >= 0x80
+}
+
 fn is_whitespace(c: char) -> bool {
     matches!(c, ' ' | '\t' | '\n')
 }
@@ -260,6 +266,20 @@ impl<'a> Tokenizer<'a> {
         let start = self.pos;
         let mut owned: Option<String> = None;
         loop {
+            // Chemin rapide : les octets d'identifiant, sans décoder l'UTF-8. Tout
+            // octet >= 0x80 fait partie d'un caractère non-ASCII, donc d'un
+            // identifiant ; on ne s'arrête que sur de l'ASCII (entre deux caractères).
+            let run = self.input.as_bytes()[self.pos..]
+                .iter()
+                .position(|&b| !is_ident_byte(b))
+                .unwrap_or(self.input.len() - self.pos);
+            if run > 0 {
+                if let Some(s) = &mut owned {
+                    s.push_str(&self.input[self.pos..self.pos + run]);
+                }
+                self.pos += run;
+                continue;
+            }
             match self.peek() {
                 Some(c) if is_ident_char(c) => {
                     self.consume();
