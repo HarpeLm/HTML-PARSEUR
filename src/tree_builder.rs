@@ -47,7 +47,7 @@ pub fn parse_fragment(html: &str, context_ns: Namespace, context_name: &str, opt
     // L'élément de contexte existe dans le document, mais hors de l'arbre.
     let name = builder.doc.atoms.intern(context_name);
     let context_tag = TagToken { name, attrs: Vec::new(), self_closing: false };
-    let context = builder.create_element(&context_tag, context_ns);
+    let context = builder.create_element(context_tag, context_ns);
     builder.context = Some(context);
 
     // L'état de départ du tokenizer dépend du contexte : dans un <title>, tout
@@ -66,7 +66,7 @@ pub fn parse_fragment(html: &str, context_ns: Namespace, context_name: &str, opt
         }
     }
 
-    let root = builder.create_element(&TagToken { name: HTML, attrs: Vec::new(), self_closing: false }, Namespace::Html);
+    let root = builder.create_element(TagToken { name: HTML, attrs: Vec::new(), self_closing: false }, Namespace::Html);
     builder.doc.append(NodeId::DOCUMENT, root);
     builder.open.push(root);
     if builder.is_html(context, TEMPLATE) {
@@ -496,7 +496,7 @@ impl TreeBuilder {
         (target, None)
     }
 
-    fn create_element(&mut self, tag: &TagToken, ns: Namespace) -> NodeId {
+    fn create_element(&mut self, tag: TagToken, ns: Namespace) -> NodeId {
         let template_contents = if ns == Namespace::Html && tag.name == atoms::TEMPLATE {
             Some(self.doc.create(NodeData::DocumentFragment))
         } else {
@@ -505,13 +505,13 @@ impl TreeBuilder {
         self.doc.create(NodeData::Element(Element {
             ns,
             name: tag.name,
-            attrs: tag.attrs.clone(),
+            attrs: tag.attrs, // déplacés, pas copiés
             template_contents,
         }))
     }
 
     /// Crée l'élément, l'insère à l'endroit approprié et l'empile.
-    fn insert_element(&mut self, tag: &TagToken, ns: Namespace) -> NodeId {
+    fn insert_element(&mut self, tag: TagToken, ns: Namespace) -> NodeId {
         let node = self.create_element(tag, ns);
         let (parent, before) = self.insertion_place(None);
         self.doc.insert_before(parent, node, before);
@@ -519,12 +519,12 @@ impl TreeBuilder {
         node
     }
 
-    fn insert_html(&mut self, tag: &TagToken) -> NodeId {
+    fn insert_html(&mut self, tag: TagToken) -> NodeId {
         self.insert_element(tag, Namespace::Html)
     }
 
     /// Élément vide (<br>, <img>...) : inséré puis immédiatement dépilé.
-    fn insert_void(&mut self, tag: &TagToken) {
+    fn insert_void(&mut self, tag: TagToken) {
         self.insert_html(tag);
         self.open.pop();
     }
@@ -558,7 +558,7 @@ impl TreeBuilder {
     }
 
     /// Algorithmes génériques pour <title>/<textarea> (RCDATA) et <style>... (RAWTEXT).
-    fn parse_raw_text(&mut self, tag: &TagToken, state: InitialState) {
+    fn parse_raw_text(&mut self, tag: TagToken, state: InitialState) {
         self.insert_html(tag);
         self.tokenizer_state = Some(state);
         self.original_mode = self.mode;
@@ -567,7 +567,7 @@ impl TreeBuilder {
 
     // ───────────── Éléments de formatage actifs (§13.2.4.3) ─────────────
 
-    fn push_formatting(&mut self, node: NodeId, tag: &TagToken) {
+    fn push_formatting(&mut self, node: NodeId, tag: TagToken) {
         // Clause "de l'arche de Noé" : au plus 3 éléments identiques depuis le dernier
         // marqueur. Sinon, on oublie le plus ancien.
         let same = |entry: &Formatting| match entry {
@@ -582,7 +582,7 @@ impl TreeBuilder {
         if matches.len() >= 3 {
             self.formatting.remove(matches[0]);
         }
-        self.formatting.push(Formatting::Element(node, tag.clone()));
+        self.formatting.push(Formatting::Element(node, tag));
     }
 
     fn last_marker_index(&self) -> Option<usize> {
@@ -615,9 +615,11 @@ impl TreeBuilder {
         }
         // ...puis les recréer dans l'ordre.
         for j in i..self.formatting.len() {
-            let Formatting::Element(_, tag) = self.formatting[j].clone() else { continue };
-            let node = self.insert_html(&tag);
-            self.formatting[j] = Formatting::Element(node, tag);
+            let Formatting::Element(_, tag) = &self.formatting[j] else { continue };
+            let node = self.insert_html(tag.clone());
+            if let Formatting::Element(n, _) = &mut self.formatting[j] {
+                *n = node;
+            }
         }
     }
 
@@ -678,7 +680,7 @@ impl TreeBuilder {
                 self.before_html_anything_else(Tok::Text(rest))
             }
             Tok::Start(tag) if tag.name == atoms::HTML => {
-                let node = self.create_element(&tag, Namespace::Html);
+                let node = self.create_element(tag, Namespace::Html);
                 self.doc.append(NodeId::DOCUMENT, node);
                 self.open.push(node);
                 self.mode = Mode::BeforeHead;
@@ -691,7 +693,7 @@ impl TreeBuilder {
 
     fn before_html_anything_else<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
         let tag = TagToken { name: atoms::HTML, attrs: Vec::new(), self_closing: false };
-        let node = self.create_element(&tag, Namespace::Html);
+        let node = self.create_element(tag, Namespace::Html);
         self.doc.append(NodeId::DOCUMENT, node);
         self.open.push(node);
         self.mode = Mode::BeforeHead;
@@ -715,7 +717,7 @@ impl TreeBuilder {
             Tok::Doctype(_) => None,
             Tok::Start(ref tag) if tag.name == atoms::HTML => self.in_body(tok),
             Tok::Start(tag) if tag.name == atoms::HEAD => {
-                self.head = Some(self.insert_html(&tag));
+                self.head = Some(self.insert_html(tag));
                 self.mode = Mode::InHead;
                 None
             }
@@ -726,7 +728,7 @@ impl TreeBuilder {
 
     fn before_head_anything_else<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
         let tag = TagToken { name: atoms::HEAD, attrs: Vec::new(), self_closing: false };
-        self.head = Some(self.insert_html(&tag));
+        self.head = Some(self.insert_html(tag));
         self.mode = Mode::InHead;
         Some(tok)
     }
@@ -752,26 +754,26 @@ impl TreeBuilder {
             Tok::Doctype(_) => None,
             Tok::Start(ref tag) if tag.name == HTML => self.in_body(tok),
             Tok::Start(tag) if [BASE, BASEFONT, BGSOUND, LINK, META].contains(&tag.name) => {
-                self.insert_void(&tag);
+                self.insert_void(tag);
                 None
             }
             Tok::Start(tag) if tag.name == TITLE => {
-                self.parse_raw_text(&tag, InitialState::Rcdata);
+                self.parse_raw_text(tag, InitialState::Rcdata);
                 None
             }
             Tok::Start(tag)
                 if tag.name == NOFRAMES || tag.name == STYLE || (tag.name == NOSCRIPT && self.scripting) =>
             {
-                self.parse_raw_text(&tag, InitialState::Rawtext);
+                self.parse_raw_text(tag, InitialState::Rawtext);
                 None
             }
             Tok::Start(tag) if tag.name == NOSCRIPT => {
-                self.insert_html(&tag);
+                self.insert_html(tag);
                 self.mode = Mode::InHeadNoscript;
                 None
             }
             Tok::Start(tag) if tag.name == SCRIPT => {
-                self.parse_raw_text(&tag, InitialState::ScriptData);
+                self.parse_raw_text(tag, InitialState::ScriptData);
                 None
             }
             Tok::End(tag) if tag.name == HEAD => {
@@ -780,7 +782,7 @@ impl TreeBuilder {
                 None
             }
             Tok::Start(tag) if tag.name == TEMPLATE => {
-                self.insert_html(&tag);
+                self.insert_html(tag);
                 self.formatting.push(Formatting::Marker);
                 self.frameset_ok = false;
                 self.mode = Mode::InTemplate;
@@ -864,13 +866,13 @@ impl TreeBuilder {
             Tok::Doctype(_) => None,
             Tok::Start(ref tag) if tag.name == HTML => self.in_body(tok),
             Tok::Start(tag) if tag.name == BODY => {
-                self.insert_html(&tag);
+                self.insert_html(tag);
                 self.frameset_ok = false;
                 self.mode = Mode::InBody;
                 None
             }
             Tok::Start(tag) if tag.name == FRAMESET => {
-                self.insert_html(&tag);
+                self.insert_html(tag);
                 self.mode = Mode::InFrameset;
                 None
             }
@@ -896,7 +898,7 @@ impl TreeBuilder {
 
     fn after_head_anything_else<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
         let tag = TagToken { name: atoms::BODY, attrs: Vec::new(), self_closing: false };
-        self.insert_html(&tag);
+        self.insert_html(tag);
         // Spec récente (vérifiée par WPT) : un <body> implicite repart avec
         // frameset-ok à "ok", quoi qu'il se soit passé dans <head>.
         self.frameset_ok = true;
@@ -956,7 +958,7 @@ impl TreeBuilder {
                     let body = self.open[1];
                     self.doc.detach(body);
                     self.open.truncate(1);
-                    self.insert_html(&tag);
+                    self.insert_html(tag);
                     self.mode = Mode::InFrameset;
                 }
             }
@@ -964,18 +966,18 @@ impl TreeBuilder {
             | FIELDSET | FIGCAPTION | FIGURE | FOOTER | HEADER | HGROUP | MAIN | MENU | NAV | OL | P
             | SEARCH | SECTION | SUMMARY | UL => {
                 self.close_p_if_in_button_scope();
-                self.insert_html(&tag);
+                self.insert_html(tag);
             }
             H1 | H2 | H3 | H4 | H5 | H6 => {
                 self.close_p_if_in_button_scope();
                 if self.is_html_any(self.current(), HEADINGS) {
                     self.open.pop();
                 }
-                self.insert_html(&tag);
+                self.insert_html(tag);
             }
             PRE | LISTING => {
                 self.close_p_if_in_button_scope();
-                self.insert_html(&tag);
+                self.insert_html(tag);
                 self.ignore_lf = true;
                 self.frameset_ok = false;
             }
@@ -984,7 +986,7 @@ impl TreeBuilder {
                     return None;
                 }
                 self.close_p_if_in_button_scope();
-                let node = self.insert_html(&tag);
+                let node = self.insert_html(tag);
                 if !self.template_on_stack_or_context() {
                     self.form = Some(node);
                 }
@@ -1006,11 +1008,11 @@ impl TreeBuilder {
                     }
                 }
                 self.close_p_if_in_button_scope();
-                self.insert_html(&tag);
+                self.insert_html(tag);
             }
             PLAINTEXT => {
                 self.close_p_if_in_button_scope();
-                self.insert_html(&tag);
+                self.insert_html(tag);
                 self.tokenizer_state = Some(InitialState::Plaintext);
             }
             BUTTON => {
@@ -1019,7 +1021,7 @@ impl TreeBuilder {
                     self.pop_until(BUTTON);
                 }
                 self.reconstruct_formatting();
-                self.insert_html(&tag);
+                self.insert_html(tag);
                 self.frameset_ok = false;
             }
             A => {
@@ -1035,13 +1037,15 @@ impl TreeBuilder {
                     self.open.retain(|&n| n != old);
                 }
                 self.reconstruct_formatting();
-                let node = self.insert_html(&tag);
-                self.push_formatting(node, &tag);
+                // Seule copie nécessaire : le token reste dans la liste de formatage.
+                let node = self.insert_html(tag.clone());
+                self.push_formatting(node, tag);
             }
             B | BIG | CODE | EM | FONT | I | S | SMALL | STRIKE | STRONG | TT | U => {
                 self.reconstruct_formatting();
-                let node = self.insert_html(&tag);
-                self.push_formatting(node, &tag);
+                // Seule copie nécessaire : le token reste dans la liste de formatage.
+                let node = self.insert_html(tag.clone());
+                self.push_formatting(node, tag);
             }
             NOBR => {
                 self.reconstruct_formatting();
@@ -1049,18 +1053,19 @@ impl TreeBuilder {
                     self.adoption_agency(NOBR);
                     self.reconstruct_formatting();
                 }
-                let node = self.insert_html(&tag);
-                self.push_formatting(node, &tag);
+                // Seule copie nécessaire : le token reste dans la liste de formatage.
+                let node = self.insert_html(tag.clone());
+                self.push_formatting(node, tag);
             }
             APPLET | MARQUEE | OBJECT => {
                 self.reconstruct_formatting();
-                self.insert_html(&tag);
+                self.insert_html(tag);
                 self.formatting.push(Formatting::Marker);
                 self.frameset_ok = false;
             }
             AREA | BR | EMBED | IMG | KEYGEN | WBR => {
                 self.reconstruct_formatting();
-                self.insert_void(&tag);
+                self.insert_void(tag);
                 self.frameset_ok = false;
             }
             INPUT => {
@@ -1071,22 +1076,22 @@ impl TreeBuilder {
                     return None;
                 }
                 self.reconstruct_formatting();
-                self.insert_void(&tag);
                 let hidden = tag
                     .attrs
                     .iter()
                     .any(|a| a.name == "type" && a.value.eq_ignore_ascii_case("hidden"));
+                self.insert_void(tag);
                 if !hidden {
                     self.frameset_ok = false;
                 }
             }
-            PARAM | SOURCE | TRACK => self.insert_void(&tag),
+            PARAM | SOURCE | TRACK => self.insert_void(tag),
             HR => {
                 self.close_p_if_in_button_scope();
                 if self.in_scope(SELECT, Scope::Default) {
                     self.generate_implied_end_tags(None);
                 }
-                self.insert_void(&tag);
+                self.insert_void(tag);
                 self.frameset_ok = false;
             }
             IMAGE => {
@@ -1094,7 +1099,7 @@ impl TreeBuilder {
                 return Some(Tok::Start(TagToken { name: IMG, ..tag }));
             }
             TEXTAREA => {
-                self.insert_html(&tag);
+                self.insert_html(tag);
                 self.ignore_lf = true;
                 self.tokenizer_state = Some(InitialState::Rcdata);
                 self.original_mode = self.mode;
@@ -1105,14 +1110,14 @@ impl TreeBuilder {
                 self.close_p_if_in_button_scope();
                 self.reconstruct_formatting();
                 self.frameset_ok = false;
-                self.parse_raw_text(&tag, InitialState::Rawtext);
+                self.parse_raw_text(tag, InitialState::Rawtext);
             }
             IFRAME => {
                 self.frameset_ok = false;
-                self.parse_raw_text(&tag, InitialState::Rawtext);
+                self.parse_raw_text(tag, InitialState::Rawtext);
             }
-            NOEMBED => self.parse_raw_text(&tag, InitialState::Rawtext),
-            NOSCRIPT if self.scripting => self.parse_raw_text(&tag, InitialState::Rawtext),
+            NOEMBED => self.parse_raw_text(tag, InitialState::Rawtext),
+            NOSCRIPT if self.scripting => self.parse_raw_text(tag, InitialState::Rawtext),
             SELECT => {
                 // Nouvelle spec du <select> (2025) : un <select> dans un <select>
                 // ferme le premier au lieu de s'imbriquer.
@@ -1124,7 +1129,7 @@ impl TreeBuilder {
                     return None;
                 }
                 self.reconstruct_formatting();
-                self.insert_html(&tag);
+                self.insert_html(tag);
                 self.frameset_ok = false;
             }
             OPTION => {
@@ -1134,7 +1139,7 @@ impl TreeBuilder {
                     self.open.pop();
                 }
                 self.reconstruct_formatting();
-                self.insert_html(&tag);
+                self.insert_html(tag);
             }
             OPTGROUP => {
                 if self.in_scope(SELECT, Scope::Default) {
@@ -1143,19 +1148,19 @@ impl TreeBuilder {
                     self.open.pop();
                 }
                 self.reconstruct_formatting();
-                self.insert_html(&tag);
+                self.insert_html(tag);
             }
             RB | RTC => {
                 if self.in_scope(RUBY, Scope::Default) {
                     self.generate_implied_end_tags(None);
                 }
-                self.insert_html(&tag);
+                self.insert_html(tag);
             }
             RP | RT => {
                 if self.in_scope(RUBY, Scope::Default) {
                     self.generate_implied_end_tags(Some(RTC));
                 }
-                self.insert_html(&tag);
+                self.insert_html(tag);
             }
             MATH | SVG => {
                 self.reconstruct_formatting();
@@ -1168,8 +1173,9 @@ impl TreeBuilder {
                     Namespace::Svg
                 };
                 foreign::adjust_foreign_attributes(&mut tag.attrs);
-                self.insert_element(&tag, ns);
-                if tag.self_closing {
+                let self_closing = tag.self_closing;
+                self.insert_element(tag, ns);
+                if self_closing {
                     self.open.pop();
                 }
             }
@@ -1177,14 +1183,14 @@ impl TreeBuilder {
                 if self.doc.quirks_mode != QuirksMode::Quirks {
                     self.close_p_if_in_button_scope();
                 }
-                self.insert_html(&tag);
+                self.insert_html(tag);
                 self.frameset_ok = false;
                 self.mode = Mode::InTable;
             }
             CAPTION | COL | COLGROUP | FRAME | HEAD | TBODY | TD | TFOOT | TH | THEAD | TR => {}
             _ => {
                 self.reconstruct_formatting();
-                self.insert_html(&tag);
+                self.insert_html(tag);
             }
         }
         None
@@ -1231,7 +1237,7 @@ impl TreeBuilder {
             P => {
                 if !self.in_scope(P, Scope::Button) {
                     // </p> sans <p> ouvert : on crée un <p> vide.
-                    self.insert_html(&TagToken { name: P, attrs: Vec::new(), self_closing: false });
+                    self.insert_html(TagToken { name: P, attrs: Vec::new(), self_closing: false });
                 }
                 self.close_p();
             }
@@ -1367,9 +1373,11 @@ impl TreeBuilder {
                     self.open.remove(node_stack);
                     continue;
                 };
-                let Formatting::Element(_, tag) = self.formatting[i].clone() else { unreachable!() };
-                let new_node = self.create_element(&tag, Namespace::Html);
-                self.formatting[i] = Formatting::Element(new_node, tag);
+                let Formatting::Element(_, tag) = &self.formatting[i] else { unreachable!() };
+                let new_node = self.create_element(tag.clone(), Namespace::Html);
+                if let Formatting::Element(n, _) = &mut self.formatting[i] {
+                    *n = new_node;
+                }
                 self.open[node_stack] = new_node;
                 if last_node == furthest_block {
                     bookmark = i + 1;
@@ -1383,7 +1391,7 @@ impl TreeBuilder {
             self.doc.insert_before(parent, last_node, before);
 
             // 4.15 à 4.17 : un nouvel élément de formatage prend les enfants du furthest block.
-            let new_fe = self.create_element(&fe_tag, Namespace::Html);
+            let new_fe = self.create_element(fe_tag.clone(), Namespace::Html);
             self.doc.reparent_children(furthest_block, new_fe);
             self.doc.append(furthest_block, new_fe);
 
@@ -1516,31 +1524,31 @@ impl TreeBuilder {
             Tok::Start(tag) if tag.name == CAPTION => {
                 self.clear_to_table_context();
                 self.formatting.push(Formatting::Marker);
-                self.insert_html(&tag);
+                self.insert_html(tag);
                 self.mode = Mode::InCaption;
                 None
             }
             Tok::Start(tag) if tag.name == COLGROUP => {
                 self.clear_to_table_context();
-                self.insert_html(&tag);
+                self.insert_html(tag);
                 self.mode = Mode::InColumnGroup;
                 None
             }
             Tok::Start(ref tag) if tag.name == COL => {
                 self.clear_to_table_context();
-                self.insert_html(&Self::fake_tag(COLGROUP));
+                self.insert_html(Self::fake_tag(COLGROUP));
                 self.mode = Mode::InColumnGroup;
                 Some(tok)
             }
             Tok::Start(tag) if [TBODY, TFOOT, THEAD].contains(&tag.name) => {
                 self.clear_to_table_context();
-                self.insert_html(&tag);
+                self.insert_html(tag);
                 self.mode = Mode::InTableBody;
                 None
             }
             Tok::Start(ref tag) if [TD, TH, TR].contains(&tag.name) => {
                 self.clear_to_table_context();
-                self.insert_html(&Self::fake_tag(TBODY));
+                self.insert_html(Self::fake_tag(TBODY));
                 self.mode = Mode::InTableBody;
                 Some(tok)
             }
@@ -1563,7 +1571,7 @@ impl TreeBuilder {
                     && tag.attrs.iter().any(|a| a.name == "type" && a.value.eq_ignore_ascii_case("hidden")) =>
             {
                 let Tok::Start(tag) = tok else { unreachable!() };
-                self.insert_void(&tag);
+                self.insert_void(tag);
                 None
             }
             Tok::Start(tag) if tag.name == FORM => {
@@ -1571,7 +1579,7 @@ impl TreeBuilder {
                 if self.form.is_some() && !in_template {
                     return None;
                 }
-                let node = self.insert_html(&tag);
+                let node = self.insert_html(tag);
                 if !in_template {
                     self.form = Some(node);
                 }
@@ -1660,7 +1668,7 @@ impl TreeBuilder {
             Tok::Doctype(_) => None,
             Tok::Start(ref tag) if tag.name == HTML => self.in_body(tok),
             Tok::Start(tag) if tag.name == COL => {
-                self.insert_void(&tag);
+                self.insert_void(tag);
                 None
             }
             Tok::End(ref tag) if tag.name == COLGROUP => {
@@ -1693,13 +1701,13 @@ impl TreeBuilder {
         match tok {
             Tok::Start(tag) if tag.name == TR => {
                 self.clear_to_table_body_context();
-                self.insert_html(&tag);
+                self.insert_html(tag);
                 self.mode = Mode::InRow;
                 None
             }
             Tok::Start(ref tag) if tag.name == TH || tag.name == TD => {
                 self.clear_to_table_body_context();
-                self.insert_html(&Self::fake_tag(TR));
+                self.insert_html(Self::fake_tag(TR));
                 self.mode = Mode::InRow;
                 Some(tok)
             }
@@ -1747,7 +1755,7 @@ impl TreeBuilder {
         match tok {
             Tok::Start(tag) if tag.name == TH || tag.name == TD => {
                 self.clear_to_table_row_context();
-                self.insert_html(&tag);
+                self.insert_html(tag);
                 self.mode = Mode::InCell;
                 self.formatting.push(Formatting::Marker);
                 None
@@ -1893,8 +1901,9 @@ impl TreeBuilder {
                     foreign::adjust_svg_attributes(&mut tag.attrs);
                 }
                 foreign::adjust_foreign_attributes(&mut tag.attrs);
-                self.insert_element(&tag, ns);
-                if tag.self_closing {
+                let self_closing = tag.self_closing;
+                self.insert_element(tag, ns);
+                if self_closing {
                     self.open.pop();
                 }
                 None
@@ -2083,7 +2092,7 @@ impl TreeBuilder {
             }
             Tok::Start(ref tag) if tag.name == HTML => self.in_body(tok),
             Tok::Start(tag) if tag.name == FRAMESET => {
-                self.insert_html(&tag);
+                self.insert_html(tag);
                 None
             }
             Tok::End(tag) if tag.name == FRAMESET => {
@@ -2096,7 +2105,7 @@ impl TreeBuilder {
                 None
             }
             Tok::Start(tag) if tag.name == FRAME => {
-                self.insert_void(&tag);
+                self.insert_void(tag);
                 None
             }
             Tok::Start(ref tag) if tag.name == NOFRAMES => self.in_head(tok),
