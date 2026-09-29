@@ -181,11 +181,19 @@ impl Default for Document {
 
 impl Document {
     /// Le nœud `id`.
+    ///
+    /// # Panics
+    ///
+    /// Si `id` vient d'un autre document (comme `vec[i]` avec un mauvais indice).
     pub fn node(&self, id: NodeId) -> &Node {
         &self.nodes[id.index()]
     }
 
     /// Le nœud `id`, modifiable.
+    ///
+    /// # Panics
+    ///
+    /// Si `id` vient d'un autre document (comme `vec[i]` avec un mauvais indice).
     pub fn node_mut(&mut self, id: NodeId) -> &mut Node {
         &mut self.nodes[id.index()]
     }

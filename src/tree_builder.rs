@@ -570,18 +570,18 @@ impl TreeBuilder {
             // Foster parenting : on insère juste AVANT le dernier <table> ouvert.
             let last_template = self.open.iter().rposition(|&n| self.is_html(n, TEMPLATE));
             let last_table = self.open.iter().rposition(|&n| self.is_html(n, TABLE));
-            if let Some(t) = last_template {
-                if last_table.is_none_or(|table| t > table) {
-                    let template = self.open[t];
-                    return (
-                        self.doc
-                            .element(template)
-                            .unwrap()
-                            .template_contents
-                            .unwrap(),
-                        None,
-                    );
-                }
+            if let Some(t) = last_template
+                && last_table.is_none_or(|table| t > table)
+            {
+                let template = self.open[t];
+                return (
+                    self.doc
+                        .element(template)
+                        .unwrap()
+                        .template_contents
+                        .unwrap(),
+                    None,
+                );
             }
             let Some(table_index) = last_table else {
                 return (self.open[0], None);
@@ -1524,14 +1524,14 @@ impl TreeBuilder {
                     break;
                 }
                 let mut node_fmt = self.formatting_index(node);
-                if inner > 3 {
-                    if let Some(i) = node_fmt {
-                        self.formatting.remove(i);
-                        if i < bookmark {
-                            bookmark -= 1;
-                        }
-                        node_fmt = None;
+                if inner > 3
+                    && let Some(i) = node_fmt
+                {
+                    self.formatting.remove(i);
+                    if i < bookmark {
+                        bookmark -= 1;
                     }
+                    node_fmt = None;
                 }
                 let Some(i) = node_fmt else {
                     self.open.remove(node_stack);

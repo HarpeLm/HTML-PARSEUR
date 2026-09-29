@@ -43,7 +43,7 @@ pub enum InitialState {
     CdataSection,
 }
 
-/// Les états de la machine (spec §13.2.5.x). On en ajoutera à chaque étape.
+/// Les états de la machine (spec §13.2.5.x).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum State {
     Data,

@@ -56,6 +56,7 @@ La documentation complète : `cargo doc --open`.
 |---|---|
 | html5lib-tests, tokenizer | **7017 / 7017** |
 | WPT, construction d'arbre (documents, fragments, avec et sans JavaScript) | **3870 / 3870** |
+| Robustesse : HTML aléatoire (`tests/robustesse.rs`) | **2 000 000 pages, 0 panique** |
 
 Mis de côté, et affiché comme tel par les bancs de test :
 
@@ -90,9 +91,20 @@ cargo run --release --example html5lib
 ./tools/fetch_wpt_tests.sh
 cargo run --release --example tree_construction
 
-# Tests unitaires et exemples de la documentation
+# Tests unitaires, exemples de la documentation et robustesse
 cargo test
+
+# Robustesse : campagne longue de HTML aléatoire (aucune panique tolérée)
+FUZZ_CAS=2000000 cargo test --release --test robustesse
 ```
+
+Le test de robustesse (`tests/robustesse.rs`) génère du HTML tordu (formatage
+mal imbriqué, tableaux, templates, SVG, entités, `\0`...) et vérifie que le
+parser ne panique jamais et que l'arbre reste cohérent, en document et en
+fragment. Dernière campagne : 2 millions de pages, aucune panique.
+
+Le code passe `cargo fmt --check` et
+`cargo clippy --all-targets --all-features -- -D warnings` sans avertissement.
 
 `VERBOSE=1` affiche le détail de chaque échec ; un argument filtre les fichiers
 (`cargo run --release --example tree_construction -- template`).

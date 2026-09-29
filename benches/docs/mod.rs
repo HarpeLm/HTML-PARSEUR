@@ -40,10 +40,10 @@ pub fn blog_page(articles: usize) -> String {
 pub fn tag_heavy_page(rows: usize) -> String {
     let mut s = String::from("<!DOCTYPE html><table class=\"data\">\n");
     for i in 0..rows {
-        write!(
+        writeln!(
             s,
             "<tr id=\"r{i}\" class=\"row\"><td class=\"c1\">{i}</td><td class=\"c2\" data-v=\"{v}\">{v}</td>\
-             <td><input type=\"checkbox\" name=\"sel\" value=\"{i}\" checked></td><td><br/></td></tr>\n",
+             <td><input type=\"checkbox\" name=\"sel\" value=\"{i}\" checked></td><td><br/></td></tr>",
             v = i * 3
         )
         .unwrap();

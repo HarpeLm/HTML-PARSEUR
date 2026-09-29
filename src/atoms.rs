@@ -186,6 +186,11 @@ impl Interner {
     }
 
     /// Le texte d'un atome.
+    ///
+    /// # Panics
+    ///
+    /// Si `atom` est un atome dynamique créé par l'`Interner` d'un autre document
+    /// (les atomes statiques comme `atoms::DIV` sont valables partout).
     pub fn name(&self, atom: Atom) -> &str {
         &self.names[atom.0 as usize]
     }
