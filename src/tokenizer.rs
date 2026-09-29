@@ -1,7 +1,28 @@
+use std::borrow::Cow;
 use std::collections::VecDeque;
 
 use crate::char_ref::{longest_named_match, numeric_reference_char};
 use crate::token::{Attribute, Doctype, Tag, Token};
+
+/// Ajoute `piece` (un morceau de `input`) à la fin de `buf`, SANS copie si c'est
+/// possible : si `buf` est vide, ou si `piece` suit exactement le morceau déjà
+/// emprunté, on agrandit simplement l'emprunt. Sinon on bascule en `String`.
+fn extend_cow<'a>(buf: &mut Cow<'a, str>, input: &'a str, piece: &'a str) {
+    if buf.is_empty() {
+        *buf = Cow::Borrowed(piece);
+        return;
+    }
+    if let Cow::Borrowed(b) = *buf {
+        // Position de l'emprunt actuel dans `input` (calculée depuis les adresses).
+        let start = (b.as_ptr() as usize).wrapping_sub(input.as_ptr() as usize);
+        let piece_start = piece.as_ptr() as usize - input.as_ptr() as usize;
+        if start <= input.len() && start + b.len() == piece_start {
+            *buf = Cow::Borrowed(&input[start..piece_start + piece.len()]);
+            return;
+        }
+    }
+    buf.to_mut().push_str(piece);
+}
 
 /// Les états dans lesquels le parser peut placer le tokenizer.
 /// Par exemple, après `<title>` il passe en RCDATA, après `<script>` en ScriptData.
@@ -108,9 +129,9 @@ pub struct Tokenizer<'a> {
     /// Taille en octets du dernier caractère lu (pour `reconsume`).
     last_len: usize,
     state: State,
-    current_tag: Tag,
+    current_tag: Tag<'a>,
     current_tag_is_end: bool,
-    current_attr: Option<Attribute>,
+    current_attr: Option<Attribute<'a>>,
     current_comment: String,
     current_doctype: Doctype,
     /// État où revenir après une référence de caractère (Data ou valeur d'attribut).
@@ -119,13 +140,13 @@ pub struct Tokenizer<'a> {
     char_ref_code: u32,
     /// Nom de la dernière balise ouvrante émise : sert à reconnaître la balise
     /// fermante "appropriée" (le `</script>` qui ferme vraiment le `<script>`).
-    last_start_tag: Option<String>,
+    last_start_tag: Option<Cow<'a, str>>,
     /// `<![CDATA[` n'est une vraie section CDATA que dans du SVG/MathML.
     /// C'est le parser qui le sait et qui l'active.
     cdata_allowed: bool,
-    pending: VecDeque<Token>,
+    pending: VecDeque<Token<'a>>,
     /// Texte accumulé, émis en un seul token avant le prochain token non-texte.
-    pending_text: String,
+    pending_text: Cow<'a, str>,
     done: bool,
 }
 
@@ -147,7 +168,7 @@ impl<'a> Tokenizer<'a> {
             last_start_tag: None,
             cdata_allowed: false,
             pending: VecDeque::new(),
-            pending_text: String::new(),
+            pending_text: Cow::Borrowed(""),
             done: false,
         }
     }
@@ -165,7 +186,7 @@ impl<'a> Tokenizer<'a> {
     }
 
     pub fn set_last_start_tag(&mut self, name: &str) {
-        self.last_start_tag = Some(name.to_string());
+        self.last_start_tag = Some(Cow::Owned(name.to_string()));
     }
 
     pub fn set_cdata_allowed(&mut self, allowed: bool) {
@@ -223,6 +244,16 @@ impl<'a> Tokenizer<'a> {
         rest.iter().position(|b| stops.contains(b)).unwrap_or(rest.len())
     }
 
+    /// Avance jusqu'au premier octet de `stops` et renvoie le morceau traversé.
+    #[inline]
+    fn take_plain(&mut self, stops: &[u8]) -> &'a str {
+        let n = self.plain_text_len(stops);
+        let input = self.input;
+        let chunk = &input[self.pos.min(input.len())..][..n];
+        self.pos += n;
+        chunk
+    }
+
     /// Regarde (sans consommer) si l'entrée continue par `s`, casse ASCII ignorée.
     fn next_is_ignore_case(&self, s: &str) -> bool {
         let rest = self.rest();
@@ -234,7 +265,7 @@ impl<'a> Tokenizer<'a> {
         self.rest().starts_with(s.as_bytes())
     }
 
-    fn emit(&mut self, token: Token) {
+    fn emit(&mut self, token: Token<'a>) {
         if matches!(token, Token::Eof) {
             self.done = true;
         }
@@ -248,7 +279,7 @@ impl<'a> Tokenizer<'a> {
 
     /// Un caractère de texte : on l'accumule au lieu de créer un token.
     fn emit_char(&mut self, c: char) {
-        self.pending_text.push(c);
+        self.pending_text.to_mut().push(c);
     }
 
     fn new_tag(&mut self, is_end: bool) {
@@ -276,13 +307,20 @@ impl<'a> Tokenizer<'a> {
 
     fn push_attr_name(&mut self, c: char) {
         if let Some(attr) = &mut self.current_attr {
-            attr.name.push(c);
+            attr.name.to_mut().push(c);
+        }
+    }
+
+    /// `piece` est un morceau de l'entrée : emprunté sans copie si possible.
+    fn push_attr_value_slice(&mut self, piece: &'a str) {
+        if let Some(attr) = &mut self.current_attr {
+            extend_cow(&mut attr.value, self.input, piece);
         }
     }
 
     fn push_attr_value(&mut self, c: char) {
         if let Some(attr) = &mut self.current_attr {
-            attr.value.push(c);
+            attr.value.to_mut().push(c);
         }
     }
 
@@ -299,11 +337,11 @@ impl<'a> Tokenizer<'a> {
 
     /// Balise fermante "appropriée" : même nom que la dernière balise ouvrante.
     fn is_appropriate_end_tag(&self) -> bool {
-        self.current_tag_is_end && self.last_start_tag.as_deref() == Some(&self.current_tag.name)
+        self.current_tag_is_end && self.last_start_tag.as_deref() == Some(&*self.current_tag.name)
     }
 
     fn emit_str(&mut self, s: &str) {
-        self.pending_text.push_str(s);
+        self.pending_text.to_mut().push_str(s);
     }
 
     /// Pas une balise fermante valide : on rend "</" + les lettres lues comme du texte.
@@ -373,14 +411,14 @@ impl<'a> Tokenizer<'a> {
     /// "Flush code points consumed as a character reference" : le tampon part dans
     /// la valeur d'attribut, ou devient des tokens Character.
     fn flush_temp_buffer(&mut self) {
-        let buffer = std::mem::take(&mut self.temp_buffer);
-        for c in buffer.chars() {
-            if self.in_attribute() {
-                self.push_attr_value(c);
-            } else {
-                self.emit_char(c);
+        if self.in_attribute() {
+            if let Some(attr) = &mut self.current_attr {
+                attr.value.to_mut().push_str(&self.temp_buffer);
             }
+        } else {
+            self.pending_text.to_mut().push_str(&self.temp_buffer);
         }
+        self.temp_buffer.clear();
     }
 
     /// Exécute UNE transition de la machine à états.
@@ -390,10 +428,9 @@ impl<'a> Tokenizer<'a> {
             State::Data => {
                 // Chemin rapide : tout le texte jusqu'au prochain octet spécial est
                 // copié d'un seul coup, sans passer par la machine à états.
-                let n = self.plain_text_len(b"<&\r\0");
-                if n > 0 {
-                    self.pending_text.push_str(&self.input[self.pos..self.pos + n]);
-                    self.pos += n;
+                let chunk = self.take_plain(b"<&\r\0");
+                if !chunk.is_empty() {
+                    extend_cow(&mut self.pending_text, self.input, chunk);
                     return;
                 }
                 match self.consume() {
@@ -450,20 +487,31 @@ impl<'a> Tokenizer<'a> {
             },
 
             // §13.2.5.8
-            State::TagName => match self.consume() {
-                Some('\t' | '\n' | '\x0C' | ' ') => self.state = State::BeforeAttributeName,
-                Some('/') => self.state = State::SelfClosingStartTag,
-                Some('>') => {
-                    self.state = State::Data;
-                    self.emit_current_tag();
+            State::TagName => {
+                // Chemin rapide : copie en bloc jusqu'au prochain caractère spécial.
+                let chunk = self.take_plain(b"\t\n\x0C /\0\r>");
+                if !chunk.is_empty() {
+                    extend_cow(&mut self.current_tag.name, self.input, chunk);
+                    if chunk.bytes().any(|b| b.is_ascii_uppercase()) {
+                        self.current_tag.name.to_mut().make_ascii_lowercase();
+                    }
+                    return;
                 }
-                Some(c) if c.is_ascii_uppercase() => {
-                    self.current_tag.name.push(c.to_ascii_lowercase())
+                match self.consume() {
+                    Some('\t' | '\n' | '\x0C' | ' ') => self.state = State::BeforeAttributeName,
+                    Some('/') => self.state = State::SelfClosingStartTag,
+                    Some('>') => {
+                        self.state = State::Data;
+                        self.emit_current_tag();
+                    }
+                    Some(c) if c.is_ascii_uppercase() => {
+                        self.current_tag.name.to_mut().push(c.to_ascii_lowercase())
+                    }
+                    Some('\0') => self.current_tag.name.to_mut().push('\u{FFFD}'),
+                    Some(c) => self.current_tag.name.to_mut().push(c),
+                    None => self.emit(Token::Eof),
                 }
-                Some('\0') => self.current_tag.name.push('\u{FFFD}'),
-                Some(c) => self.current_tag.name.push(c),
-                None => self.emit(Token::Eof),
-            },
+            }
 
             // ───────────── Contenus spéciaux : <title>, <style>, <script>… ─────────────
 
@@ -571,7 +619,7 @@ impl<'a> Tokenizer<'a> {
                         self.emit_current_tag();
                     }
                     Some(c) if c.is_ascii_alphabetic() => {
-                        self.current_tag.name.push(c.to_ascii_lowercase());
+                        self.current_tag.name.to_mut().push(c.to_ascii_lowercase());
                         self.temp_buffer.push(c);
                     }
                     _ => {
@@ -752,16 +800,29 @@ impl<'a> Tokenizer<'a> {
             },
 
             // §13.2.5.33
-            State::AttributeName => match self.consume() {
-                Some('\t' | '\n' | '\x0C' | ' ' | '/' | '>') | None => {
-                    self.reconsume();
-                    self.state = State::AfterAttributeName;
+            State::AttributeName => {
+                // Chemin rapide : copie en bloc jusqu'au prochain caractère spécial.
+                let chunk = self.take_plain(b"\t\n\x0C /\0\r>=");
+                if !chunk.is_empty() {
+                    if let Some(attr) = &mut self.current_attr {
+                        extend_cow(&mut attr.name, self.input, chunk);
+                        if chunk.bytes().any(|b| b.is_ascii_uppercase()) {
+                            attr.name.to_mut().make_ascii_lowercase();
+                        }
+                    }
+                    return;
                 }
-                Some('=') => self.state = State::BeforeAttributeValue,
-                Some(c) if c.is_ascii_uppercase() => self.push_attr_name(c.to_ascii_lowercase()),
-                Some('\0') => self.push_attr_name('\u{FFFD}'),
-                Some(c) => self.push_attr_name(c),
-            },
+                match self.consume() {
+                    Some('\t' | '\n' | '\x0C' | ' ' | '/' | '>') | None => {
+                        self.reconsume();
+                        self.state = State::AfterAttributeName;
+                    }
+                    Some('=') => self.state = State::BeforeAttributeValue,
+                    Some(c) if c.is_ascii_uppercase() => self.push_attr_name(c.to_ascii_lowercase()),
+                    Some('\0') => self.push_attr_name('\u{FFFD}'),
+                    Some(c) => self.push_attr_name(c),
+                }
+            }
 
             // §13.2.5.34
             State::AfterAttributeName => match self.consume() {
@@ -796,35 +857,59 @@ impl<'a> Tokenizer<'a> {
             },
 
             // §13.2.5.36
-            State::AttributeValueDoubleQuoted => match self.consume() {
-                Some('"') => self.state = State::AfterAttributeValueQuoted,
-                Some('&') => self.start_char_ref(),
-                Some('\0') => self.push_attr_value('\u{FFFD}'),
-                Some(c) => self.push_attr_value(c),
-                None => self.emit(Token::Eof),
-            },
+            State::AttributeValueDoubleQuoted => {
+                // Chemin rapide : copie en bloc jusqu'au prochain caractère spécial.
+                let chunk = self.take_plain(b"\"&\0\r");
+                if !chunk.is_empty() {
+                    self.push_attr_value_slice(chunk);
+                    return;
+                }
+                match self.consume() {
+                    Some('"') => self.state = State::AfterAttributeValueQuoted,
+                    Some('&') => self.start_char_ref(),
+                    Some('\0') => self.push_attr_value('\u{FFFD}'),
+                    Some(c) => self.push_attr_value(c),
+                    None => self.emit(Token::Eof),
+                }
+            }
 
             // §13.2.5.37
-            State::AttributeValueSingleQuoted => match self.consume() {
-                Some('\'') => self.state = State::AfterAttributeValueQuoted,
-                Some('&') => self.start_char_ref(),
-                Some('\0') => self.push_attr_value('\u{FFFD}'),
-                Some(c) => self.push_attr_value(c),
-                None => self.emit(Token::Eof),
-            },
+            State::AttributeValueSingleQuoted => {
+                // Chemin rapide : copie en bloc jusqu'au prochain caractère spécial.
+                let chunk = self.take_plain(b"'&\0\r");
+                if !chunk.is_empty() {
+                    self.push_attr_value_slice(chunk);
+                    return;
+                }
+                match self.consume() {
+                    Some('\'') => self.state = State::AfterAttributeValueQuoted,
+                    Some('&') => self.start_char_ref(),
+                    Some('\0') => self.push_attr_value('\u{FFFD}'),
+                    Some(c) => self.push_attr_value(c),
+                    None => self.emit(Token::Eof),
+                }
+            }
 
             // §13.2.5.38
-            State::AttributeValueUnquoted => match self.consume() {
-                Some('\t' | '\n' | '\x0C' | ' ') => self.state = State::BeforeAttributeName,
-                Some('&') => self.start_char_ref(),
-                Some('>') => {
-                    self.state = State::Data;
-                    self.emit_current_tag();
+            State::AttributeValueUnquoted => {
+                // Chemin rapide : copie en bloc jusqu'au prochain caractère spécial.
+                let chunk = self.take_plain(b"\t\n\x0C &>\0\r");
+                if !chunk.is_empty() {
+                    self.push_attr_value_slice(chunk);
+                    return;
                 }
-                Some('\0') => self.push_attr_value('\u{FFFD}'),
-                Some(c) => self.push_attr_value(c),
-                None => self.emit(Token::Eof),
-            },
+                match self.consume() {
+                    Some('\t' | '\n' | '\x0C' | ' ') => self.state = State::BeforeAttributeName,
+                    Some('&') => self.start_char_ref(),
+                    Some('>') => {
+                        self.state = State::Data;
+                        self.emit_current_tag();
+                    }
+                    Some('\0') => self.push_attr_value('\u{FFFD}'),
+                    Some(c) => self.push_attr_value(c),
+                    None => self.emit(Token::Eof),
+                }
+            }
 
             // §13.2.5.39
             State::AfterAttributeValueQuoted => match self.consume() {
@@ -1409,10 +1494,10 @@ impl<'a> Tokenizer<'a> {
     }
 }
 
-impl Iterator for Tokenizer<'_> {
-    type Item = Token;
+impl<'a> Iterator for Tokenizer<'a> {
+    type Item = Token<'a>;
 
-    fn next(&mut self) -> Option<Token> {
+    fn next(&mut self) -> Option<Token<'a>> {
         while self.pending.is_empty() {
             if self.done {
                 return None;

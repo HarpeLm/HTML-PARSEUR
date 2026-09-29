@@ -12,7 +12,7 @@ use html_tokenizer::{InitialState, Token, Tokenizer};
 use serde_json::{json, Map, Value};
 
 /// Convertit nos tokens au format JSON attendu par html5lib-tests.
-fn tokens_to_json(tokens: Vec<Token>) -> Vec<Value> {
+fn tokens_to_json(tokens: Vec<Token<'_>>) -> Vec<Value> {
     let mut out = Vec::new();
     let mut text = String::new(); // les caractères consécutifs sont fusionnés
 
@@ -29,7 +29,7 @@ fn tokens_to_json(tokens: Vec<Token>) -> Vec<Value> {
                 let attrs: Map<String, Value> = tag
                     .attributes
                     .into_iter()
-                    .map(|a| (a.name, Value::String(a.value)))
+                    .map(|a| (a.name.into_owned(), Value::String(a.value.into_owned())))
                     .collect();
                 let mut v = vec![json!("StartTag"), json!(tag.name), Value::Object(attrs)];
                 if tag.self_closing {
