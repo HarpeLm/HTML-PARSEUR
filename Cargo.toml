@@ -17,7 +17,10 @@ categories = ["parser-implementations", "web-programming"]
 [dev-dependencies]
 criterion = "0.8.2"
 html5ever = "0.40.1"
+html5gum = "0.8.4"
+lol_html = "3.0.1"
 serde_json = "1.0.151"
+tl = "0.7.8"
 typed-arena = "2"
 
 [[bench]]
@@ -36,4 +39,8 @@ harness = false
 
 [[bench]]
 name = "vraies_pages"
+harness = false
+
+[[bench]]
+name = "autres_parseurs"
 harness = false

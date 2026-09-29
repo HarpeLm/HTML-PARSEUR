@@ -147,6 +147,45 @@ nœuds. Mesures sans copie de la page des deux côtés.
 cargo bench --bench vraies_pages
 ```
 
+### Contre d'autres parsers Rust
+
+Mêmes 5 pages (`cargo bench --bench autres_parseurs`). Débits en Mo/s.
+**Ils ne font pas tous le même travail** :
+[html5gum](https://github.com/untitaker/html5gum) est un tokenizer conforme ;
+[lol_html](https://github.com/cloudflare/lol-html) (Cloudflare) réécrit la page en
+streaming, recopie la sortie et ne décode pas les entités du texte ;
+[tl](https://github.com/y21/tl) construit un DOM volontairement **non conforme**
+à la spec.
+
+**Tokenizers**
+
+| Page | html-parseur | html5ever | html5gum | lol_html |
+|---|---|---|---|---|
+| Wikipédia FR | **359** | 159 | 167 | 290 |
+| Wikipedia EN | **390** | 186 | 182 | 351 |
+| Spec WHATWG | **405** | 209 | 182 | 230 |
+| Doc Rust | **258** | 142 | 146 | 212 |
+| MDN FR | 269 | 191 | 169 | **480** |
+
+Sur MDN, lol_html est nettement devant : 25 % de cette page est un bloc `<style>`,
+et notre tokenizer n'a pas encore de chemin rapide dans ce type de contenu
+(RAWTEXT) : il y avance caractère par caractère.
+
+**Construction du DOM**
+
+| Page | html-parseur | html5ever | tl (non conforme) | Nœuds : nous / tl |
+|---|---|---|---|---|
+| Wikipédia FR | 189 | 139 | 868 | 12 367 / 12 368 |
+| Wikipedia EN | 200 | 152 | 924 | 15 468 / 15 469 |
+| Spec WHATWG | 177 | 153 | 625 | 31 031 / 30 490 |
+| Doc Rust | 142 | 115 | 564 | 38 317 / 39 321 |
+| MDN FR | 168 | 145 | 1 434 | 4 310 / 4 948 |
+
+tl est 3 à 8 fois plus rapide, mais ne produit pas l'arbre qu'un navigateur
+construirait : il ne suit pas les règles de la spec (balises implicites, contenu
+mal imbriqué...), d'où des nombres de nœuds différents. Parmi les parsers
+**conformes**, html-parseur est le plus rapide sur ces 5 pages.
+
 ### Sur des pages générées
 
 Trois pages générées (`benches/docs/`) qui isolent des cas extrêmes.
