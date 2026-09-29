@@ -3,24 +3,21 @@
 use crate::entities::ENTITIES;
 
 /// Cherche la plus longue entité nommée au début de `input` (sans le '&').
-/// Renvoie (nombre de caractères reconnus, caractères de remplacement).
+/// Renvoie (nombre d'octets reconnus, caractères de remplacement).
 ///
 /// Exemple : "notit;" -> Some((3, "¬")) car "not" existe mais pas "notit;".
-pub fn longest_named_match(input: &[char]) -> Option<(usize, &'static str)> {
-    let mut name = String::new();
+pub fn longest_named_match(input: &[u8]) -> Option<(usize, &'static str)> {
     let mut best = None;
 
-    for (i, &c) in input.iter().enumerate() {
-        if !c.is_ascii() {
-            break;
-        }
-        name.push(c);
+    for i in 1..=input.len() {
+        // On compare directement les octets : pas besoin de convertir en &str.
+        let name = &input[..i];
         // Première entrée >= name. Si une entité commence par `name`, c'est celle-là.
-        let idx = ENTITIES.partition_point(|(n, _)| *n < name.as_str());
+        let idx = ENTITIES.partition_point(|(n, _)| n.as_bytes() < name);
         match ENTITIES.get(idx) {
-            Some((n, value)) if n.starts_with(name.as_str()) => {
-                if *n == name {
-                    best = Some((i + 1, *value));
+            Some((n, value)) if n.as_bytes().starts_with(name) => {
+                if n.len() == i {
+                    best = Some((i, *value));
                 }
             }
             _ => break, // plus aucune entité possible avec ce préfixe

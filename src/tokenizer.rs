@@ -100,9 +100,13 @@ enum State {
     NumericCharacterReferenceEnd,
 }
 
-pub struct Tokenizer {
-    input: Vec<char>,
+pub struct Tokenizer<'a> {
+    /// L'entrée est empruntée telle quelle : aucune copie.
+    input: &'a str,
+    /// Position en OCTETS dans `input`.
     pos: usize,
+    /// Taille en octets du dernier caractère lu (pour `reconsume`).
+    last_len: usize,
     state: State,
     current_tag: Tag,
     current_tag_is_end: bool,
@@ -125,13 +129,12 @@ pub struct Tokenizer {
     done: bool,
 }
 
-impl Tokenizer {
-    pub fn new(input: &str) -> Self {
-        // Prétraitement du flux d'entrée (§13.2.3.5) : CRLF et CR deviennent LF.
-        let normalized = input.replace("\r\n", "\n").replace('\r', "\n");
+impl<'a> Tokenizer<'a> {
+    pub fn new(input: &'a str) -> Self {
         Self {
-            input: normalized.chars().collect(),
+            input,
             pos: 0,
+            last_len: 0,
             state: State::Data,
             current_tag: Tag::default(),
             current_tag_is_end: false,
@@ -170,27 +173,65 @@ impl Tokenizer {
     }
 
     /// Lit le prochain caractère. `None` = fin de fichier (EOF).
+    ///
+    /// Fait aussi le prétraitement du flux d'entrée (§13.2.3.5) à la volée :
+    /// CRLF et CR isolé deviennent LF, sans recopier toute la page.
+    #[inline]
     fn consume(&mut self) -> Option<char> {
-        let c = self.input.get(self.pos).copied();
-        self.pos += 1;
-        c
+        let bytes = self.input.as_bytes();
+        let Some(&b) = bytes.get(self.pos) else {
+            self.pos += 1;
+            self.last_len = 1;
+            return None;
+        };
+        if b < 0x80 {
+            // Cas rapide : caractère ASCII sur un seul octet (l'immense majorité du HTML).
+            self.pos += 1;
+            self.last_len = 1;
+            if b == b'\r' {
+                if bytes.get(self.pos) == Some(&b'\n') {
+                    self.pos += 1;
+                    self.last_len = 2;
+                }
+                return Some('\n');
+            }
+            return Some(b as char);
+        }
+        // Caractère UTF-8 sur plusieurs octets (é, €, emoji...).
+        let c = self.input[self.pos..].chars().next().unwrap();
+        self.last_len = c.len_utf8();
+        self.pos += self.last_len;
+        Some(c)
     }
 
     /// "Reconsume" de la spec : on relira le même caractère dans le nouvel état.
+    #[inline]
     fn reconsume(&mut self) {
-        self.pos -= 1;
+        self.pos -= self.last_len;
+    }
+
+    /// Le reste de l'entrée, à partir de la position courante.
+    fn rest(&self) -> &'a [u8] {
+        &self.input.as_bytes()[self.pos.min(self.input.len())..]
+    }
+
+    /// Nombre d'octets avant le premier octet de `stops` (ou jusqu'à la fin).
+    /// Les octets d'arrêt sont ASCII : couper là tombe toujours entre deux caractères.
+    #[inline]
+    fn plain_text_len(&self, stops: &[u8]) -> usize {
+        let rest = self.rest();
+        rest.iter().position(|b| stops.contains(b)).unwrap_or(rest.len())
     }
 
     /// Regarde (sans consommer) si l'entrée continue par `s`, casse ASCII ignorée.
     fn next_is_ignore_case(&self, s: &str) -> bool {
-        let mut rest = self.input[self.pos.min(self.input.len())..].iter();
-        s.chars().all(|expected| rest.next().is_some_and(|c| c.eq_ignore_ascii_case(&expected)))
+        let rest = self.rest();
+        rest.len() >= s.len() && rest[..s.len()].eq_ignore_ascii_case(s.as_bytes())
     }
 
     /// Pareil, mais en respectant la casse.
     fn next_is(&self, s: &str) -> bool {
-        let mut rest = self.input[self.pos.min(self.input.len())..].iter();
-        s.chars().all(|expected| rest.next() == Some(&expected))
+        self.rest().starts_with(s.as_bytes())
     }
 
     fn emit(&mut self, token: Token) {
@@ -346,12 +387,22 @@ impl Tokenizer {
     fn step(&mut self) {
         match self.state {
             // §13.2.5.1
-            State::Data => match self.consume() {
-                Some('&') => self.start_char_ref(),
-                Some('<') => self.state = State::TagOpen,
-                Some(c) => self.emit_char(c),
-                None => self.emit(Token::Eof),
-            },
+            State::Data => {
+                // Chemin rapide : tout le texte jusqu'au prochain octet spécial est
+                // copié d'un seul coup, sans passer par la machine à états.
+                let n = self.plain_text_len(b"<&\r\0");
+                if n > 0 {
+                    self.pending_text.push_str(&self.input[self.pos..self.pos + n]);
+                    self.pos += n;
+                    return;
+                }
+                match self.consume() {
+                    Some('&') => self.start_char_ref(),
+                    Some('<') => self.state = State::TagOpen,
+                    Some(c) => self.emit_char(c),
+                    None => self.emit(Token::Eof),
+                }
+            }
 
             // §13.2.5.6
             State::TagOpen => match self.consume() {
@@ -1243,13 +1294,13 @@ impl Tokenizer {
 
             // §13.2.5.73
             State::NamedCharacterReference => {
-                let rest = &self.input[self.pos.min(self.input.len())..];
-                match longest_named_match(rest) {
+                match longest_named_match(self.rest()) {
                     Some((len, value)) => {
+                        // Les noms d'entités sont en ASCII : len octets = len caractères.
                         let matched = &self.input[self.pos..self.pos + len];
-                        let ends_with_semicolon = matched.last() == Some(&';');
-                        let next = self.input.get(self.pos + len).copied();
-                        self.temp_buffer.extend(matched);
+                        let ends_with_semicolon = matched.ends_with(';');
+                        let next = self.input.as_bytes().get(self.pos + len).map(|&b| b as char);
+                        self.temp_buffer.push_str(matched);
                         self.pos += len;
 
                         // Exception historique : dans un attribut, "?a=1&copy=2" doit
@@ -1358,7 +1409,7 @@ impl Tokenizer {
     }
 }
 
-impl Iterator for Tokenizer {
+impl Iterator for Tokenizer<'_> {
     type Item = Token;
 
     fn next(&mut self) -> Option<Token> {
