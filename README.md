@@ -13,8 +13,8 @@ optimisé en mesurant.
 ## Démarrer
 
 ```bash
-git clone --recurse-submodules https://github.com/HarpeLm/HTML-PARSEUR.git
-cd HTML-PARSEUR
+git clone --recurse-submodules https://github.com/HarpeLm/lumen.git
+cd lumen
 cargo test                    # tous les tests de toutes les briques
 ```
 

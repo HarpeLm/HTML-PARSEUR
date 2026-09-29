@@ -3,7 +3,7 @@ name = "html-parseur"
 version = "0.1.0"
 edition = "2024"
 description = "Tokenizer et parser HTML conformes à la spec WHATWG (100 % html5lib et WPT), en Rust, sans dépendance"
-repository = "https://github.com/HarpeLm/HTML-PARSEUR"
+repository = "https://github.com/HarpeLm/lumen"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
 # Données de test, profils et pages réelles (sous leurs propres licences) :
