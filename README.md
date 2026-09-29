@@ -8,7 +8,8 @@ C'est la première brique d'un navigateur web.
   ([html5lib-tests](https://github.com/html5lib/html5lib-tests)) et de la
   construction d'arbre ([WPT](https://github.com/web-platform-tests/wpt/tree/master/html/syntax/parsing)).
 - **Rapide** : plus rapide que [html5ever](https://github.com/servo/html5ever)
-  (le parser de Servo) sur des pages réalistes. Voir les [benchmarks](#benchmarks).
+  (le parser de Servo) sur nos pages de test, sauf sur du texte pur où il est
+  légèrement devant. Voir les [benchmarks](#benchmarks) et leurs limites.
 - **Aucune dépendance** à l'exécution.
 - Suit la spec la plus récente : nouveau `<select>` personnalisable (2025),
   processing instructions `<?cible données?>` (2026).
@@ -54,9 +55,13 @@ La documentation complète : `cargo doc --open`.
 
 | Suite | Résultat |
 |---|---|
-| html5lib-tests, tokenizer | **7017 / 7017** |
-| WPT, construction d'arbre (documents, fragments, avec et sans JavaScript) | **3870 / 3870** |
+| html5lib-tests, tokenizer | **7017 / 7017** exécutions |
+| WPT, construction d'arbre : 1953 tests (documents et fragments) | **3870 / 3870** exécutions |
 | Robustesse : HTML aléatoire (`tests/robustesse.rs`) | **2 000 000 pages, 0 panique** |
+
+Une « exécution » = un test lancé dans une configuration : un test html5lib
+tourne dans chacun de ses états initiaux, et un test WPT sans indication tourne
+avec ET sans JavaScript (1917 tests x 2 + 36 tests à mode imposé = 3870).
 
 Mis de côté, et affiché comme tel par les bancs de test :
 
@@ -111,29 +116,39 @@ Le code passe `cargo fmt --check` et
 
 ## Benchmarks
 
-Débits sur un Apple M5, mesurés avec [criterion](https://github.com/criterion-rs/criterion.rs)
-contre html5ever 0.40 (DOM en arène de son exemple officiel), sur trois pages
-générées (`benches/docs/`). Les deux parsers sont mesurés dans le même lancement ;
-le bruit de mesure est d'environ ±3 %.
+Débits mesurés sur un Apple M5 avec [criterion](https://github.com/criterion-rs/criterion.rs)
+(valeur médiane), contre html5ever 0.40 avec le DOM en arène de son exemple
+officiel. Dernière mesure : commit `3d35487`.
+
+**Méthode** : les deux parsers sont mesurés dans le même lancement, machine au
+repos, et on compare leur *rapport*. Entre deux sessions, les débits bruts varient
+jusqu'à ~7 % (température du processeur, autres programmes) ; les rapports sont
+bien plus stables. Une vérification ancienne version / version actuelle, faite
+l'une juste après l'autre, a confirmé qu'un écart de 7 % observé n'était pas une
+régression du code.
 
 **Parsing complet** (tokenizer + DOM), sans copie de la page des deux côtés :
 
 | Page | html-parseur | html5ever | Rapport |
 |---|---|---|---|
-| Blog (texte, balises, entités) | 130,5 Mo/s | 120,1 Mo/s | ×1,09 |
+| Blog (texte, balises, entités) | 139,7 Mo/s | 118,7 Mo/s | ×1,18 |
 | Balises (grand tableau) | 103,9 Mo/s | 79,7 Mo/s | ×1,30 |
-| Texte (longs paragraphes) | 5,25 Go/s | 5,59 Go/s | ×0,94 |
+| Texte (longs paragraphes) | 5,26 Go/s | 5,44 Go/s | ×0,97 |
 
-**Tokenizer seul** :
+**Tokenizer seul** (sans copie de la page des deux côtés) :
 
 | Page | html-parseur | html5ever | Rapport |
 |---|---|---|---|
-| Blog | 204 Mo/s | 149 Mo/s | ×1,36 |
-| Balises | 180 Mo/s | 96 Mo/s | ×1,88 |
-| Texte | 8,88 Go/s | 7,98 Go/s | ×1,11 |
+| Blog | 199,5 Mo/s | 148,5 Mo/s | ×1,34 |
+| Balises | 179,0 Mo/s | 96,0 Mo/s | ×1,87 |
+| Texte | 8,92 Go/s | 8,22 Go/s | ×1,09 |
 
-Attention : html5ever fait plus de travail que nous (streaming, numéros de ligne,
-erreurs de parsing) ; voir les limites ci-dessous.
+**Ce que ces chiffres ne disent pas** :
+
+- les trois pages sont **générées** (`benches/docs/`), pas de vraies pages du web ;
+- une seule machine (ARM64 avec SIMD NEON ; sur x86 notre scan n'a pas de SIMD) ;
+- html5ever fait plus de travail que nous (streaming, numéros de ligne, erreurs de
+  parsing) : voir les [limites](#limites-actuelles).
 
 ```bash
 cargo bench --bench parse      # parsing complet

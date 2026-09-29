@@ -103,6 +103,14 @@ fn initial_state(name: &str) -> InitialState {
     }
 }
 
+/// Vrai si le résultat attendu contient un commentaire "?..." : c'est ainsi que
+/// l'ancienne spec traitait "<?", avant les processing instructions.
+fn expects_old_pi_comment(expected: &[Value]) -> bool {
+    expected.iter().any(|token| {
+        token[0] == "Comment" && token[1].as_str().is_some_and(|data| data.starts_with('?'))
+    })
+}
+
 fn panic_message(err: &Box<dyn std::any::Any + Send>) -> String {
     if let Some(s) = err.downcast_ref::<String>() {
         s.clone()
@@ -184,7 +192,10 @@ fn main() {
                     // html5lib-tests n'est plus mis à jour : il attend encore des
                     // commentaires pour "<?", alors que la spec (et WPT) en font
                     // maintenant des processing instructions.
-                    Ok(_) if input.contains("<?") => obsolete += 1,
+                    // On ne classe "obsolète" QUE ce cas précis : le résultat attendu
+                    // contient un commentaire "?..." (l'ancienne règle). Toute autre
+                    // différence reste un vrai échec.
+                    Ok(_) if expects_old_pi_comment(expected) => obsolete += 1,
                     Ok(got) => {
                         fail += 1;
                         if verbose {
