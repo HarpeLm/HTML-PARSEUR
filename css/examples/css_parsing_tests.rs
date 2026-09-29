@@ -164,6 +164,10 @@ fn run(file: &str, input: &str) -> Option<Value> {
                 .collect(),
         ),
         "rule_list" => Value::Array(parser.parse_rule_list().iter().map(item_json).collect()),
+        "An+B" => match lumen_css::parse_an_plus_b(&parser.parse_component_value_list()) {
+            Some((a, b)) => json!([a, b]),
+            None => Value::Null,
+        },
         "stylesheet" => Value::Array(parser.parse_stylesheet().iter().map(item_json).collect()),
         _ => return None,
     })
