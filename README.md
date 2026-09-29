@@ -7,7 +7,7 @@ optimisé en mesurant.
 | Brique | Dossier | État |
 |---|---|---|
 | Parser HTML (tokenizer, arbre DOM) | [`html/`](html/) | ✅ v0.1 : 100 % html5lib et WPT, plus rapide que html5ever |
-| Parser CSS | — | prochaine brique |
+| Parser CSS | [`css/`](css/) | 🚧 en cours : tokenizer et component values, 100 % des tests correspondants |
 | DOM complet, styles, mise en page, rendu, réseau, JavaScript… | — | à venir |
 
 ## Démarrer
