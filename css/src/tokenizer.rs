@@ -219,12 +219,25 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
+    /// Le n-ième caractère à venir. Cas rapide : si les octets jusque-là sont de
+    /// l'ASCII (presque tout le CSS), pas besoin de décoder l'UTF-8.
+    #[inline]
     fn peek_nth(&self, n: usize) -> Option<char> {
-        self.input[self.pos..].chars().nth(n)
+        let bytes = &self.input.as_bytes()[self.pos..];
+        match bytes.get(..=n) {
+            Some(prefix) if prefix.is_ascii() => Some(bytes[n] as char),
+            _ => self.input[self.pos..].chars().nth(n),
+        }
     }
 
+    #[inline]
     fn peek(&self) -> Option<char> {
-        self.peek_nth(0)
+        let &b = self.input.as_bytes().get(self.pos)?;
+        if b < 0x80 {
+            Some(b as char)
+        } else {
+            self.input[self.pos..].chars().next()
+        }
     }
 
     fn consume(&mut self) -> Option<char> {
@@ -556,9 +569,12 @@ impl<'a> Tokenizer<'a> {
         let c = self.consume()?;
         let token = match c {
             c if is_whitespace(c) => {
-                while self.peek().is_some_and(is_whitespace) {
-                    self.consume();
-                }
+                // Les espaces suivants, en bloc (après prétraitement : ' ', '\t', '\n').
+                let run = self.input.as_bytes()[self.pos..]
+                    .iter()
+                    .position(|b| !matches!(b, b' ' | b'\t' | b'\n'))
+                    .unwrap_or(self.input.len() - self.pos);
+                self.pos += run;
                 Token::Whitespace
             }
             '"' | '\'' => self.consume_string(c),
