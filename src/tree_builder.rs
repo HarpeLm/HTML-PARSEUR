@@ -39,6 +39,13 @@ enum Mode {
     AfterHead,
     InBody,
     Text,
+    InTable,
+    InTableText,
+    InCaption,
+    InColumnGroup,
+    InTableBody,
+    InRow,
+    InCell,
     AfterBody,
     InFrameset,
     AfterFrameset,
@@ -77,6 +84,7 @@ enum Scope {
     Default,
     ListItem,
     Button,
+    Table,
 }
 
 fn is_ws(c: char) -> bool {
@@ -105,6 +113,11 @@ pub struct TreeBuilder {
     scripting: bool,
     /// Nouvel état demandé au tokenizer (lu par `parse_document`).
     tokenizer_state: Option<InitialState>,
+    /// Actif quand du contenu mal placé dans un tableau doit être "adopté"
+    /// et inséré juste avant le <table> (§13.2.6.1).
+    foster_parenting: bool,
+    /// Texte rencontré directement dans un tableau (mode InTableText).
+    pending_table_text: String,
 }
 
 impl Default for TreeBuilder {
@@ -121,6 +134,8 @@ impl Default for TreeBuilder {
             ignore_lf: false,
             scripting: false,
             tokenizer_state: None,
+            foster_parenting: false,
+            pending_table_text: String::new(),
         }
     }
 }
@@ -186,6 +201,13 @@ impl TreeBuilder {
             Mode::AfterHead => self.after_head(tok),
             Mode::InBody => self.in_body(tok),
             Mode::Text => self.text(tok),
+            Mode::InTable => self.in_table(tok),
+            Mode::InTableText => self.in_table_text(tok),
+            Mode::InCaption => self.in_caption(tok),
+            Mode::InColumnGroup => self.in_column_group(tok),
+            Mode::InTableBody => self.in_table_body(tok),
+            Mode::InRow => self.in_row(tok),
+            Mode::InCell => self.in_cell(tok),
             Mode::AfterBody => self.after_body(tok),
             Mode::InFrameset => self.in_frameset(tok),
             Mode::AfterFrameset => self.after_frameset(tok),
@@ -232,6 +254,9 @@ impl TreeBuilder {
     fn is_scope_boundary(&self, id: NodeId, scope: Scope) -> bool {
         use atoms::*;
         let Some(e) = self.doc.element(id) else { return false };
+        if scope == Scope::Table {
+            return self.is_html_any(id, &[HTML, TABLE, TEMPLATE]);
+        }
         let default = match e.ns {
             Namespace::Html => {
                 [APPLET, CAPTION, HTML, TABLE, TD, TH, MARQUEE, OBJECT, TEMPLATE].contains(&e.name)
@@ -244,6 +269,7 @@ impl TreeBuilder {
                 Scope::Default => false,
                 Scope::ListItem => self.is_html_any(id, &[OL, UL]),
                 Scope::Button => self.is_html(id, BUTTON),
+                Scope::Table => unreachable!(),
             }
     }
 
@@ -319,7 +345,27 @@ impl TreeBuilder {
 
     /// L'endroit où insérer un nouveau nœud (§13.2.6.1) : (parent, avant quel nœud).
     fn insertion_place(&self, target: Option<NodeId>) -> (NodeId, Option<NodeId>) {
+        use atoms::*;
         let target = target.unwrap_or_else(|| self.current());
+        if self.foster_parenting && self.is_html_any(target, &[TABLE, TBODY, TFOOT, THEAD, TR]) {
+            // Foster parenting : on insère juste AVANT le dernier <table> ouvert.
+            let last_template = self.open.iter().rposition(|&n| self.is_html(n, TEMPLATE));
+            let last_table = self.open.iter().rposition(|&n| self.is_html(n, TABLE));
+            if let Some(t) = last_template {
+                if last_table.is_none_or(|table| t > table) {
+                    let template = self.open[t];
+                    return (self.doc.element(template).unwrap().template_contents.unwrap(), None);
+                }
+            }
+            let Some(table_index) = last_table else {
+                return (self.open[0], None);
+            };
+            let table = self.open[table_index];
+            if let Some(parent) = self.doc.node(table).parent {
+                return (parent, Some(table));
+            }
+            return (self.open[table_index - 1], None);
+        }
         if let Some(contents) = self.doc.element(target).and_then(|e| e.template_contents) {
             return (contents, None);
         }
@@ -965,6 +1011,14 @@ impl TreeBuilder {
                     self.open.pop();
                 }
             }
+            TABLE => {
+                if self.doc.quirks_mode != QuirksMode::Quirks {
+                    self.close_p_if_in_button_scope();
+                }
+                self.insert_html(&tag);
+                self.frameset_ok = false;
+                self.mode = Mode::InTable;
+            }
             CAPTION | COL | COLGROUP | FRAME | HEAD | TBODY | TD | TFOOT | TH | THEAD | TR => {}
             _ => {
                 self.reconstruct_formatting();
@@ -1204,6 +1258,389 @@ impl TreeBuilder {
                 None
             }
             _ => None,
+        }
+    }
+
+    // ───────────── Tableaux ─────────────
+
+    fn clear_stack_back_to(&mut self, names: &[Atom]) {
+        while !self.is_html_any(self.current(), names) {
+            self.open.pop();
+        }
+    }
+
+    fn clear_to_table_context(&mut self) {
+        self.clear_stack_back_to(&[atoms::TABLE, atoms::TEMPLATE, atoms::HTML]);
+    }
+
+    fn clear_to_table_body_context(&mut self) {
+        use atoms::*;
+        self.clear_stack_back_to(&[TBODY, TFOOT, THEAD, TEMPLATE, HTML]);
+    }
+
+    fn clear_to_table_row_context(&mut self) {
+        self.clear_stack_back_to(&[atoms::TR, atoms::TEMPLATE, atoms::HTML]);
+    }
+
+    fn fake_tag(name: Atom) -> TagToken {
+        TagToken { name, attrs: Vec::new(), self_closing: false }
+    }
+
+    /// "Reset the insertion mode appropriately" (§13.2.4.1) : après avoir fermé un
+    /// tableau (ou une cellule...), on retrouve le mode d'après la pile.
+    fn reset_insertion_mode(&mut self) {
+        use atoms::*;
+        for i in (0..self.open.len()).rev() {
+            let node = self.open[i];
+            let last = i == 0;
+            let Some(e) = self.doc.element(node) else { continue };
+            if e.ns != Namespace::Html {
+                if last {
+                    self.mode = Mode::InBody;
+                    return;
+                }
+                continue;
+            }
+            self.mode = match e.name {
+                TD | TH if !last => Mode::InCell,
+                TR => Mode::InRow,
+                TBODY | THEAD | TFOOT => Mode::InTableBody,
+                CAPTION => Mode::InCaption,
+                COLGROUP => Mode::InColumnGroup,
+                TABLE => Mode::InTable,
+                HEAD if !last => Mode::InHead,
+                BODY => Mode::InBody,
+                FRAMESET => Mode::InFrameset,
+                HTML => {
+                    if self.head.is_none() { Mode::BeforeHead } else { Mode::AfterHead }
+                }
+                _ if last => Mode::InBody,
+                _ => continue,
+            };
+            return;
+        }
+    }
+
+    /// Fermer la table ouverte (utilisé par </table> et <table> imbriqué).
+    fn close_table(&mut self) -> bool {
+        if !self.in_scope(atoms::TABLE, Scope::Table) {
+            return false;
+        }
+        self.pop_until(atoms::TABLE);
+        self.reset_insertion_mode();
+        true
+    }
+
+    // §13.2.6.4.9
+    fn in_table<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
+        use atoms::*;
+        match tok {
+            Tok::Text(_) if self.is_html_any(self.current(), &[TABLE, TBODY, TEMPLATE, TFOOT, THEAD, TR]) => {
+                self.pending_table_text.clear();
+                self.original_mode = self.mode;
+                self.mode = Mode::InTableText;
+                Some(tok)
+            }
+            Tok::Comment(data) => {
+                self.insert_comment(data, None);
+                None
+            }
+            Tok::Doctype(_) => None,
+            Tok::Start(tag) if tag.name == CAPTION => {
+                self.clear_to_table_context();
+                self.formatting.push(Formatting::Marker);
+                self.insert_html(&tag);
+                self.mode = Mode::InCaption;
+                None
+            }
+            Tok::Start(tag) if tag.name == COLGROUP => {
+                self.clear_to_table_context();
+                self.insert_html(&tag);
+                self.mode = Mode::InColumnGroup;
+                None
+            }
+            Tok::Start(ref tag) if tag.name == COL => {
+                self.clear_to_table_context();
+                self.insert_html(&Self::fake_tag(COLGROUP));
+                self.mode = Mode::InColumnGroup;
+                Some(tok)
+            }
+            Tok::Start(tag) if [TBODY, TFOOT, THEAD].contains(&tag.name) => {
+                self.clear_to_table_context();
+                self.insert_html(&tag);
+                self.mode = Mode::InTableBody;
+                None
+            }
+            Tok::Start(ref tag) if [TD, TH, TR].contains(&tag.name) => {
+                self.clear_to_table_context();
+                self.insert_html(&Self::fake_tag(TBODY));
+                self.mode = Mode::InTableBody;
+                Some(tok)
+            }
+            Tok::Start(ref tag) if tag.name == TABLE => {
+                if self.close_table() { Some(tok) } else { None }
+            }
+            Tok::End(ref tag) if tag.name == TABLE => {
+                self.close_table();
+                None
+            }
+            Tok::End(ref tag)
+                if [BODY, CAPTION, COL, COLGROUP, HTML, TBODY, TD, TFOOT, TH, THEAD, TR].contains(&tag.name) =>
+            {
+                None
+            }
+            Tok::Start(ref tag) if [STYLE, SCRIPT, TEMPLATE].contains(&tag.name) => self.in_head(tok),
+            Tok::End(ref tag) if tag.name == TEMPLATE => self.in_head(tok),
+            Tok::Start(ref tag)
+                if tag.name == INPUT
+                    && tag.attrs.iter().any(|a| a.name == "type" && a.value.eq_ignore_ascii_case("hidden")) =>
+            {
+                let Tok::Start(tag) = tok else { unreachable!() };
+                self.insert_void(&tag);
+                None
+            }
+            Tok::Start(tag) if tag.name == FORM => {
+                if self.template_on_stack() || self.form.is_some() {
+                    return None;
+                }
+                self.form = Some(self.insert_html(&tag));
+                self.open.pop();
+                None
+            }
+            Tok::Eof => self.in_body(tok),
+            tok => self.in_table_anything_else(tok),
+        }
+    }
+
+    /// Contenu mal placé dans un tableau : traité comme dans <body>, mais adopté
+    /// (inséré avant le tableau).
+    fn in_table_anything_else<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
+        self.foster_parenting = true;
+        let result = self.in_body(tok);
+        self.foster_parenting = false;
+        result
+    }
+
+    // §13.2.6.4.10
+    fn in_table_text<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
+        if let Tok::Text(s) = tok {
+            self.pending_table_text.extend(s.chars().filter(|&c| c != '\0'));
+            return None;
+        }
+        let text = std::mem::take(&mut self.pending_table_text);
+        if text.chars().all(is_ws) {
+            self.insert_text(&text);
+        } else {
+            // Du vrai texte dans un tableau : il est sorti du tableau.
+            self.in_table_anything_else(Tok::Text(&text));
+        }
+        self.mode = self.original_mode;
+        Some(tok)
+    }
+
+    fn close_caption(&mut self) -> bool {
+        if !self.in_scope(atoms::CAPTION, Scope::Table) {
+            return false;
+        }
+        self.generate_implied_end_tags(None);
+        self.pop_until(atoms::CAPTION);
+        self.clear_formatting_to_last_marker();
+        self.mode = Mode::InTable;
+        true
+    }
+
+    // §13.2.6.4.11
+    fn in_caption<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
+        use atoms::*;
+        match tok {
+            Tok::End(ref tag) if tag.name == CAPTION => {
+                self.close_caption();
+                None
+            }
+            Tok::Start(ref tag) if [CAPTION, COL, COLGROUP, TBODY, TD, TFOOT, TH, THEAD, TR].contains(&tag.name) => {
+                if self.close_caption() { Some(tok) } else { None }
+            }
+            Tok::End(ref tag) if tag.name == TABLE => {
+                if self.close_caption() { Some(tok) } else { None }
+            }
+            Tok::End(ref tag) if [BODY, COL, COLGROUP, HTML, TBODY, TD, TFOOT, TH, THEAD, TR].contains(&tag.name) => None,
+            tok => self.in_body(tok),
+        }
+    }
+
+    // §13.2.6.4.12
+    fn in_column_group<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
+        use atoms::*;
+        match tok {
+            Tok::Text(s) => {
+                let (ws, rest) = split_leading_ws(s);
+                if !ws.is_empty() {
+                    self.insert_text(ws);
+                }
+                if rest.is_empty() {
+                    return None;
+                }
+                self.in_column_group_anything_else(Tok::Text(rest))
+            }
+            Tok::Comment(data) => {
+                self.insert_comment(data, None);
+                None
+            }
+            Tok::Doctype(_) => None,
+            Tok::Start(ref tag) if tag.name == HTML => self.in_body(tok),
+            Tok::Start(tag) if tag.name == COL => {
+                self.insert_void(&tag);
+                None
+            }
+            Tok::End(ref tag) if tag.name == COLGROUP => {
+                if self.is_html(self.current(), COLGROUP) {
+                    self.open.pop();
+                    self.mode = Mode::InTable;
+                }
+                None
+            }
+            Tok::End(ref tag) if tag.name == COL => None,
+            Tok::Start(ref tag) if tag.name == TEMPLATE => self.in_head(tok),
+            Tok::End(ref tag) if tag.name == TEMPLATE => self.in_head(tok),
+            Tok::Eof => self.in_body(tok),
+            tok => self.in_column_group_anything_else(tok),
+        }
+    }
+
+    fn in_column_group_anything_else<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
+        if !self.is_html(self.current(), atoms::COLGROUP) {
+            return None;
+        }
+        self.open.pop();
+        self.mode = Mode::InTable;
+        Some(tok)
+    }
+
+    // §13.2.6.4.13
+    fn in_table_body<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
+        use atoms::*;
+        match tok {
+            Tok::Start(tag) if tag.name == TR => {
+                self.clear_to_table_body_context();
+                self.insert_html(&tag);
+                self.mode = Mode::InRow;
+                None
+            }
+            Tok::Start(ref tag) if tag.name == TH || tag.name == TD => {
+                self.clear_to_table_body_context();
+                self.insert_html(&Self::fake_tag(TR));
+                self.mode = Mode::InRow;
+                Some(tok)
+            }
+            Tok::End(ref tag) if [TBODY, TFOOT, THEAD].contains(&tag.name) => {
+                if self.in_scope(tag.name, Scope::Table) {
+                    self.clear_to_table_body_context();
+                    self.open.pop();
+                    self.mode = Mode::InTable;
+                }
+                None
+            }
+            Tok::Start(ref tag) if [CAPTION, COL, COLGROUP, TBODY, TFOOT, THEAD].contains(&tag.name) => {
+                self.close_table_body(tok)
+            }
+            Tok::End(ref tag) if tag.name == TABLE => self.close_table_body(tok),
+            Tok::End(ref tag) if [BODY, CAPTION, COL, COLGROUP, HTML, TD, TH, TR].contains(&tag.name) => None,
+            tok => self.in_table(tok),
+        }
+    }
+
+    fn close_table_body<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
+        use atoms::*;
+        if !self.in_scope_any(&[TBODY, THEAD, TFOOT], Scope::Table) {
+            return None;
+        }
+        self.clear_to_table_body_context();
+        self.open.pop();
+        self.mode = Mode::InTable;
+        Some(tok)
+    }
+
+    fn close_row(&mut self) -> bool {
+        if !self.in_scope(atoms::TR, Scope::Table) {
+            return false;
+        }
+        self.clear_to_table_row_context();
+        self.open.pop();
+        self.mode = Mode::InTableBody;
+        true
+    }
+
+    // §13.2.6.4.14
+    fn in_row<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
+        use atoms::*;
+        match tok {
+            Tok::Start(tag) if tag.name == TH || tag.name == TD => {
+                self.clear_to_table_row_context();
+                self.insert_html(&tag);
+                self.mode = Mode::InCell;
+                self.formatting.push(Formatting::Marker);
+                None
+            }
+            Tok::End(ref tag) if tag.name == TR => {
+                self.close_row();
+                None
+            }
+            Tok::Start(ref tag) if [CAPTION, COL, COLGROUP, TBODY, TFOOT, THEAD, TR].contains(&tag.name) => {
+                if self.close_row() { Some(tok) } else { None }
+            }
+            Tok::End(ref tag) if tag.name == TABLE => {
+                if self.close_row() { Some(tok) } else { None }
+            }
+            Tok::End(ref tag) if [TBODY, TFOOT, THEAD].contains(&tag.name) => {
+                if !self.in_scope(tag.name, Scope::Table) {
+                    return None;
+                }
+                if self.close_row() { Some(tok) } else { None }
+            }
+            Tok::End(ref tag) if [BODY, CAPTION, COL, COLGROUP, HTML, TD, TH].contains(&tag.name) => None,
+            tok => self.in_table(tok),
+        }
+    }
+
+    fn close_cell(&mut self) {
+        use atoms::*;
+        self.generate_implied_end_tags(None);
+        self.pop_until_any(&[TD, TH]);
+        self.clear_formatting_to_last_marker();
+        self.mode = Mode::InRow;
+    }
+
+    // §13.2.6.4.15
+    fn in_cell<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {
+        use atoms::*;
+        match tok {
+            Tok::End(ref tag) if tag.name == TD || tag.name == TH => {
+                if self.in_scope(tag.name, Scope::Table) {
+                    self.generate_implied_end_tags(None);
+                    self.pop_until(tag.name);
+                    self.clear_formatting_to_last_marker();
+                    self.mode = Mode::InRow;
+                }
+                None
+            }
+            Tok::Start(ref tag)
+                if [CAPTION, COL, COLGROUP, TBODY, TD, TFOOT, TH, THEAD, TR].contains(&tag.name) =>
+            {
+                if !self.in_scope_any(&[TD, TH], Scope::Table) {
+                    return None;
+                }
+                self.close_cell();
+                Some(tok)
+            }
+            Tok::End(ref tag) if [BODY, CAPTION, COL, COLGROUP, HTML].contains(&tag.name) => None,
+            Tok::End(ref tag) if [TABLE, TBODY, TFOOT, THEAD, TR].contains(&tag.name) => {
+                if !self.in_scope(tag.name, Scope::Table) {
+                    return None;
+                }
+                self.close_cell();
+                Some(tok)
+            }
+            tok => self.in_body(tok),
         }
     }
 
