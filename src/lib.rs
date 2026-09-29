@@ -1,5 +1,6 @@
 mod char_ref;
 mod entities;
+pub mod scan;
 mod token;
 mod tokenizer;
 

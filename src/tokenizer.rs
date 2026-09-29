@@ -2,6 +2,7 @@ use std::borrow::Cow;
 use std::collections::VecDeque;
 
 use crate::char_ref::{longest_named_match, numeric_reference_char};
+use crate::scan::find_first_of;
 use crate::token::{Attribute, Doctype, Tag, Token};
 
 /// Ajoute `piece` (un morceau de `input`) à la fin de `buf`, SANS copie si c'est
@@ -239,14 +240,13 @@ impl<'a> Tokenizer<'a> {
     /// Nombre d'octets avant le premier octet de `stops` (ou jusqu'à la fin).
     /// Les octets d'arrêt sont ASCII : couper là tombe toujours entre deux caractères.
     #[inline]
-    fn plain_text_len(&self, stops: &[u8]) -> usize {
-        let rest = self.rest();
-        rest.iter().position(|b| stops.contains(b)).unwrap_or(rest.len())
+    fn plain_text_len<const N: usize>(&self, stops: &[u8; N]) -> usize {
+        find_first_of(self.rest(), stops)
     }
 
     /// Avance jusqu'au premier octet de `stops` et renvoie le morceau traversé.
     #[inline]
-    fn take_plain(&mut self, stops: &[u8]) -> &'a str {
+    fn take_plain<const N: usize>(&mut self, stops: &[u8; N]) -> &'a str {
         let n = self.plain_text_len(stops);
         let input = self.input;
         let chunk = &input[self.pos.min(input.len())..][..n];
