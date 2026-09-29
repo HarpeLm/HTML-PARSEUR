@@ -266,6 +266,26 @@ impl Document {
         id
     }
 
+    /// Le premier enfant.
+    pub fn first_child(&self, id: NodeId) -> Option<NodeId> {
+        self.node(id).first_child
+    }
+
+    /// Le dernier enfant.
+    pub fn last_child(&self, id: NodeId) -> Option<NodeId> {
+        self.node(id).last_child
+    }
+
+    /// Le frère précédent.
+    pub fn prev_sibling(&self, id: NodeId) -> Option<NodeId> {
+        self.node(id).prev_sibling
+    }
+
+    /// Le frère suivant.
+    pub fn next_sibling(&self, id: NodeId) -> Option<NodeId> {
+        self.node(id).next_sibling
+    }
+
     /// Les enfants d'un nœud, dans l'ordre.
     pub fn children(&self, id: NodeId) -> impl Iterator<Item = NodeId> + '_ {
         let mut next = self.node(id).first_child;

@@ -7,7 +7,7 @@ optimisé en mesurant.
 | Brique | Dossier | État |
 |---|---|---|
 | Parser HTML (tokenizer, arbre DOM) | [`html/`](html/) | ✅ v0.1 : 100 % html5lib et WPT, plus rapide que html5ever |
-| Parser CSS | [`css/`](css/) | 🚧 en cours : syntaxe complète (tokens, règles, déclarations, CSS imbriqué), 149 / 149 tests |
+| Parser CSS | [`css/`](css/) | 🚧 en cours : syntaxe et `An+B` 277 / 277 tests ; sélecteurs identiques à Servo sur 1 825 comparaisons |
 | DOM complet, styles, mise en page, rendu, réseau, JavaScript… | — | à venir |
 
 ## Démarrer

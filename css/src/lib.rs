@@ -19,6 +19,7 @@
 mod an_plus_b;
 mod parser;
 mod rules;
+pub mod selectors;
 mod tokenizer;
 
 pub use an_plus_b::parse_an_plus_b;
