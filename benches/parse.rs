@@ -5,7 +5,8 @@
 
 use std::hint::black_box;
 
-use criterion::{criterion_group, criterion_main, Criterion, Throughput};
+use criterion::{criterion_group, criterion_main, BatchSize, Criterion, Throughput};
+use html5ever::tendril::StrTendril;
 
 mod docs;
 mod html5ever_arena;
@@ -52,6 +53,24 @@ fn bench(c: &mut Criterion) {
             b.iter(|| {
                 let arena = typed_arena::Arena::new();
                 let root = html5ever_arena::parse(black_box(html), &arena);
+                black_box(root);
+            })
+        });
+
+        // Variantes SANS copie de la page, des deux côtés. La préparation de
+        // l'entrée (clone de la String, clone du tendril) n'est pas chronométrée.
+        group.bench_function("html-tokenizer-sans-copie", |b| {
+            b.iter_batched(
+                || html.clone(),
+                |owned| black_box(html_tokenizer::parse_document_owned(owned)),
+                BatchSize::LargeInput,
+            )
+        });
+        let tendril = StrTendril::from_slice(html);
+        group.bench_function("html5ever-sans-copie", |b| {
+            b.iter(|| {
+                let arena = typed_arena::Arena::new();
+                let root = html5ever_arena::parse_tendril(black_box(tendril.clone()), &arena);
                 black_box(root);
             })
         });

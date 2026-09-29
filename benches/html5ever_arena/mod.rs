@@ -22,6 +22,17 @@ use std::collections::HashSet;
 use std::ptr;
 
 /// By using our Sink type, the arena is filled with parsed HTML.
+/// Comme `parse`, avec une page déjà dans un tendril (clone = compteur de
+/// références, pas de copie du texte).
+pub fn parse_tendril<'a>(html: StrTendril, arena: Arena<'a>) -> Ref<'a> {
+    let sink = Sink {
+        arena,
+        document: arena.alloc(Node::new(NodeData::Document)),
+        quirks_mode: Cell::new(QuirksMode::NoQuirks),
+    };
+    parse_document(sink, Default::default()).one(html)
+}
+
 pub fn parse<'a>(html: &str, arena: Arena<'a>) -> Ref<'a> {
     let sink = Sink {
         arena,

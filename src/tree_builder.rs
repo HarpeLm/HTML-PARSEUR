@@ -31,10 +31,21 @@ pub fn parse_document(html: &str) -> Document {
 }
 
 pub fn parse_document_with(html: &str, options: ParseOptions) -> Document {
+    // Le document doit garder la page : on en fait une copie.
+    parse_document_owned_with(html.to_string(), options)
+}
+
+/// Comme `parse_document`, mais le document PREND la page au lieu de la copier.
+/// Utile quand la page vient d'être lue (réseau, fichier) dans une `String`.
+pub fn parse_document_owned(html: String) -> Document {
+    parse_document_owned_with(html, ParseOptions::default())
+}
+
+pub fn parse_document_owned_with(html: String, options: ParseOptions) -> Document {
     let mut builder = TreeBuilder { scripting: options.scripting, ..TreeBuilder::default() };
-    // Le document garde une copie de la page ; le tokenizer lit CETTE copie, pour
-    // que les textes empruntés puissent devenir des plages du document.
-    let source: Rc<str> = Rc::from(html);
+    // Le document garde la page ; le tokenizer lit CE texte-là, pour que les
+    // textes empruntés puissent devenir des plages du document.
+    let source = Rc::new(html);
     builder.doc.set_source(Rc::clone(&source));
     let mut tokenizer = Tokenizer::new(&source);
     run(&mut builder, &mut tokenizer);
@@ -47,7 +58,7 @@ pub fn parse_document_with(html: &str, options: ParseOptions) -> Document {
 pub fn parse_fragment(html: &str, context_ns: Namespace, context_name: &str, options: ParseOptions) -> (Document, NodeId) {
     use atoms::*;
     let mut builder = TreeBuilder { scripting: options.scripting, ..TreeBuilder::default() };
-    let source: Rc<str> = Rc::from(html);
+    let source = Rc::new(html.to_string());
     builder.doc.set_source(Rc::clone(&source));
     let mut tokenizer = Tokenizer::new(&source);
 

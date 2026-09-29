@@ -112,7 +112,9 @@ pub enum QuirksMode {
 pub struct Document {
     nodes: Vec<Node>,
     /// La page HTML d'origine, à laquelle renvoient les `TextData::Source`.
-    source: Rc<str>,
+    /// `Rc<String>` et pas `Rc<str>` : `Rc::new(page)` ne déplace que la structure
+    /// String, alors que `Rc<str>::from(page)` recopierait tout le texte.
+    source: Rc<String>,
     pub atoms: Interner,
     pub quirks_mode: QuirksMode,
 }
@@ -121,7 +123,7 @@ impl Default for Document {
     fn default() -> Self {
         let mut doc = Document {
             nodes: Vec::new(),
-            source: Rc::from(""),
+            source: Rc::new(String::new()),
             atoms: Interner::default(),
             quirks_mode: QuirksMode::NoQuirks,
         };
@@ -154,7 +156,7 @@ impl Document {
     }
 
     /// Le parser donne au document la page qu'il va lire.
-    pub(crate) fn set_source(&mut self, source: Rc<str>) {
+    pub(crate) fn set_source(&mut self, source: Rc<String>) {
         self.source = source;
     }
 
@@ -466,7 +468,7 @@ mod tests {
     #[test]
     fn texte_partage_avec_la_page() {
         let mut doc = Document::default();
-        let page: Rc<str> = Rc::from("Bonjour le monde");
+        let page = Rc::new(String::from("Bonjour le monde"));
         doc.set_source(page.clone());
         let root = NodeId::DOCUMENT;
         // Deux morceaux contigus de la page : une seule plage, aucune copie.
