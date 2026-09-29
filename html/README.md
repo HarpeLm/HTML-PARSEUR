@@ -190,6 +190,29 @@ construirait : il ne suit pas les règles de la spec (balises implicites, conten
 mal imbriqué...), d'où des nombres de nœuds différents. Parmi les parsers
 **conformes**, html-parseur est le plus rapide sur ces 5 pages.
 
+### Contre Chromium (indicatif)
+
+Le parser HTML de Chromium (Blink), mesuré dans le navigateur avec
+`DOMParser.parseFromString()` sur les mêmes 5 pages, médiane de 30 parsings
+(Chromium 152, même machine ; script : [benches/chromium/domparser.js](benches/chromium/domparser.js)).
+Chromium trouve **exactement** le même nombre de nœuds que nous sur les 5 pages.
+
+| Page | html-parseur | Chromium (`DOMParser`) | Rapport |
+|---|---|---|---|
+| Wikipédia FR | 202 | 146 | ×1,38 |
+| Wikipedia EN | 215 | 159 | ×1,36 |
+| Spec WHATWG | 180 | 137 | ×1,31 |
+| Doc Rust | 160 | 67 | ×2,40 |
+| MDN FR | 288 | 200 | ×1,44 |
+
+**À lire avec prudence** : ce n'est pas le même travail. Chromium construit un
+vrai DOM (objets C++ complets, ramasse-miettes, liaison avec JavaScript), là où
+notre arène ne stocke que l'essentiel ; la mesure passe par JavaScript
+(`performance.now()`, précision limitée à ~0,1 ms) ; et dans un vrai chargement
+de page, Chromium parse en streaming sur un autre fil d'exécution. Cela montre
+que notre parser est dans la bonne cour, pas qu'il « bat Chrome ». Firefox n'a
+pas été mesuré.
+
 ### Sur des pages générées
 
 Trois pages générées (`benches/docs/`) qui isolent des cas extrêmes.
