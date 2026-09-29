@@ -1,0 +1,94 @@
+/* Feuille de style par défaut de Lumen (origine « navigateur »).
+ *
+ * D'après la spec HTML (§15, « Rendering »), avec les valeurs de Chromium pour
+ * les propriétés que Lumen gère (vérifiées par tests/oracle_cascade.rs).
+ * Ces règles ne s'appliquent qu'aux éléments HTML (comme le `@namespace html`
+ * de la feuille de Chromium). */
+
+/* ───── Affichage ───── */
+
+[hidden]:not([hidden=until-found i]), area, base, basefont, datalist, head, link,
+meta, noembed, noframes, param, rp, script, style, template, title {
+  display: none;
+}
+
+html, body, address, blockquote, center, dialog, div, figure, figcaption,
+footer, form, header, hr, legend, listing, main, p, plaintext, pre, search, xmp,
+article, aside, h1, h2, h3, h4, h5, h6, hgroup, nav, section, dir, dd, dl, dt,
+menu, ol, ul, fieldset, details, summary, optgroup, option, frameset, frame {
+  display: block;
+}
+
+li { display: list-item; }
+details > summary:first-of-type { display: list-item; }
+
+table { display: table; }
+caption { display: table-caption; }
+colgroup { display: table-column-group; }
+col { display: table-column; }
+thead { display: table-header-group; }
+tbody { display: table-row-group; }
+tfoot { display: table-footer-group; }
+tr { display: table-row; }
+td, th { display: table-cell; }
+
+input, button, select, textarea, meter, progress, marquee { display: inline-block; }
+
+ruby { display: ruby; }
+rt { display: ruby-text; font-size: 50%; }
+slot { display: contents; }
+
+dialog { position: absolute; margin: auto; }
+dialog:not([open]) { display: none; }
+audio:not([controls]) { display: none; }
+
+/* ───── Marges ───── */
+
+body { margin: 8px; }
+p, blockquote, figure, dl, ul, ol, menu, dir, pre, listing, xmp, plaintext {
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+:is(ul, ol, menu, dir, dl) :is(ul, ol, menu, dir, dl) { margin-top: 0; margin-bottom: 0; }
+hr { margin: 0.5em auto; }
+blockquote, figure { margin-left: 40px; margin-right: 40px; }
+dd { margin-left: 40px; }
+ul, ol, menu, dir { padding-left: 40px; }
+
+/* ───── Formulaires et tableaux ───── */
+
+table { box-sizing: border-box; }
+td, th { padding: 1px; }
+input { padding: 1px 2px; }
+input[type=hidden i] { display: none; }
+input:is([type=checkbox i], [type=radio i]) { box-sizing: border-box; padding: 0; }
+input[type=hidden i] { padding: 0; }
+input[type=search i] { box-sizing: border-box; }
+input[type=checkbox i] { margin: 3px 3px 3px 4px; }
+input[type=radio i] { margin: 3px 3px 0 5px; }
+button { padding: 1px 6px; box-sizing: border-box; }
+select, meter, progress { box-sizing: border-box; }
+option { padding: 0 2px 1px; }
+textarea { padding: 2px; }
+fieldset { margin-left: 2px; margin-right: 2px; padding: 0.35em 0.75em 0.625em; }
+legend { padding-left: 2px; padding-right: 2px; }
+dialog { padding: 1em; }
+
+/* ───── Polices ───── */
+
+h1 { font-size: 2em; margin-top: 0.67em; margin-bottom: 0.67em; }
+h2 { font-size: 1.5em; margin-top: 0.83em; margin-bottom: 0.83em; }
+h3 { font-size: 1.17em; margin-top: 1em; margin-bottom: 1em; }
+h4 { margin-top: 1.33em; margin-bottom: 1.33em; }
+h5 { font-size: 0.83em; margin-top: 1.67em; margin-bottom: 1.67em; }
+h6 { font-size: 0.67em; margin-top: 2.33em; margin-bottom: 2.33em; }
+h1, h2, h3, h4, h5, h6, th, optgroup { font-weight: bold; }
+
+b, strong { font-weight: bolder; }
+small, sub, sup { font-size: smaller; }
+big { font-size: larger; }
+
+code, kbd, samp, pre, tt, xmp, listing, plaintext { font-family: monospace; }
+
+/* Les champs de formulaire : `font: -webkit-small-control` dans Chromium. */
+input, button, select, textarea { font-size: 13.333333px; font-weight: normal; }

@@ -1,0 +1,6 @@
+/* Feuille par défaut pour les éléments MathML (comme le `mathml.css` de
+ * Chromium) : ne s'applique qu'aux éléments de l'espace de noms MathML. */
+
+* { display: block math; }
+math { display: math; }
+math[display=block i] { display: block math; }
