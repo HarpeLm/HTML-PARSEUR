@@ -122,6 +122,7 @@ static_atoms! {
     SEARCH = "search",
     SECTION = "section",
     SELECT = "select",
+    SELECTEDCONTENT = "selectedcontent",
     SMALL = "small",
     SOURCE = "source",
     STRIKE = "strike",

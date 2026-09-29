@@ -190,6 +190,8 @@ pub struct TreeBuilder {
     template_modes: Vec<Mode>,
     /// Élément de contexte, pour le parsing de fragments (innerHTML).
     context: Option<NodeId>,
+    /// Un <selectedcontent> a été créé : il faudra le remplir en fin de parsing.
+    saw_selectedcontent: bool,
 }
 
 impl Default for TreeBuilder {
@@ -210,6 +212,7 @@ impl Default for TreeBuilder {
             pending_table_text: String::new(),
             template_modes: Vec::new(),
             context: None,
+            saw_selectedcontent: false,
         }
     }
 }
@@ -497,6 +500,9 @@ impl TreeBuilder {
     }
 
     fn create_element(&mut self, tag: TagToken, ns: Namespace) -> NodeId {
+        if tag.name == atoms::SELECTEDCONTENT {
+            self.saw_selectedcontent = true;
+        }
         let template_contents = if ns == Namespace::Html && tag.name == atoms::TEMPLATE {
             Some(self.doc.create(NodeData::DocumentFragment))
         } else {
@@ -1962,7 +1968,11 @@ impl TreeBuilder {
     /// avec l'option sélectionnée à ce moment-là. C'est ce qu'on fait ici (tant
     /// qu'il n'y a pas de JavaScript qui pourrait observer les étapes).
     fn fill_selectedcontent(&mut self) {
-        let selectedcontent = self.doc.atoms.intern("selectedcontent");
+        // Presque aucune page n'en a : on évite alors de parcourir tout le document.
+        if !self.saw_selectedcontent {
+            return;
+        }
+        let selectedcontent = atoms::SELECTEDCONTENT;
         let selects: Vec<NodeId> = self.doc.descendants(NodeId::DOCUMENT)
             .filter(|&n| self.is_html(n, atoms::SELECT))
             .collect();
