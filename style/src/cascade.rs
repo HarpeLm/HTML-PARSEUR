@@ -18,6 +18,7 @@ use lumen_css::selectors::{Element, Specificity};
 use lumen_css::variables::{CustomProperties, substitute};
 use lumen_css::{Parser, preprocess};
 
+use crate::bloom::{AncestorFilter, MAX_HASHES, ancestor_hashes};
 use crate::computed::{Cascaded, ComputedStyle, Context, PROPERTIES, compute, property_index};
 use crate::sheet::{Declaration, Parsed, Stylesheet, parse_style_attribute};
 
@@ -205,6 +206,18 @@ struct Entry {
     order: u32,
     /// La spécificité du sélecteur, calculée une fois.
     specificity: Specificity,
+    /// Les empreintes que doivent avoir ses ancêtres (filtre de Bloom).
+    ancestor_hashes: [u32; MAX_HASHES],
+    ancestor_hash_count: u8,
+}
+
+impl Entry {
+    /// Le filtre des ancêtres n'exclut pas ce sélecteur.
+    fn may_match(&self, filter: &AncestorFilter) -> bool {
+        self.ancestor_hashes[..self.ancestor_hash_count as usize]
+            .iter()
+            .all(|&h| filter.might_contain(h))
+    }
 }
 
 /// Les sélecteurs rangés selon leur partie la plus à droite, comme dans tous les
@@ -310,12 +323,15 @@ impl StyleEngine {
             for (r, rule) in sheet.rules.iter().enumerate() {
                 order += 1;
                 for (i, selector) in rule.selectors.0.iter().enumerate() {
+                    let (ancestor_hashes, ancestor_hash_count) = ancestor_hashes(selector);
                     let entry = Entry {
                         sheet: s as u32,
                         rule: r as u32,
                         selector: i as u32,
                         order,
                         specificity: selector.specificity(),
+                        ancestor_hashes,
+                        ancestor_hash_count,
                     };
                     index.insert(selector, entry);
                 }
@@ -330,13 +346,34 @@ impl StyleEngine {
 
     /// Calcule le style de tous les éléments, du haut de l'arbre vers le bas.
     pub fn style_document(&self, doc: &Document) -> Styles {
+        /// Une étape du parcours : entrer dans un nœud (avec le style de son
+        /// parent), ou sortir du sous-arbre d'un élément (ses empreintes, à
+        /// retirer du filtre, commencent à cet indice de `hashes`).
+        enum Step {
+            Enter(NodeId, Option<Rc<ComputedStyle>>),
+            Exit(usize),
+        }
         let mut styles = Styles::default();
         let mut root_font_size = 16.0;
-        // Pile de (nœud, style du parent) : pas de récursion, même sur un DOM très profond.
-        let mut stack: Vec<(NodeId, Option<Rc<ComputedStyle>>)> =
-            doc.children(NodeId::DOCUMENT).map(|c| (c, None)).collect();
+        let mut filter = AncestorFilter::default();
+        // Les empreintes des ancêtres, en pile : une seule allocation.
+        let mut hashes: Vec<u32> = Vec::new();
+        // Une pile plutôt que la récursion : pas de débordement, même sur un DOM
+        // très profond.
+        let mut stack: Vec<Step> = doc
+            .children(NodeId::DOCUMENT)
+            .map(|c| Step::Enter(c, None))
+            .collect();
         stack.reverse();
-        while let Some((id, parent)) = stack.pop() {
+        while let Some(step) = stack.pop() {
+            let (id, parent) = match step {
+                Step::Enter(id, parent) => (id, parent),
+                Step::Exit(start) => {
+                    filter.pop(&hashes[start..]);
+                    hashes.truncate(start);
+                    continue;
+                }
+            };
             if doc.element(id).is_none() {
                 continue;
             }
@@ -353,13 +390,19 @@ impl StyleEngine {
                     )
                 }),
             };
-            let style = Rc::new(self.style_element(doc, id, parent.as_deref(), &ctx));
+            let style = Rc::new(self.style_element(doc, id, parent.as_deref(), &ctx, &filter));
             if is_root {
                 root_font_size = style.font_size.px;
             }
-            let children: Vec<NodeId> = doc.children(id).collect();
-            for c in children.into_iter().rev() {
-                stack.push((c, Some(style.clone())));
+            // L'élément devient un ancêtre pour ses enfants.
+            if doc.first_child(id).is_some() {
+                let start = hashes.len();
+                filter.push(&DomElement::new(doc, id), &mut hashes);
+                stack.push(Step::Exit(start));
+                let children: Vec<NodeId> = doc.children(id).collect();
+                for c in children.into_iter().rev() {
+                    stack.push(Step::Enter(c, Some(style.clone())));
+                }
             }
             styles.styles.insert(id, style);
         }
@@ -373,17 +416,20 @@ impl StyleEngine {
         doc: &Document,
         id: NodeId,
         inline: &'s [Declaration],
+        filter: &AncestorFilter,
     ) -> Vec<(Priority, &'s Declaration)> {
         let element = DomElement::new(doc, id);
         let ns = element.element().ns;
         let mut candidates = Vec::new();
         self.index.candidates(&element, &mut candidates);
-        // Les sélecteurs qui correspondent vraiment.
+        // Les sélecteurs qui correspondent vraiment : le filtre des ancêtres
+        // écarte d'abord la plupart des autres sans remonter l'arbre.
         let mut matched: Vec<Entry> = candidates
             .into_iter()
             .filter(|e| {
                 let (_, target, sheet) = &self.sheets[e.sheet as usize];
                 target.is_none_or(|t| t == ns)
+                    && e.may_match(filter)
                     && sheet.rules[e.rule as usize].selectors.0[e.selector as usize]
                         .matches(element)
             })
@@ -421,12 +467,13 @@ impl StyleEngine {
         id: NodeId,
         parent: Option<&ComputedStyle>,
         ctx: &Context,
+        filter: &AncestorFilter,
     ) -> ComputedStyle {
         let inline = DomElement::new(doc, id)
             .attribute("style")
             .map(parse_style_attribute)
             .unwrap_or_default();
-        let declarations = self.matching_declarations(doc, id, &inline);
+        let declarations = self.matching_declarations(doc, id, &inline, filter);
 
         // Les propriétés personnalisées d'abord : les autres peuvent en dépendre.
         let empty = CustomProperties::default();

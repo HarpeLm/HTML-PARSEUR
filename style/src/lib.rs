@@ -34,6 +34,7 @@
 
 #![warn(missing_docs)]
 
+mod bloom;
 pub mod cascade;
 pub mod computed;
 pub mod sheet;
