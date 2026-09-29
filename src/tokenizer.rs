@@ -120,6 +120,8 @@ pub struct Tokenizer {
     /// C'est le parser qui le sait et qui l'active.
     cdata_allowed: bool,
     pending: VecDeque<Token>,
+    /// Texte accumulé, émis en un seul token avant le prochain token non-texte.
+    pending_text: String,
     done: bool,
 }
 
@@ -142,6 +144,7 @@ impl Tokenizer {
             last_start_tag: None,
             cdata_allowed: false,
             pending: VecDeque::new(),
+            pending_text: String::new(),
             done: false,
         }
     }
@@ -194,7 +197,17 @@ impl Tokenizer {
         if matches!(token, Token::Eof) {
             self.done = true;
         }
+        // Le texte accumulé passe avant le token qu'on émet.
+        if !self.pending_text.is_empty() {
+            let text = std::mem::take(&mut self.pending_text);
+            self.pending.push_back(Token::Characters(text));
+        }
         self.pending.push_back(token);
+    }
+
+    /// Un caractère de texte : on l'accumule au lieu de créer un token.
+    fn emit_char(&mut self, c: char) {
+        self.pending_text.push(c);
     }
 
     fn new_tag(&mut self, is_end: bool) {
@@ -249,9 +262,7 @@ impl Tokenizer {
     }
 
     fn emit_str(&mut self, s: &str) {
-        for c in s.chars() {
-            self.emit(Token::Character(c));
-        }
+        self.pending_text.push_str(s);
     }
 
     /// Pas une balise fermante valide : on rend "</" + les lettres lues comme du texte.
@@ -326,7 +337,7 @@ impl Tokenizer {
             if self.in_attribute() {
                 self.push_attr_value(c);
             } else {
-                self.emit(Token::Character(c));
+                self.emit_char(c);
             }
         }
     }
@@ -338,7 +349,7 @@ impl Tokenizer {
             State::Data => match self.consume() {
                 Some('&') => self.start_char_ref(),
                 Some('<') => self.state = State::TagOpen,
-                Some(c) => self.emit(Token::Character(c)),
+                Some(c) => self.emit_char(c),
                 None => self.emit(Token::Eof),
             },
 
@@ -357,11 +368,11 @@ impl Tokenizer {
                     self.state = State::BogusComment;
                 }
                 None => {
-                    self.emit(Token::Character('<'));
+                    self.emit_char('<');
                     self.emit(Token::Eof);
                 }
                 Some(_) => {
-                    self.emit(Token::Character('<'));
+                    self.emit_char('<');
                     self.reconsume();
                     self.state = State::Data;
                 }
@@ -376,8 +387,8 @@ impl Tokenizer {
                 }
                 Some('>') => self.state = State::Data,
                 None => {
-                    self.emit(Token::Character('<'));
-                    self.emit(Token::Character('/'));
+                    self.emit_char('<');
+                    self.emit_char('/');
                     self.emit(Token::Eof);
                 }
                 Some(_) => {
@@ -409,8 +420,8 @@ impl Tokenizer {
             State::Rcdata => match self.consume() {
                 Some('&') => self.start_char_ref(),
                 Some('<') => self.state = State::RcdataLessThanSign,
-                Some('\0') => self.emit(Token::Character('\u{FFFD}')),
-                Some(c) => self.emit(Token::Character(c)),
+                Some('\0') => self.emit_char('\u{FFFD}'),
+                Some(c) => self.emit_char(c),
                 None => self.emit(Token::Eof),
             },
 
@@ -423,15 +434,15 @@ impl Tokenizer {
                         State::ScriptDataLessThanSign
                     }
                 }
-                Some('\0') => self.emit(Token::Character('\u{FFFD}')),
-                Some(c) => self.emit(Token::Character(c)),
+                Some('\0') => self.emit_char('\u{FFFD}'),
+                Some(c) => self.emit_char(c),
                 None => self.emit(Token::Eof),
             },
 
             // §13.2.5.5 (<plaintext> : tout le reste du fichier est du texte)
             State::Plaintext => match self.consume() {
-                Some('\0') => self.emit(Token::Character('\u{FFFD}')),
-                Some(c) => self.emit(Token::Character(c)),
+                Some('\0') => self.emit_char('\u{FFFD}'),
+                Some(c) => self.emit_char(c),
                 None => self.emit(Token::Eof),
             },
 
@@ -452,7 +463,7 @@ impl Tokenizer {
                         self.state = State::ScriptDataEscapeStart;
                     }
                     _ => {
-                        self.emit(Token::Character('<'));
+                        self.emit_char('<');
                         self.reconsume();
                         self.state = text_state;
                     }
@@ -523,7 +534,7 @@ impl Tokenizer {
             // §13.2.5.18 : "<!-" dans un script
             State::ScriptDataEscapeStart => match self.consume() {
                 Some('-') => {
-                    self.emit(Token::Character('-'));
+                    self.emit_char('-');
                     self.state = State::ScriptDataEscapeStartDash;
                 }
                 _ => {
@@ -535,7 +546,7 @@ impl Tokenizer {
             // §13.2.5.19 : "<!--" dans un script
             State::ScriptDataEscapeStartDash => match self.consume() {
                 Some('-') => {
-                    self.emit(Token::Character('-'));
+                    self.emit_char('-');
                     self.state = State::ScriptDataEscapedDashDash;
                 }
                 _ => {
@@ -554,7 +565,7 @@ impl Tokenizer {
                 };
                 match self.consume() {
                     Some('-') => {
-                        self.emit(Token::Character('-'));
+                        self.emit_char('-');
                         self.state = match dashes {
                             0 => State::ScriptDataEscapedDash,
                             _ => State::ScriptDataEscapedDashDash,
@@ -562,15 +573,15 @@ impl Tokenizer {
                     }
                     Some('<') => self.state = State::ScriptDataEscapedLessThanSign,
                     Some('>') if dashes == 2 => {
-                        self.emit(Token::Character('>'));
+                        self.emit_char('>');
                         self.state = State::ScriptData;
                     }
                     Some('\0') => {
-                        self.emit(Token::Character('\u{FFFD}'));
+                        self.emit_char('\u{FFFD}');
                         self.state = State::ScriptDataEscaped;
                     }
                     Some(c) => {
-                        self.emit(Token::Character(c));
+                        self.emit_char(c);
                         self.state = State::ScriptDataEscaped;
                     }
                     None => self.emit(Token::Eof),
@@ -585,12 +596,12 @@ impl Tokenizer {
                 }
                 Some(c) if c.is_ascii_alphabetic() => {
                     self.temp_buffer.clear();
-                    self.emit(Token::Character('<'));
+                    self.emit_char('<');
                     self.reconsume();
                     self.state = State::ScriptDataDoubleEscapeStart;
                 }
                 _ => {
-                    self.emit(Token::Character('<'));
+                    self.emit_char('<');
                     self.reconsume();
                     self.state = State::ScriptDataEscaped;
                 }
@@ -607,11 +618,11 @@ impl Tokenizer {
                 match self.consume() {
                     Some(c @ ('\t' | '\n' | '\x0C' | ' ' | '/' | '>')) => {
                         self.state = if self.temp_buffer == "script" { if_script } else { otherwise };
-                        self.emit(Token::Character(c));
+                        self.emit_char(c);
                     }
                     Some(c) if c.is_ascii_alphabetic() => {
                         self.temp_buffer.push(c.to_ascii_lowercase());
-                        self.emit(Token::Character(c));
+                        self.emit_char(c);
                     }
                     _ => {
                         self.reconsume();
@@ -631,26 +642,26 @@ impl Tokenizer {
                 };
                 match self.consume() {
                     Some('-') => {
-                        self.emit(Token::Character('-'));
+                        self.emit_char('-');
                         self.state = match dashes {
                             0 => State::ScriptDataDoubleEscapedDash,
                             _ => State::ScriptDataDoubleEscapedDashDash,
                         };
                     }
                     Some('<') => {
-                        self.emit(Token::Character('<'));
+                        self.emit_char('<');
                         self.state = State::ScriptDataDoubleEscapedLessThanSign;
                     }
                     Some('>') if dashes == 2 => {
-                        self.emit(Token::Character('>'));
+                        self.emit_char('>');
                         self.state = State::ScriptData;
                     }
                     Some('\0') => {
-                        self.emit(Token::Character('\u{FFFD}'));
+                        self.emit_char('\u{FFFD}');
                         self.state = State::ScriptDataDoubleEscaped;
                     }
                     Some(c) => {
-                        self.emit(Token::Character(c));
+                        self.emit_char(c);
                         self.state = State::ScriptDataDoubleEscaped;
                     }
                     None => self.emit(Token::Eof),
@@ -661,7 +672,7 @@ impl Tokenizer {
             State::ScriptDataDoubleEscapedLessThanSign => match self.consume() {
                 Some('/') => {
                     self.temp_buffer.clear();
-                    self.emit(Token::Character('/'));
+                    self.emit_char('/');
                     self.state = State::ScriptDataDoubleEscapeEnd;
                 }
                 _ => {
@@ -1182,7 +1193,7 @@ impl Tokenizer {
             // §13.2.5.69
             State::CdataSection => match self.consume() {
                 Some(']') => self.state = State::CdataSectionBracket,
-                Some(c) => self.emit(Token::Character(c)),
+                Some(c) => self.emit_char(c),
                 None => self.emit(Token::Eof),
             },
 
@@ -1190,7 +1201,7 @@ impl Tokenizer {
             State::CdataSectionBracket => match self.consume() {
                 Some(']') => self.state = State::CdataSectionEnd,
                 _ => {
-                    self.emit(Token::Character(']'));
+                    self.emit_char(']');
                     self.reconsume();
                     self.state = State::CdataSection;
                 }
@@ -1198,7 +1209,7 @@ impl Tokenizer {
 
             // §13.2.5.71
             State::CdataSectionEnd => match self.consume() {
-                Some(']') => self.emit(Token::Character(']')),
+                Some(']') => self.emit_char(']'),
                 Some('>') => self.state = State::Data,
                 _ => {
                     self.emit_str("]]");
@@ -1266,7 +1277,7 @@ impl Tokenizer {
                     if self.in_attribute() {
                         self.push_attr_value(c);
                     } else {
-                        self.emit(Token::Character(c));
+                        self.emit_char(c);
                     }
                 }
                 _ => {

@@ -17,8 +17,8 @@ fn tokens_to_json(tokens: Vec<Token>) -> Vec<Value> {
     let mut text = String::new(); // les caractères consécutifs sont fusionnés
 
     for token in tokens {
-        if let Token::Character(c) = token {
-            text.push(c);
+        if let Token::Characters(s) = &token {
+            text.push_str(s);
             continue;
         }
         if !text.is_empty() {
@@ -47,7 +47,7 @@ fn tokens_to_json(tokens: Vec<Token>) -> Vec<Value> {
                 !d.force_quirks
             ])),
             Token::Eof => {}
-            Token::Character(_) => unreachable!(),
+            Token::Characters(_) => unreachable!(),
         }
     }
     if !text.is_empty() {

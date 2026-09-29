@@ -1,7 +1,9 @@
 /// Les 6 types de tokens définis par la spec WHATWG (section 13.2.5).
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
-    Character(char),
+    /// Une suite de caractères consécutifs (la spec émet un token par caractère,
+    /// on les regroupe : c'est beaucoup plus rapide).
+    Characters(String),
     StartTag(Tag),
     EndTag(Tag),
     Comment(String),

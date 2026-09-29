@@ -13,3 +13,9 @@ serde_json = "1.0.151"
 [[bench]]
 name = "tokenize"
 harness = false
+
+# Comme release, mais avec les symboles de debug pour que le profileur
+# puisse afficher les noms de fonctions.
+[profile.profiling]
+inherits = "release"
+debug = true
