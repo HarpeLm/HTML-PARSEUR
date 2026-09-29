@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 
+use crate::char_ref::{longest_named_match, numeric_reference_char};
 use crate::token::{Attribute, Doctype, Tag, Token};
 
 /// Les états de la machine (spec §13.2.5.x). On en ajoutera à chaque étape.
@@ -46,6 +47,15 @@ enum State {
     DoctypeSystemIdentifierSingleQuoted,
     AfterDoctypeSystemIdentifier,
     BogusDoctype,
+    CharacterReference,
+    NamedCharacterReference,
+    AmbiguousAmpersand,
+    NumericCharacterReference,
+    HexadecimalCharacterReferenceStart,
+    DecimalCharacterReferenceStart,
+    HexadecimalCharacterReference,
+    DecimalCharacterReference,
+    NumericCharacterReferenceEnd,
 }
 
 pub struct Tokenizer {
@@ -57,6 +67,10 @@ pub struct Tokenizer {
     current_attr: Option<Attribute>,
     current_comment: String,
     current_doctype: Doctype,
+    /// État où revenir après une référence de caractère (Data ou valeur d'attribut).
+    return_state: State,
+    temp_buffer: String,
+    char_ref_code: u32,
     pending: VecDeque<Token>,
     done: bool,
 }
@@ -74,6 +88,9 @@ impl Tokenizer {
             current_attr: None,
             current_comment: String::new(),
             current_doctype: Doctype::default(),
+            return_state: State::Data,
+            temp_buffer: String::new(),
+            char_ref_code: 0,
             pending: VecDeque::new(),
             done: false,
         }
@@ -196,12 +213,41 @@ impl Tokenizer {
         self.current_doctype.system_id.get_or_insert_with(String::new).push(c);
     }
 
+    /// Démarre une référence de caractère (on vient de lire '&').
+    fn start_char_ref(&mut self) {
+        self.return_state = self.state;
+        self.state = State::CharacterReference;
+    }
+
+    /// Vrai si la référence en cours se trouve dans une valeur d'attribut.
+    fn in_attribute(&self) -> bool {
+        matches!(
+            self.return_state,
+            State::AttributeValueDoubleQuoted
+                | State::AttributeValueSingleQuoted
+                | State::AttributeValueUnquoted
+        )
+    }
+
+    /// "Flush code points consumed as a character reference" : le tampon part dans
+    /// la valeur d'attribut, ou devient des tokens Character.
+    fn flush_temp_buffer(&mut self) {
+        let buffer = std::mem::take(&mut self.temp_buffer);
+        for c in buffer.chars() {
+            if self.in_attribute() {
+                self.push_attr_value(c);
+            } else {
+                self.emit(Token::Character(c));
+            }
+        }
+    }
+
     /// Exécute UNE transition de la machine à états.
     fn step(&mut self) {
         match self.state {
             // §13.2.5.1
             State::Data => match self.consume() {
-                Some('&') => self.emit(Token::Character('&')), // TODO étape 4 : références de caractères
+                Some('&') => self.start_char_ref(),
                 Some('<') => self.state = State::TagOpen,
                 Some(c) => self.emit(Token::Character(c)),
                 None => self.emit(Token::Eof),
@@ -334,7 +380,7 @@ impl Tokenizer {
             // §13.2.5.36
             State::AttributeValueDoubleQuoted => match self.consume() {
                 Some('"') => self.state = State::AfterAttributeValueQuoted,
-                Some('&') => self.push_attr_value('&'), // TODO étape 4
+                Some('&') => self.start_char_ref(),
                 Some('\0') => self.push_attr_value('\u{FFFD}'),
                 Some(c) => self.push_attr_value(c),
                 None => self.emit(Token::Eof),
@@ -343,7 +389,7 @@ impl Tokenizer {
             // §13.2.5.37
             State::AttributeValueSingleQuoted => match self.consume() {
                 Some('\'') => self.state = State::AfterAttributeValueQuoted,
-                Some('&') => self.push_attr_value('&'), // TODO étape 4
+                Some('&') => self.start_char_ref(),
                 Some('\0') => self.push_attr_value('\u{FFFD}'),
                 Some(c) => self.push_attr_value(c),
                 None => self.emit(Token::Eof),
@@ -352,7 +398,7 @@ impl Tokenizer {
             // §13.2.5.38
             State::AttributeValueUnquoted => match self.consume() {
                 Some('\t' | '\n' | '\x0C' | ' ') => self.state = State::BeforeAttributeName,
-                Some('&') => self.push_attr_value('&'), // TODO étape 4
+                Some('&') => self.start_char_ref(),
                 Some('>') => {
                     self.state = State::Data;
                     self.emit_current_tag();
@@ -772,6 +818,143 @@ impl Tokenizer {
                 }
                 Some(_) => {}
             },
+
+            // ───────────── Références de caractères ─────────────
+
+            // §13.2.5.72
+            State::CharacterReference => {
+                self.temp_buffer.clear();
+                self.temp_buffer.push('&');
+                match self.consume() {
+                    Some(c) if c.is_ascii_alphanumeric() => {
+                        self.reconsume();
+                        self.state = State::NamedCharacterReference;
+                    }
+                    Some('#') => {
+                        self.temp_buffer.push('#');
+                        self.state = State::NumericCharacterReference;
+                    }
+                    _ => {
+                        self.flush_temp_buffer();
+                        self.reconsume();
+                        self.state = self.return_state;
+                    }
+                }
+            }
+
+            // §13.2.5.73
+            State::NamedCharacterReference => {
+                let rest = &self.input[self.pos.min(self.input.len())..];
+                match longest_named_match(rest) {
+                    Some((len, value)) => {
+                        let matched = &self.input[self.pos..self.pos + len];
+                        let ends_with_semicolon = matched.last() == Some(&';');
+                        let next = self.input.get(self.pos + len).copied();
+                        self.temp_buffer.extend(matched);
+                        self.pos += len;
+
+                        // Exception historique : dans un attribut, "?a=1&copy=2" doit
+                        // rester tel quel (c'est une URL, pas un ©).
+                        let keep_as_is = self.in_attribute()
+                            && !ends_with_semicolon
+                            && next.is_some_and(|c| c == '=' || c.is_ascii_alphanumeric());
+                        if !keep_as_is {
+                            self.temp_buffer.clear();
+                            self.temp_buffer.push_str(value);
+                        }
+                        self.flush_temp_buffer();
+                        self.state = self.return_state;
+                    }
+                    None => {
+                        self.flush_temp_buffer();
+                        self.state = State::AmbiguousAmpersand;
+                    }
+                }
+            }
+
+            // §13.2.5.74
+            State::AmbiguousAmpersand => match self.consume() {
+                Some(c) if c.is_ascii_alphanumeric() => {
+                    if self.in_attribute() {
+                        self.push_attr_value(c);
+                    } else {
+                        self.emit(Token::Character(c));
+                    }
+                }
+                _ => {
+                    self.reconsume();
+                    self.state = self.return_state;
+                }
+            },
+
+            // §13.2.5.75
+            State::NumericCharacterReference => {
+                self.char_ref_code = 0;
+                match self.consume() {
+                    Some(c @ ('x' | 'X')) => {
+                        self.temp_buffer.push(c);
+                        self.state = State::HexadecimalCharacterReferenceStart;
+                    }
+                    _ => {
+                        self.reconsume();
+                        self.state = State::DecimalCharacterReferenceStart;
+                    }
+                }
+            }
+
+            // §13.2.5.76
+            State::HexadecimalCharacterReferenceStart => match self.consume() {
+                Some(c) if c.is_ascii_hexdigit() => {
+                    self.reconsume();
+                    self.state = State::HexadecimalCharacterReference;
+                }
+                _ => {
+                    // "&#x" sans chiffre : on rend le texte tel quel.
+                    self.flush_temp_buffer();
+                    self.reconsume();
+                    self.state = self.return_state;
+                }
+            },
+
+            // §13.2.5.77
+            State::DecimalCharacterReferenceStart => match self.consume() {
+                Some(c) if c.is_ascii_digit() => {
+                    self.reconsume();
+                    self.state = State::DecimalCharacterReference;
+                }
+                _ => {
+                    self.flush_temp_buffer();
+                    self.reconsume();
+                    self.state = self.return_state;
+                }
+            },
+
+            // §13.2.5.78 et §13.2.5.79
+            State::HexadecimalCharacterReference | State::DecimalCharacterReference => {
+                let radix = if self.state == State::HexadecimalCharacterReference { 16 } else { 10 };
+                match self.consume() {
+                    Some(c) if c.is_digit(radix) => {
+                        // saturating : "&#99999999999;" ne doit pas faire déborder le u32.
+                        self.char_ref_code = self
+                            .char_ref_code
+                            .saturating_mul(radix)
+                            .saturating_add(c.to_digit(radix).unwrap());
+                    }
+                    Some(';') => self.state = State::NumericCharacterReferenceEnd,
+                    _ => {
+                        self.reconsume();
+                        self.state = State::NumericCharacterReferenceEnd;
+                    }
+                }
+            }
+
+            // §13.2.5.80
+            State::NumericCharacterReferenceEnd => {
+                self.temp_buffer.clear();
+                self.temp_buffer.push(numeric_reference_char(self.char_ref_code));
+                self.flush_temp_buffer();
+                self.state = self.return_state;
+            }
         }
     }
 }

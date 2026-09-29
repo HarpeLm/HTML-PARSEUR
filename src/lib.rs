@@ -1,3 +1,5 @@
+mod char_ref;
+mod entities;
 mod token;
 mod tokenizer;
 
