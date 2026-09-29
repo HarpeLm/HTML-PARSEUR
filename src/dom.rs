@@ -66,6 +66,10 @@ pub enum NodeData {
     Element(Element),
     Text(String),
     Comment(String),
+    ProcessingInstruction {
+        target: String,
+        data: String,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -259,6 +263,9 @@ impl Document {
                 out.push_str("<!-- ");
                 out.push_str(text);
                 out.push_str(" -->");
+            }
+            NodeData::ProcessingInstruction { target, data } => {
+                out.push_str(&format!("<?{target} {data}?>"));
             }
             NodeData::Element(e) => {
                 out.push('<');

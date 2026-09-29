@@ -81,6 +81,10 @@ enum State {
     AfterAttributeValueQuoted,
     SelfClosingStartTag,
     BogusComment,
+    ProcessingInstructionStart,
+    ProcessingInstructionTarget,
+    ProcessingInstructionBeforeData,
+    ProcessingInstructionData,
     MarkupDeclarationOpen,
     CommentStart,
     CommentStartDash,
@@ -135,6 +139,8 @@ pub struct Tokenizer<'a> {
     current_attr: Option<Attribute<'a>>,
     current_comment: String,
     current_doctype: Doctype,
+    pi_target: String,
+    pi_data: String,
     /// État où revenir après une référence de caractère (Data ou valeur d'attribut).
     return_state: State,
     temp_buffer: String,
@@ -163,6 +169,8 @@ impl<'a> Tokenizer<'a> {
             current_attr: None,
             current_comment: String::new(),
             current_doctype: Doctype::default(),
+            pi_target: String::new(),
+            pi_data: String::new(),
             return_state: State::Data,
             temp_buffer: String::new(),
             char_ref_code: 0,
@@ -351,6 +359,24 @@ impl<'a> Tokenizer<'a> {
         self.emit_str(&buffer);
     }
 
+    /// Cible invalide : on revient à l'ancien comportement, un commentaire bogus
+    /// qui commence par "?" et le début de la cible déjà lu.
+    fn pi_to_bogus_comment(&mut self) {
+        self.current_comment.clear();
+        self.current_comment.push('?');
+        if self.state == State::ProcessingInstructionTarget {
+            self.current_comment.push_str(&self.pi_target);
+        }
+        self.reconsume();
+        self.state = State::BogusComment;
+    }
+
+    fn emit_pi(&mut self) {
+        let target = std::mem::take(&mut self.pi_target);
+        let data = std::mem::take(&mut self.pi_data);
+        self.emit(Token::ProcessingInstruction { target, data });
+    }
+
     fn emit_comment(&mut self) {
         let data = std::mem::take(&mut self.current_comment);
         self.emit(Token::Comment(data));
@@ -450,11 +476,7 @@ impl<'a> Tokenizer<'a> {
                     self.reconsume();
                     self.state = State::TagName;
                 }
-                Some('?') => {
-                    self.current_comment.clear();
-                    self.reconsume();
-                    self.state = State::BogusComment;
-                }
+                Some('?') => self.state = State::ProcessingInstructionStart,
                 None => {
                     self.emit_char('<');
                     self.emit(Token::Eof);
@@ -954,6 +976,71 @@ impl<'a> Tokenizer<'a> {
                 }
                 Some('\0') => self.current_comment.push('\u{FFFD}'),
                 Some(c) => self.current_comment.push(c),
+            },
+
+            // ───────────── Processing instructions : <?cible données?> ─────────────
+            // Ajoutées à la spec en 2026. Règles déduites des tests WPT
+            // (processing-instructions.dat) : si la cible est invalide ou commence
+            // par "xml", on retombe sur l'ancien comportement (commentaire bogus).
+
+            State::ProcessingInstructionStart => match self.consume() {
+                Some(c) if c.is_ascii_alphabetic() || c == '_' => {
+                    self.pi_target.clear();
+                    self.pi_data.clear();
+                    self.pi_target.push(c);
+                    self.state = State::ProcessingInstructionTarget;
+                }
+                None => self.emit(Token::Eof),
+                Some(_) => self.pi_to_bogus_comment(),
+            },
+
+            State::ProcessingInstructionTarget => match self.consume() {
+                Some(c) if c.is_ascii_alphanumeric() || c == '-' || c == '_' => self.pi_target.push(c),
+                Some(c @ ('\t' | '\n' | '\x0C' | ' ' | '>' | '?')) => {
+                    if self.pi_target.len() >= 3 && self.pi_target[..3].eq_ignore_ascii_case("xml") {
+                        return self.pi_to_bogus_comment();
+                    }
+                    match c {
+                        '>' => {
+                            self.state = State::Data;
+                            self.emit_pi();
+                        }
+                        '?' => {
+                            self.pi_data.push('?');
+                            self.state = State::ProcessingInstructionData;
+                        }
+                        _ => self.state = State::ProcessingInstructionBeforeData,
+                    }
+                }
+                None => self.emit(Token::Eof),
+                Some(_) => self.pi_to_bogus_comment(),
+            },
+
+            State::ProcessingInstructionBeforeData => match self.consume() {
+                Some('\t' | '\n' | '\x0C' | ' ') => {}
+                Some('>') => {
+                    self.state = State::Data;
+                    self.emit_pi();
+                }
+                None => self.emit(Token::Eof),
+                Some(_) => {
+                    self.reconsume();
+                    self.state = State::ProcessingInstructionData;
+                }
+            },
+
+            State::ProcessingInstructionData => match self.consume() {
+                Some('>') => {
+                    // Le "?" de "?>" ne fait pas partie des données.
+                    if self.pi_data.ends_with('?') {
+                        self.pi_data.pop();
+                    }
+                    self.state = State::Data;
+                    self.emit_pi();
+                }
+                Some('\0') => self.pi_data.push('\u{FFFD}'),
+                Some(c) => self.pi_data.push(c),
+                None => self.emit(Token::Eof),
             },
 
             // §13.2.5.42 : on vient de lire "<!", on regarde ce qui suit.

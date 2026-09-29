@@ -14,6 +14,8 @@ pub enum Token<'a> {
     StartTag(Tag<'a>),
     EndTag(Tag<'a>),
     Comment(String),
+    /// `<?cible données?>` (ajouté à la spec HTML en 2026).
+    ProcessingInstruction { target: String, data: String },
     Doctype(Doctype),
     Eof,
 }

@@ -74,7 +74,8 @@ enum Tok<'t> {
     Text(&'t str),
     Start(TagToken),
     End(TagToken),
-    Comment(String),
+    /// Commentaire OU processing instruction : les deux se placent pareil.
+    Comment(NodeData),
     Doctype(Doctype),
     Eof,
 }
@@ -167,7 +168,10 @@ impl TreeBuilder {
             }
             Token::StartTag(tag) => Tok::Start(self.convert_tag(tag.name, tag.attributes, tag.self_closing)),
             Token::EndTag(tag) => Tok::End(self.convert_tag(tag.name, tag.attributes, tag.self_closing)),
-            Token::Comment(data) => Tok::Comment(data),
+            Token::Comment(data) => Tok::Comment(NodeData::Comment(data)),
+            Token::ProcessingInstruction { target, data } => {
+                Tok::Comment(NodeData::ProcessingInstruction { target, data })
+            }
             Token::Doctype(d) => Tok::Doctype(d),
             Token::Eof => Tok::Eof,
         };
@@ -447,12 +451,12 @@ impl TreeBuilder {
         self.doc.insert_text(parent, before, text);
     }
 
-    fn insert_comment(&mut self, data: String, parent: Option<NodeId>) {
+    fn insert_comment(&mut self, data: NodeData, parent: Option<NodeId>) {
         let (parent, before) = match parent {
             Some(p) => (p, None),
             None => self.insertion_place(None),
         };
-        let node = self.doc.create(NodeData::Comment(data));
+        let node = self.doc.create(data);
         self.doc.insert_before(parent, node, before);
     }
 
