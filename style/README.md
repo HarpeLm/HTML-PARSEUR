@@ -69,21 +69,57 @@ les attributs `style`. Scripts et capture : [tests/oracle/](tests/oracle/).
 ## Temps de calcul
 
 `cargo run --release -p lumen-style --example style_pages` (Apple M5, médiane de
-20 passages, après parsing du HTML) :
+20 passages, après parsing du HTML). Temps de la cascade, en ms :
 
-| Page | Éléments | Règles | Cascade | Par élément |
+| Étape | Wikipédia FR | Wikipedia EN | WHATWG | Doc Rust | MDN |
+|---|---|---|---|---|---|
+| v0 : chaque règle testée sur chaque élément | 8,8 | 36,9 | 19,8 | 22,1 | 3,1 |
+| 1 : index des règles par id, classe, balise | 6,1 | 22,7 | 15,2 | 16,8 | 2,4 |
+| 2 : l'environnement n'est plus copié par élément | 3,6 | 19,4 | 8,7 | 9,1 | 1,4 |
+| 3 : chaque déclaration analysée une seule fois | 3,0 | 16,5 | 5,9 | 6,7 | 0,9 |
+| 4 : filtre de Bloom des ancêtres | 3,1 | **4,4** | 6,1 | 7,0 | 1,0 |
+
+Chaque étape a été choisie d'après le profil (`./profiling/profile.sh`, flame
+graphs dans [profiling/](profiling/)) et vérifiée : styles toujours identiques à
+Chromium. Le filtre de Bloom divise par 3,7 le temps de Wikipedia EN (pleine de
+sélecteurs comme `.mw-parser-output .reference`) ; sur les pages sans feuille
+d'auteur, il ne coûte que son entretien (dans le bruit de mesure, ±5 %).
+
+### Contre Stylo et Chromium
+
+Même machine, mêmes pages, fenêtre de 1024 × 768, feuilles externes non chargées
+des trois côtés. Temps pour calculer le style de toute la page, en ms :
+
+| Page | lumen-style | Stylo (Firefox), 1 fil | Stylo, plusieurs fils | Chromium 152 |
 |---|---|---|---|---|
-| Wikipédia FR | 5 995 | 59 | 8,8 ms | 1,46 µs |
-| Wikipedia EN | 7 864 | 228 | 36,9 ms | 4,69 µs |
-| Spec WHATWG | 13 650 | 58 | 19,8 ms | 1,45 µs |
-| Doc Rust | 16 086 | 58 | 22,1 ms | 1,38 µs |
-| MDN FR | 2 184 | 58 | 3,1 ms | 1,44 µs |
+| Wikipédia FR | 3,4 | 3,4 | 5,7 | 4,1 |
+| Wikipedia EN | **5,0** | 5,5 | 6,2 | 7,3 |
+| Spec WHATWG | 6,4 | **5,4** | 10,1 | 9,8 |
+| Doc Rust | 7,5 | **6,6** | 13,7 | 10,7 |
+| MDN FR | 1,1 | 1,1 | 1,7 | 1,3 |
 
-Première version, **sans aucune optimisation** : chaque règle est testée sur
-chaque élément, et le temps croît avec le nombre de règles. Les vrais moteurs
-(Stylo dans Firefox, Blink) indexent les règles par id, classe et balise, et
-partagent les styles entre éléments semblables. Pas encore de comparaison avec
-eux : ce sera la prochaine étape, en mesurant d'abord.
+- **Stylo** : via [blitz-dom](https://github.com/dioxuslabs/blitz), qui l'utilise
+  avec un DOM html5ever ([comparaisons/stylo](../comparaisons/stylo/),
+  `cargo run --release --manifest-path comparaisons/stylo/Cargo.toml`). On mesure
+  `resolve_stylist` (indexation des règles + parcours) ; pour Lumen, lecture des
+  feuilles + cascade. En plusieurs fils, Stylo est plus lent ici : ces pages sont
+  trop petites pour que la répartition du travail soit rentable.
+- **Chromium** : mesuré depuis JavaScript
+  ([comparaisons/chromium](../comparaisons/chromium/recalcul-style.js)) : une
+  règle `* {}` ajoutée force le recalcul du style de tous les éléments. La mesure
+  inclut la mise à jour de l'arbre de rendu (pas la mise en page).
+
+**Ce n'est pas le même travail**, et la comparaison flatte Lumen :
+
+- Stylo et Chromium calculent **toutes** les propriétés CSS (plus de 400) ; Lumen,
+  29 pour l'instant. Chaque propriété ajoutée coûtera du temps.
+- Ils ne calculent pas le style des éléments dans un sous-arbre `display: none`
+  (`<head>`...) ; Lumen, si. Leur feuille par défaut n'est pas la même.
+- Ils gèrent le shadow DOM, les animations, les pseudo-éléments, le style
+  incrémental (ne recalculer que ce qui a changé)...
+
+Ce que ces chiffres montrent : l'algorithme de Lumen est au niveau des vrais
+moteurs sur la partie qu'il fait. Pas qu'il est plus rapide qu'eux.
 
 ## Licence
 
