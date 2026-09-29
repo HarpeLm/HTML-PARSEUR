@@ -197,11 +197,88 @@ impl Styles {
     }
 }
 
+/// Un sélecteur d'une règle, dans l'index.
+#[derive(Debug, Clone, Copy)]
+struct Entry {
+    /// La feuille, la règle et le sélecteur (dans la liste de la règle).
+    sheet: u32,
+    rule: u32,
+    selector: u32,
+    /// L'ordre d'apparition de la règle, toutes feuilles confondues.
+    order: u32,
+    /// La spécificité du sélecteur, calculée une fois.
+    specificity: Specificity,
+}
+
+/// Les sélecteurs rangés selon leur partie la plus à droite, comme dans tous les
+/// moteurs : `#menu a.lien` ne peut viser qu'un élément de classe `lien`. Pour
+/// un élément, on ne teste que les sélecteurs de son id, de ses classes, de sa
+/// balise, et les « universels » (`*`, `[href]`, `:hover`...).
+#[derive(Debug, Default)]
+struct RuleIndex {
+    by_id: HashMap<String, Vec<Entry>>,
+    by_class: HashMap<String, Vec<Entry>>,
+    /// Par nom de balise en minuscules (le test complet vérifie ensuite la casse).
+    by_tag: HashMap<String, Vec<Entry>>,
+    universal: Vec<Entry>,
+}
+
+impl RuleIndex {
+    fn insert(&mut self, selector: &lumen_css::selectors::Selector, entry: Entry) {
+        use lumen_css::selectors::Simple;
+        let simple = &selector.subject.simple;
+        let bucket = if let Some(id) = simple.iter().find_map(|s| match s {
+            Simple::Id(id) => Some(id),
+            _ => None,
+        }) {
+            self.by_id.entry(id.clone()).or_default()
+        } else if let Some(class) = simple.iter().find_map(|s| match s {
+            Simple::Class(c) => Some(c),
+            _ => None,
+        }) {
+            self.by_class.entry(class.clone()).or_default()
+        } else if let Some(tag) = simple.iter().find_map(|s| match s {
+            Simple::Type(t) => Some(t),
+            _ => None,
+        }) {
+            self.by_tag.entry(tag.to_ascii_lowercase()).or_default()
+        } else {
+            &mut self.universal
+        };
+        bucket.push(entry);
+    }
+
+    /// Les sélecteurs qui peuvent viser `element` (à vérifier ensuite).
+    fn candidates(&self, element: &DomElement, out: &mut Vec<Entry>) {
+        out.extend_from_slice(&self.universal);
+        let name = element.local_name();
+        let tag = if name.bytes().any(|b| b.is_ascii_uppercase()) {
+            self.by_tag.get(&name.to_ascii_lowercase())
+        } else {
+            self.by_tag.get(name)
+        };
+        out.extend_from_slice(tag.map_or(&[][..], Vec::as_slice));
+        if let Some(id) = element.attribute("id")
+            && let Some(entries) = self.by_id.get(id)
+        {
+            out.extend_from_slice(entries);
+        }
+        if let Some(classes) = element.attribute("class") {
+            for class in classes.split_ascii_whitespace() {
+                if let Some(entries) = self.by_class.get(class) {
+                    out.extend_from_slice(entries);
+                }
+            }
+        }
+    }
+}
+
 /// Le moteur de style d'un document : ses feuilles et l'environnement.
 pub struct StyleEngine {
     /// Chaque feuille, son origine, et l'espace de noms qu'elle vise (feuilles
     /// du navigateur) ou `None` (tous les éléments).
     sheets: Vec<(Origin, Option<Namespace>, Stylesheet)>,
+    index: RuleIndex,
     env: Environment,
 }
 
@@ -230,8 +307,26 @@ impl StyleEngine {
                 .into_iter()
                 .map(|s| (Origin::Author, None, s)),
         );
+        let mut index = RuleIndex::default();
+        let mut order = 0u32;
+        for (s, (_, _, sheet)) in sheets.iter().enumerate() {
+            for (r, rule) in sheet.rules.iter().enumerate() {
+                order += 1;
+                for (i, selector) in rule.selectors.0.iter().enumerate() {
+                    let entry = Entry {
+                        sheet: s as u32,
+                        rule: r as u32,
+                        selector: i as u32,
+                        order,
+                        specificity: selector.specificity(),
+                    };
+                    index.insert(selector, entry);
+                }
+            }
+        }
         StyleEngine {
             sheets,
+            index,
             env: env.clone(),
         }
     }
@@ -283,30 +378,34 @@ impl StyleEngine {
     ) -> Vec<(Priority, &'s Declaration)> {
         let element = DomElement::new(doc, id);
         let ns = element.element().ns;
+        let mut candidates = Vec::new();
+        self.index.candidates(&element, &mut candidates);
+        // Les sélecteurs qui correspondent vraiment.
+        let mut matched: Vec<Entry> = candidates
+            .into_iter()
+            .filter(|e| {
+                let (_, target, sheet) = &self.sheets[e.sheet as usize];
+                target.is_none_or(|t| t == ns)
+                    && sheet.rules[e.rule as usize].selectors.0[e.selector as usize]
+                        .matches(element)
+            })
+            .collect();
+        // Une règle dont plusieurs sélecteurs correspondent (`a, .x`) compte une
+        // fois, avec la plus forte spécificité.
+        matched.sort_by_key(|e| (e.order, std::cmp::Reverse(e.specificity)));
+        matched.dedup_by_key(|e| e.order);
+
         let mut found = Vec::new();
-        let mut order = 0u32;
-        for (origin, target, sheet) in &self.sheets {
-            let skip = target.is_some_and(|t| t != ns);
-            for rule in &sheet.rules {
-                order += 1;
-                if skip {
-                    continue;
-                }
-                let spec = rule
-                    .selectors
-                    .0
-                    .iter()
-                    .filter(|s| s.matches(element))
-                    .map(|s| s.specificity())
-                    .max();
-                if let Some(spec) = spec {
-                    for d in &rule.declarations {
-                        found.push((priority(*origin, d.important, false, spec, order), d));
-                    }
-                }
+        for e in &matched {
+            let (origin, _, sheet) = &self.sheets[e.sheet as usize];
+            for d in &sheet.rules[e.rule as usize].declarations {
+                found.push((
+                    priority(*origin, d.important, false, e.specificity, e.order),
+                    d,
+                ));
             }
         }
-        order += 1;
+        let order = u32::MAX;
         for d in inline {
             found.push((
                 priority(Origin::Author, d.important, true, (0, 0, 0), order),

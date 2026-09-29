@@ -1,0 +1,24 @@
+# Comparaison de lumen-style avec Stylo, le moteur de style de Firefox (via
+# blitz-dom, qui l'utilise avec un DOM html5ever). Crate à part, avec son propre
+# workspace : les dépendances de Stylo (lourdes) ne touchent pas Lumen.
+#
+#   cargo run --release --manifest-path comparaisons/stylo/Cargo.toml
+[package]
+name = "comparaison-stylo"
+version = "0.1.0"
+edition = "2024"
+publish = false
+license = "MIT OR Apache-2.0"
+
+[workspace]
+
+[dependencies]
+blitz-dom = { version = "=0.3.0-beta.2", default-features = false }
+blitz-html = "=0.3.0-beta.2"
+blitz-traits = "=0.3.0-beta.2"
+html-parseur = { path = "../../html" }
+lumen-css = { path = "../../css" }
+lumen-style = { path = "../../style" }
+
+[profile.release]
+debug = true
