@@ -1,0 +1,4 @@
+/* Feuille par défaut pour les éléments SVG (comme le `svg.css` de Chromium) :
+ * ne s'applique qu'aux éléments de l'espace de noms SVG. */
+
+svg:not(:root), symbol, image, marker, pattern, foreignObject { overflow: hidden; }

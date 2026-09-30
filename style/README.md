@@ -6,7 +6,7 @@ assemble les précédentes : le DOM de [`html-parseur`](../html/) et, de
 [`lumen-css`](../css/), les sélecteurs, `@media`, `var()` et les propriétés.
 
 1. **Collecter les règles** : la feuille par défaut du navigateur
-   ([`src/ua.css`](src/ua.css), [`src/mathml.css`](src/mathml.css)), les
+   ([`src/ua.css`](src/ua.css), [`src/mathml.css`](src/mathml.css), [`src/svg.css`](src/svg.css)), les
    `<style>` du document (avec `media="..."`, `@media`, `@supports`), l'attribut
    `style=""`, et les `<style>` des arbres fantômes (shadow DOM déclaratif).
 2. **Trier les déclarations** : origine et `!important`, contexte (règles `:host`
@@ -36,16 +36,17 @@ Pas de suite officielle utilisable hors navigateur : on compare à
 
 | Test | Résultat |
 |---|---|
-| 52 pages écrites pour chaque règle de la cascade, dont 10 de shadow DOM (`tests/oracle_cascade.rs`) | **6 195 / 6 195** valeurs identiques |
-| Wikipédia FR, *Rust* (5 995 éléments) | **83 929 / 83 929** |
-| Wikipedia EN, *HTML* (7 864 éléments) | **110 085 / 110 085** |
-| Spec WHATWG, *Parsing* (13 650 éléments) | **191 085 / 191 085** |
-| Doc Rust, `Vec` (16 086 éléments) | **225 204 / 225 204** |
-| MDN FR, `<table>` (2 166 éléments, 18 arbres fantômes) | **30 324 / 30 324** |
+| 54 pages écrites pour chaque règle de la cascade, dont 10 de shadow DOM (`tests/oracle_cascade.rs`) | **10 157 / 10 157** valeurs identiques |
+| Wikipédia FR, *Rust* (5 995 éléments) | **131 889 / 131 889** |
+| Wikipedia EN, *HTML* (7 864 éléments) | **172 997 / 172 997** |
+| Spec WHATWG, *Parsing* (13 650 éléments) | **300 285 / 300 285** |
+| Doc Rust, `Vec` (16 086 éléments) | **353 892 / 353 892** |
+| MDN FR, `<table>` (2 166 éléments, 18 arbres fantômes) | **47 652 / 47 652** |
 
-Propriétés comparées : `display`, `position`, `float`, `visibility`,
+Propriétés comparées (22) : `display`, `position`, `float`, `visibility`,
 `box-sizing`, `opacity`, `z-index`, `font-size`, `font-weight`, `line-height`,
-`margin-top`, `margin-left`, `padding-top`, `padding-left`.
+`margin-top`, `margin-left`, `padding-top`, `padding-left`, les épaisseurs des
+4 bordures, `border-top-style`, `border-left-style`, `overflow-x`, `overflow-y`.
 
 Méthode : chaque page est chargée par Chromium dans une iframe (800 × 600 px pour
 les pages de test, 1024 × 768 pour les vraies pages). Les vraies pages sont

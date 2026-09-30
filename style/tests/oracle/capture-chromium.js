@@ -11,6 +11,8 @@ const LUMEN_PROPS = [
   'display', 'position', 'float', 'visibility', 'box-sizing', 'opacity', 'z-index',
   'font-size', 'font-weight', 'line-height',
   'margin-top', 'margin-left', 'padding-top', 'padding-left',
+  'border-top-width', 'border-right-width', 'border-bottom-width', 'border-left-width',
+  'border-top-style', 'border-left-style', 'overflow-x', 'overflow-y',
 ];
 
 // L'environnement d'une fenêtre, pour évaluer les media queries comme elle.

@@ -136,6 +136,25 @@ fn display(values: &[&ComponentValue]) -> Option<SpecifiedValue> {
     single(values, DISPLAY, |v| keyword(v, &["math"]))
 }
 
+const BORDER_STYLES: &[&str] = &[
+    "none", "hidden", "dotted", "dashed", "solid", "double", "groove", "ridge", "inset", "outset",
+];
+const OVERFLOW: &[&str] = &["visible", "hidden", "clip", "scroll", "auto"];
+
+/// Une épaisseur de bordure : `thin`, `medium`, `thick` ou une longueur positive.
+fn border_width(v: &ComponentValue) -> Option<SpecifiedValue> {
+    keyword(v, &["thin", "medium", "thick"]).or_else(|| {
+        parse_length_percentage(
+            v,
+            Allowed {
+                percentage: false,
+                negative: false,
+            },
+        )
+        .map(SpecifiedValue::LengthPercentage)
+    })
+}
+
 /// Parse une propriété longue (une seule valeur).
 fn longhand(name: &str, values: &[&ComponentValue]) -> Option<(&'static str, SpecifiedValue)> {
     let none = |_: &ComponentValue| None;
@@ -219,6 +238,13 @@ fn longhand(name: &str, values: &[&ComponentValue]) -> Option<(&'static str, Spe
                     .or_else(|| lp(v, false))
             })?,
         ),
+        "border-top-width" | "border-right-width" | "border-bottom-width" | "border-left-width" => {
+            (static_name(name), single(values, &[], border_width)?)
+        }
+        "border-top-style" | "border-right-style" | "border-bottom-style" | "border-left-style" => {
+            (static_name(name), single(values, BORDER_STYLES, none)?)
+        }
+        "overflow-x" | "overflow-y" => (static_name(name), single(values, OVERFLOW, none)?),
         "z-index" => (
             "z-index",
             single(values, &["auto"], |v| match v {
@@ -254,16 +280,27 @@ fn static_name(name: &str) -> &'static str {
         "min-height",
         "max-width",
         "max-height",
+        "border-top-width",
+        "border-right-width",
+        "border-bottom-width",
+        "border-left-width",
+        "border-top-style",
+        "border-right-style",
+        "border-bottom-style",
+        "border-left-style",
+        "overflow-x",
+        "overflow-y",
     ];
     NAMES.iter().find(|n| **n == name).copied().unwrap_or("?")
 }
 
-/// `margin` / `padding` : 1 à 4 valeurs, dans l'ordre haut, droite, bas, gauche.
-fn four_sides(prefix: &str, values: &[&ComponentValue]) -> Option<Vec<Longhand>> {
-    let sides = ["top", "right", "bottom", "left"];
+/// `margin`, `padding`, `border-width`, `border-style` : 1 à 4 valeurs, dans
+/// l'ordre haut, droite, bas, gauche. `names` : les 4 propriétés longues ;
+/// chaque valeur est parsée comme la première.
+fn four_sides(names: [&str; 4], values: &[&ComponentValue]) -> Option<Vec<Longhand>> {
     let parsed: Vec<SpecifiedValue> = values
         .iter()
-        .map(|v| longhand(&format!("{prefix}-top"), &[v]).map(|(_, value)| value))
+        .map(|v| longhand(names[0], &[v]).map(|(_, value)| value))
         .collect::<Option<_>>()?;
     let [t, r, b, l] = match parsed.len() {
         1 => [0, 0, 0, 0],
@@ -273,12 +310,47 @@ fn four_sides(prefix: &str, values: &[&ComponentValue]) -> Option<Vec<Longhand>>
         _ => return None,
     };
     Some(
-        sides
+        names
             .iter()
             .zip([t, r, b, l])
-            .map(|(side, i)| (static_name(&format!("{prefix}-{side}")), parsed[i].clone()))
+            .map(|(name, i)| (static_name(name), parsed[i].clone()))
             .collect(),
     )
+}
+
+fn side_names(pattern: &str) -> [String; 4] {
+    ["top", "right", "bottom", "left"].map(|side| pattern.replace("{}", side))
+}
+
+/// `border`, `border-top`... : une épaisseur, un style et une couleur, dans
+/// n'importe quel ordre, chacun au plus une fois. Ce qui manque reprend sa
+/// valeur initiale (`medium`, `none`). La couleur est vérifiée mais pas encore
+/// gardée (Lumen ne calcule pas encore les couleurs).
+fn border_shorthand(sides: &[&str], values: &[&ComponentValue]) -> Option<Vec<Longhand>> {
+    let (mut width, mut style, mut color) = (None, None, false);
+    for v in values {
+        if width.is_none()
+            && let Some(w) = border_width(v)
+        {
+            width = Some(w);
+        } else if style.is_none()
+            && let Some(s) = keyword(v, BORDER_STYLES)
+        {
+            style = Some(s);
+        } else if !color && crate::color::parse_color(std::slice::from_ref(*v)).is_some() {
+            color = true;
+        } else {
+            return None;
+        }
+    }
+    let width = width.unwrap_or(SpecifiedValue::Keyword("medium"));
+    let style = style.unwrap_or(SpecifiedValue::Keyword("none"));
+    let mut out = Vec::new();
+    for side in sides {
+        out.push((static_name(&format!("border-{side}-width")), width.clone()));
+        out.push((static_name(&format!("border-{side}-style")), style.clone()));
+    }
+    Some(out)
 }
 
 /// `font-family` : des familles séparées par des virgules, chacune une chaîne
@@ -375,7 +447,33 @@ pub fn parse_property(name: &str, value: &[ComponentValue]) -> Option<Vec<Longha
         return None;
     }
     match name.as_str() {
-        "margin" | "padding" => four_sides(&name, &values),
+        "margin" | "padding" => {
+            let names = side_names(&format!("{name}-{{}}"));
+            four_sides(names.each_ref().map(String::as_str), &values)
+        }
+        "border-width" | "border-style" => {
+            let kind = name.trim_start_matches("border-");
+            let names = side_names(&format!("border-{{}}-{kind}"));
+            four_sides(names.each_ref().map(String::as_str), &values)
+        }
+        "border" => border_shorthand(&["top", "right", "bottom", "left"], &values),
+        "border-top" | "border-right" | "border-bottom" | "border-left" => {
+            border_shorthand(&[name.trim_start_matches("border-")], &values)
+        }
+        "overflow" => {
+            let parsed: Vec<SpecifiedValue> = values
+                .iter()
+                .map(|v| keyword(v, OVERFLOW))
+                .collect::<Option<_>>()?;
+            match &parsed[..] {
+                [both] => Some(vec![
+                    ("overflow-x", both.clone()),
+                    ("overflow-y", both.clone()),
+                ]),
+                [x, y] => Some(vec![("overflow-x", x.clone()), ("overflow-y", y.clone())]),
+                _ => None,
+            }
+        }
         "font" => font_shorthand(&values),
         "font-family" => font_family(&values).map(|v| vec![("font-family", v)]),
         _ => longhand(&name, &values).map(|l| vec![l]),
@@ -409,6 +507,13 @@ pub fn initial_value(name: &str) -> Option<SpecifiedValue> {
         "line-height" => Keyword("normal"),
         "z-index" => Keyword("auto"),
         "font-family" => SpecifiedValue::FontFamily(vec!["serif".into()]),
+        "border-top-width" | "border-right-width" | "border-bottom-width" | "border-left-width" => {
+            Keyword("medium")
+        }
+        "border-top-style" | "border-right-style" | "border-bottom-style" | "border-left-style" => {
+            Keyword("none")
+        }
+        "overflow-x" | "overflow-y" => Keyword("visible"),
         _ => return None,
     })
 }

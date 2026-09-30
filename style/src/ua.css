@@ -72,7 +72,20 @@ option { padding: 0 2px 1px; }
 textarea { padding: 2px; }
 fieldset { margin-left: 2px; margin-right: 2px; padding: 0.35em 0.75em 0.625em; }
 legend { padding-left: 2px; padding-right: 2px; }
-dialog { padding: 1em; }
+dialog { padding: 1em; border: solid; }
+
+/* ───── Bordures et débordement (valeurs de Chromium) ───── */
+
+input { border: 2px inset; overflow: clip; }
+input:is([type=checkbox i], [type=radio i]) { border: none; overflow: visible; }
+input[type=hidden i] { border: none; }
+button { border: 2px outset; }
+select { border: 1px solid; overflow: clip; }
+textarea { border: 1px solid; overflow: auto; }
+fieldset { border: 2px groove; }
+iframe { border: 2px inset; overflow: clip; }
+hr { border: 1px inset; overflow: hidden; }
+img, video, canvas { overflow: clip; }
 
 /* ───── Polices ───── */
 

@@ -39,6 +39,6 @@ pub mod cascade;
 pub mod computed;
 pub mod sheet;
 
-pub use cascade::{StyleEngine, Styles, USER_AGENT_CSS, style_document};
+pub use cascade::{StyleEngine, Styles, USER_AGENT_CSS, flat_children, style_document};
 pub use computed::{Computed, ComputedStyle};
 pub use sheet::Stylesheet;

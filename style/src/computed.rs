@@ -44,6 +44,16 @@ pub const PROPERTIES: &[&str] = &[
     "min-height",
     "max-width",
     "max-height",
+    "border-top-width",
+    "border-right-width",
+    "border-bottom-width",
+    "border-left-width",
+    "border-top-style",
+    "border-right-style",
+    "border-bottom-style",
+    "border-left-style",
+    "overflow-x",
+    "overflow-y",
 ];
 
 const FONT_FAMILY: usize = 0;
@@ -56,7 +66,7 @@ pub fn property_index(name: &str) -> Option<usize> {
 
 /// Lumen sait calculer cette propriété (longue ou raccourci).
 pub fn is_supported(name: &str) -> bool {
-    property_index(name).is_some() || matches!(name, "margin" | "padding" | "font")
+    property_index(name).is_some() || !longhands(name).is_empty()
 }
 
 /// Les propriétés longues qu'une déclaration de `name` définit.
@@ -66,6 +76,24 @@ pub fn longhands(name: &str) -> Vec<&'static str> {
         "margin" => sides(property_index("margin-top").unwrap()),
         "padding" => sides(property_index("padding-top").unwrap()),
         "font" => PROPERTIES[..4].to_vec(),
+        "border-width" => sides(property_index("border-top-width").unwrap()),
+        "border-style" => sides(property_index("border-top-style").unwrap()),
+        "border" => {
+            let mut all = sides(property_index("border-top-width").unwrap());
+            all.extend(sides(property_index("border-top-style").unwrap()));
+            all
+        }
+        "border-top" | "border-right" | "border-bottom" | "border-left" => {
+            let side = &name["border-".len()..];
+            [
+                format!("border-{side}-width"),
+                format!("border-{side}-style"),
+            ]
+            .iter()
+            .filter_map(|n| property_index(n).map(|i| PROPERTIES[i]))
+            .collect()
+        }
+        "overflow" => vec!["overflow-x", "overflow-y"],
         _ => property_index(name)
             .map(|i| vec![PROPERTIES[i]])
             .unwrap_or_default(),
@@ -245,6 +273,8 @@ pub struct Context {
     pub is_root: bool,
     /// Le parent est un conteneur flex ou grid (ses enfants deviennent des blocs).
     pub parent_is_flex_or_grid: bool,
+    /// Pixels de l'écran par px CSS (les bordures sont arrondies au pixel d'écran).
+    pub device_pixel_ratio: f64,
 }
 
 /// Une longueur en px. `em_base` : la taille de police de référence.
@@ -447,6 +477,12 @@ pub fn compute(
                 )
             }
             ("opacity", SpecifiedValue::Number(n)) => Computed::Number(n.clamp(0.0, 1.0)),
+            (border, SpecifiedValue::Keyword(k)) if border.starts_with("border") => match *k {
+                "thin" => Computed::Px(1.0),
+                "medium" => Computed::Px(3.0),
+                "thick" => Computed::Px(5.0),
+                other => Computed::Keyword(other),
+            },
             (_, SpecifiedValue::Keyword(k)) => Computed::Keyword(k),
             (_, SpecifiedValue::LengthPercentage(lp)) => length_percentage(lp, em, ctx),
             (_, SpecifiedValue::Number(n)) => Computed::Number(*n),
@@ -462,6 +498,34 @@ pub fn compute(
     let positioned = matches!(position, Computed::Keyword("absolute" | "fixed"));
     if positioned {
         values[index("float")] = Computed::Keyword("none");
+    }
+    // Bordures : épaisseur nulle sans style ; sinon arrondie vers le bas au
+    // pixel d'écran, avec au moins un pixel d'écran (comme Chromium).
+    for side in ["top", "right", "bottom", "left"] {
+        let style_index = property_index(&format!("border-{side}-style")).unwrap();
+        let width_index = property_index(&format!("border-{side}-width")).unwrap();
+        let no_border = matches!(values[style_index], Computed::Keyword("none" | "hidden"));
+        let width = &mut values[width_index];
+        if let Computed::Px(w) = width {
+            let dpr = ctx.device_pixel_ratio;
+            *w = if no_border || *w <= 0.0 {
+                0.0
+            } else {
+                (*w * dpr).floor().max(1.0) / dpr
+            };
+        }
+    }
+    // `overflow` : visible ou clip d'un côté seulement devient auto ou hidden.
+    let (x, y) = (index("overflow-x"), index("overflow-y"));
+    let is_visible_or_clip = |v: &Computed| matches!(v, Computed::Keyword("visible" | "clip"));
+    if is_visible_or_clip(&values[x]) != is_visible_or_clip(&values[y]) {
+        for i in [x, y] {
+            values[i] = match values[i] {
+                Computed::Keyword("visible") => Computed::Keyword("auto"),
+                Computed::Keyword("clip") => Computed::Keyword("hidden"),
+                ref other => other.clone(),
+            };
+        }
     }
     let floats = values[index("float")] != Computed::Keyword("none");
     if (positioned || floats || ctx.is_root || ctx.parent_is_flex_or_grid)

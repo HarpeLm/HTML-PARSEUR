@@ -50,5 +50,7 @@
   "<!DOCTYPE html><mdn-truc><template shadowrootmode=open><style>:host { display: contents } @media (min-width: 1px) { :host { font-size: 21px } }</style><slot></slot></template><span>élément personnalisé</span></mdn-truc>",
   "<!DOCTYPE html><div style='font-size: 30px; font-weight: 300'><template shadowrootmode=open><p style='font-size: 10px; font-weight: 800'><slot></slot></p></template><span>placé dans le slot</span></div>",
   "<!DOCTYPE html><div style='font-size: 30px'><template shadowrootmode=open><p style='font-size: 10px'><slot name=a></slot></p></template><span>sans slot</span><b slot=a>slot nommé</b></div>",
-  "<!DOCTYPE html><div><template shadowrootmode=open><style>:host { --c: 9 } </style><slot></slot></template><span style='z-index: var(--c, 1)'>variable de l'hôte</span></div>"
+  "<!DOCTYPE html><div><template shadowrootmode=open><style>:host { --c: 9 } </style><slot></slot></template><span style='z-index: var(--c, 1)'>variable de l'hôte</span></div>",
+  "<!DOCTYPE html><div style='border: 1.3px solid'>a</div><div style='border: 0.3px dashed'>b</div><div style='border: thick double; border-left: thin dotted'>c</div><div style='border-width: 5px'>d</div><div style='border: 2px solid; border-style: none solid hidden'>e</div><div style='border: red 4px groove'>f</div><div style='border-top: 0.2em solid; font-size: 13px'>g</div>",
+  "<!DOCTYPE html><div style='overflow: hidden'>a</div><div style='overflow: visible hidden'>b</div><div style='overflow: clip auto'>c</div><div style='overflow: scroll clip'>d</div><div style='overflow: clip'>e</div><div style='overflow-y: auto'>f</div>"
 ]

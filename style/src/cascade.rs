@@ -116,6 +116,9 @@ pub const USER_AGENT_CSS: &str = include_str!("ua.css");
 /// La feuille par défaut des éléments MathML.
 pub const MATHML_CSS: &str = include_str!("mathml.css");
 
+/// La feuille par défaut des éléments SVG.
+pub const SVG_CSS: &str = include_str!("svg.css");
+
 /// Les feuilles `<style>` du document, dans l'ordre. Les `<link rel=stylesheet>`
 /// ne sont pas chargées (pas encore de réseau dans Lumen).
 pub fn author_stylesheets(doc: &Document, env: &Environment) -> Vec<Stylesheet> {
@@ -349,6 +352,11 @@ impl StyleEngine {
                 Some(Namespace::MathMl),
                 Stylesheet::parse(MATHML_CSS, env),
             ),
+            (
+                Origin::UserAgent,
+                Some(Namespace::Svg),
+                Stylesheet::parse(SVG_CSS, env),
+            ),
         ];
         sheets.extend(
             author_stylesheets(doc, env)
@@ -439,6 +447,7 @@ impl StyleEngine {
             let ctx = Context {
                 viewport_width: self.env.width,
                 viewport_height: self.env.height,
+                device_pixel_ratio: self.env.resolution,
                 root_font_size,
                 is_root,
                 parent_is_flex_or_grid: parent.as_ref().is_some_and(|p| {
@@ -694,6 +703,35 @@ fn assign_slots(
             assigned.entry(slot).or_default().push(child);
         }
     }
+}
+
+/// Les enfants d'un nœud dans l'« arbre plat » (CSS Scoping) : pour un hôte,
+/// ceux de sa racine fantôme ; pour un `<slot>`, les nœuds qui lui sont
+/// assignés (ou, s'il n'y en a pas, son contenu par défaut) ; sinon ses enfants.
+/// C'est l'arbre que suivent l'héritage et la mise en page.
+pub fn flat_children(doc: &Document, id: NodeId) -> Vec<NodeId> {
+    if let Some(root) = doc.element(id).and_then(|e| e.shadow_root) {
+        return doc.children(root).collect();
+    }
+    let is_slot = doc
+        .element(id)
+        .is_some_and(|e| e.ns == Namespace::Html && doc.atoms.name(e.name) == "slot");
+    if is_slot {
+        // L'hôte de l'arbre fantôme qui contient ce slot.
+        let mut current = doc.node(id).parent;
+        while let Some(n) = current {
+            if let NodeData::ShadowRoot(info) = &doc.node(n).data {
+                let mut assigned = HashMap::new();
+                assign_slots(doc, info.host, n, &mut assigned);
+                if let Some(nodes) = assigned.remove(&id) {
+                    return nodes;
+                }
+                break;
+            }
+            current = doc.node(n).parent;
+        }
+    }
+    doc.children(id).collect()
 }
 
 /// Raccourci : le style calculé de tous les éléments de `doc` dans `env`.
