@@ -68,25 +68,25 @@ fn vraies_pages_comme_chromium() {
         .map(|v| v.as_str().unwrap())
         .collect();
 
-    let (mut total_checked, mut total_same, mut unexplained) = (0usize, 0usize, 0usize);
+    let (mut total_checked, mut total_same) = (0usize, 0usize);
     for r in oracle["results"].as_array().unwrap() {
         let page = r["page"].as_str().unwrap();
         let html = std::fs::read_to_string(root.join(format!("../html/benches/pages/{page}.html")))
             .unwrap();
         let env = environment(&r["environment"]);
-        let doc = parse_document_with(&html, ParseOptions { scripting: true });
+        let doc = parse_document_with(
+            &html,
+            ParseOptions {
+                scripting: true,
+                declarative_shadow_roots: true,
+            },
+        );
         let styles = style_document(&doc, &env);
-        // `<template shadowrootmode>` (shadow DOM déclaratif) : Chromium en fait
-        // une racine fantôme et retire l'élément de l'arbre ; html-parseur ne le
-        // gère pas encore et le garde. On l'écarte pour comparer les mêmes arbres.
+        // Les éléments de l'arbre du document, dans l'ordre (pas ceux des arbres
+        // fantômes : getElementsByTagName ne les voit pas non plus).
         let ours: Vec<NodeId> = doc
             .descendants(NodeId::DOCUMENT)
-            .filter(|&n| {
-                doc.element(n).is_some_and(|e| {
-                    doc.atoms.name(e.name) != "template"
-                        || !e.attrs.iter().any(|a| a.name == "shadowrootmode")
-                })
-            })
+            .filter(|&n| doc.element(n).is_some())
             .collect();
         let names: Vec<&str> = r["names"]
             .as_array()
@@ -120,23 +120,18 @@ fn vraies_pages_comme_chromium() {
                 *name,
                 "{page} : arbres différents"
             );
-            let style = styles.get(id).unwrap();
+            // Pas de style : élément hors de l'arbre plat (enfant d'un hôte assigné à
+            // aucun slot) ; Chromium renvoie alors des valeurs vides.
+            let style = styles.get(id);
             for (i, property) in props.iter().enumerate() {
-                if needs_layout(property, style.get(property)) {
+                if needs_layout(property, style.and_then(|s| s.get(property))) {
                     layout += 1;
                     continue;
                 }
                 checked += 1;
                 let expected = dictionary[row[i].as_u64().unwrap() as usize];
-                let got = style.resolved(property).unwrap_or_default();
+                let got = style.and_then(|s| s.resolved(property)).unwrap_or_default();
                 if got != expected {
-                    // Différence connue : un élément personnalisé (`<mdn-dropdown>`)
-                    // dont le `display` vient d'une règle `:host` de sa racine
-                    // fantôme (shadow DOM déclaratif, pas encore géré).
-                    let shadow_host = *property == "display" && name.contains('-');
-                    if !shadow_host {
-                        unexplained += 1;
-                    }
                     *per_property.entry(property).or_default() += 1;
                     *diffs
                         .entry((
@@ -170,5 +165,10 @@ fn vraies_pages_comme_chromium() {
         "\nTotal : {total_same} / {total_checked} valeurs identiques à Chromium ({:.3} %)",
         100.0 * total_same as f64 / total_checked as f64
     );
-    assert_eq!(unexplained, 0, "différences inexpliquées avec Chromium");
+    assert_eq!(
+        total_same,
+        total_checked,
+        "{} différences avec Chromium",
+        total_checked - total_same
+    );
 }

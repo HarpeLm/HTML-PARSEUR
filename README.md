@@ -8,7 +8,7 @@ optimisé en mesurant.
 |---|---|---|
 | Parser HTML (tokenizer, arbre DOM) | [`html/`](html/) | ✅ v0.1 : 100 % html5lib et WPT, plus rapide que html5ever |
 | Parser CSS : sélecteurs, couleurs, valeurs, `@media`, `var()` | [`css/`](css/) | ✅ 8 338 / 8 338 tests officiels, sélecteurs identiques à Servo, propriétés, media queries et `var()` identiques à Chromium, tokenizer au niveau de cssparser |
-| Cascade CSS : style calculé de chaque élément | [`style/`](style/) | ✅ identique à Chromium sur 640 616 / 640 627 valeurs (5 vraies pages), écarts expliqués |
+| Cascade CSS : style calculé de chaque élément | [`style/`](style/) | ✅ identique à Chromium : 640 627 / 640 627 valeurs sur 5 vraies pages, shadow DOM compris ; au niveau de Stylo (Firefox) en vitesse |
 | DOM complet, mise en page, rendu, réseau, JavaScript… | — | à venir |
 
 ## Démarrer

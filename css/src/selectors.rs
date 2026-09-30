@@ -159,6 +159,10 @@ pub enum PseudoClass {
     /// `:hover`, `:focus`, `:visited`... : états dynamiques, jamais vrais pour
     /// un document statique.
     Never(String),
+    /// `:host` ou `:host(sélecteur)`, dans la feuille d'un arbre fantôme : l'hôte
+    /// de cet arbre. Ne correspond à rien ailleurs ; voir
+    /// [`Selector::matches_as_host`].
+    Host(Option<Box<SelectorList>>),
 }
 
 /// La spécificité (§17) : (ids, classes/attributs/pseudo-classes, types).
@@ -383,6 +387,7 @@ fn parse_pseudo(values: &[ComponentValue], pos: &mut usize, compound: &mut Compo
                 "only-of-type" => PseudoClass::OnlyOfType,
                 "hover" | "active" | "focus" | "focus-within" | "focus-visible" | "visited"
                 | "target" => PseudoClass::Never(lower),
+                "host" => PseudoClass::Host(None),
                 _ => return None,
             };
             compound.simple.push(Simple::PseudoClass(pc));
@@ -394,6 +399,15 @@ fn parse_pseudo(values: &[ComponentValue], pos: &mut usize, compound: &mut Compo
                 "not" => PseudoClass::Not(Box::new(parse_selector_list(trim(arguments))?)),
                 "is" => PseudoClass::Is(Box::new(parse_forgiving_list(arguments))),
                 "where" => PseudoClass::Where(Box::new(parse_forgiving_list(arguments))),
+                // `:host(<compound-selector>)` : un seul sélecteur, sans combinateur.
+                "host" => {
+                    let list = parse_selector_list(trim(arguments))?;
+                    let [selector] = &list.0[..] else { return None };
+                    if !selector.ancestors.is_empty() || selector.subject.pseudo_element.is_some() {
+                        return None;
+                    }
+                    PseudoClass::Host(Some(Box::new(list)))
+                }
                 "nth-child" | "nth-last-child" | "nth-of-type" | "nth-last-of-type" => {
                     let of_type = lower.ends_with("of-type");
                     // `An+B of S` : seulement pour nth-child et nth-last-child.
@@ -457,7 +471,8 @@ impl Selector {
                         PseudoClass::Nth {
                             of_selector: Some(list),
                             ..
-                        } => {
+                        }
+                        | PseudoClass::Host(Some(list)) => {
                             let (a, b, c) = list.max_specificity();
                             (a, b + 1, c)
                         }
@@ -541,6 +556,20 @@ impl Selector {
         self.subject.pseudo_element.is_none()
             && matches_compound(&self.subject, element)
             && matches_ancestors(&self.ancestors, element)
+    }
+
+    /// Dans la feuille d'un arbre fantôme : le sélecteur vise-t-il son hôte
+    /// `host` ? Seuls `:host` et `:host(sélecteur)` le peuvent (CSS Scoping :
+    /// l'hôte n'a pas d'autres « traits » vus de l'intérieur, donc `:host.x` ou
+    /// `div` ne le visent pas).
+    pub fn matches_as_host<E: Element>(&self, host: E) -> bool {
+        if !self.ancestors.is_empty() || self.subject.pseudo_element.is_some() {
+            return false;
+        }
+        let [Simple::PseudoClass(PseudoClass::Host(argument))] = &self.subject.simple[..] else {
+            return false;
+        };
+        argument.as_ref().is_none_or(|list| list.matches(host))
     }
 }
 
@@ -716,6 +745,6 @@ fn matches_pseudo_class<E: Element>(pc: &PseudoClass, e: E) -> bool {
         }
         PseudoClass::Not(list) => !list.matches(e),
         PseudoClass::Is(list) | PseudoClass::Where(list) => list.matches(e),
-        PseudoClass::Never(_) => false,
+        PseudoClass::Never(_) | PseudoClass::Host(_) => false,
     }
 }

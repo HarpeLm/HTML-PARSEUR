@@ -36,7 +36,10 @@ fn lumen(html: &str) -> (f64, f64, usize) {
         height: 768.0,
         ..Environment::default()
     };
-    let doc = parse_document_with(html, ParseOptions { scripting: true });
+    let doc = parse_document_with(html, ParseOptions {
+            scripting: true,
+            declarative_shadow_roots: true,
+        });
     let (mut sheets, mut cascade, mut n) = (Vec::new(), Vec::new(), 0);
     for _ in 0..RUNS {
         let t = Instant::now();

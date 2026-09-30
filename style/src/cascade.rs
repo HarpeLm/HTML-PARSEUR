@@ -102,6 +102,10 @@ impl Element for DomElement<'_> {
     fn same_as(&self, other: &Self) -> bool {
         self.id == other.id
     }
+    /// La racine du document (pas le premier élément d'un arbre fantôme).
+    fn is_root(&self) -> bool {
+        self.doc.node(self.id).parent == Some(NodeId::DOCUMENT)
+    }
 }
 
 // ───────────── Les feuilles d'un document ─────────────
@@ -115,8 +119,13 @@ pub const MATHML_CSS: &str = include_str!("mathml.css");
 /// Les feuilles `<style>` du document, dans l'ordre. Les `<link rel=stylesheet>`
 /// ne sont pas chargées (pas encore de réseau dans Lumen).
 pub fn author_stylesheets(doc: &Document, env: &Environment) -> Vec<Stylesheet> {
+    stylesheets_under(doc, NodeId::DOCUMENT, env)
+}
+
+/// Les feuilles `<style>` d'un arbre (le document, ou un arbre fantôme).
+fn stylesheets_under(doc: &Document, root: NodeId, env: &Environment) -> Vec<Stylesheet> {
     let mut sheets = Vec::new();
-    for id in doc.descendants(NodeId::DOCUMENT) {
+    for id in doc.descendants(root) {
         let Some(el) = doc.element(id) else { continue };
         // `<style>` en HTML, et aussi dans un `<svg>`.
         if el.ns == Namespace::MathMl || doc.atoms.name(el.name) != "style" {
@@ -154,11 +163,30 @@ enum Origin {
 }
 
 /// La clé de tri : plus elle est grande, plus la déclaration est prioritaire.
-type Priority = (u8, bool, Specificity, u32);
+/// (origine et importance, contexte, attribut `style`, spécificité, ordre)
+type Priority = (u8, u8, bool, Specificity, u32);
+
+/// D'où vient une règle, vu de l'élément : de l'arbre où il se trouve, ou de
+/// l'arbre fantôme dont il est l'hôte (règles `:host`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum TreeContext {
+    Own,
+    Inner,
+}
+
+/// L'arbre dans lequel se trouve un élément : le document, ou l'arbre fantôme
+/// d'un hôte. Seules les feuilles de cet arbre (et celles du navigateur) le
+/// visent.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Scope {
+    Document,
+    Shadow(NodeId),
+}
 
 fn priority(
     origin: Origin,
     important: bool,
+    context: TreeContext,
     inline: bool,
     spec: Specificity,
     order: u32,
@@ -169,7 +197,14 @@ fn priority(
         (Origin::Author, true) => 2,
         (Origin::UserAgent, true) => 3,
     };
-    (level, inline, spec, order)
+    // CSS Cascade 4, « contexte » : entre une règle de l'arbre de l'élément et
+    // une règle `:host` de son arbre fantôme, la première gagne si elles sont
+    // normales, la seconde si elles sont `!important`.
+    let context = match (context, important) {
+        (TreeContext::Own, false) | (TreeContext::Inner, true) => 1,
+        _ => 0,
+    };
+    (level, context, inline, spec, order)
 }
 
 /// Les styles calculés de tous les éléments d'un document.
@@ -289,6 +324,9 @@ pub struct StyleEngine {
     /// du navigateur) ou `None` (tous les éléments).
     sheets: Vec<(Origin, Option<Namespace>, Stylesheet)>,
     index: RuleIndex,
+    /// Les feuilles de l'arbre fantôme de chaque hôte (shadow DOM déclaratif) :
+    /// leurs règles `:host` s'appliquent à l'hôte.
+    shadow_sheets: HashMap<NodeId, Vec<Stylesheet>>,
     env: Environment,
 }
 
@@ -337,20 +375,37 @@ impl StyleEngine {
                 }
             }
         }
+        // Les hôtes du document, puis ceux des arbres fantômes (imbriqués).
+        let mut shadow_sheets = HashMap::new();
+        let mut trees = vec![NodeId::DOCUMENT];
+        while let Some(tree) = trees.pop() {
+            for id in doc.descendants(tree) {
+                if let Some(root) = doc.element(id).and_then(|e| e.shadow_root) {
+                    shadow_sheets.insert(id, stylesheets_under(doc, root, env));
+                    trees.push(root);
+                }
+            }
+        }
         StyleEngine {
             sheets,
             index,
+            shadow_sheets,
             env: env.clone(),
         }
     }
 
     /// Calcule le style de tous les éléments, du haut de l'arbre vers le bas.
+    ///
+    /// On suit l'« arbre plat » (CSS Scoping) : un hôte a pour enfants ceux de
+    /// sa racine fantôme, et un `<slot>` les enfants de l'hôte qui lui sont
+    /// assignés ; c'est de là que vient l'héritage. Un enfant de l'hôte assigné
+    /// à aucun slot n'est pas affiché et n'a pas de style (comme dans Chromium).
     pub fn style_document(&self, doc: &Document) -> Styles {
         /// Une étape du parcours : entrer dans un nœud (avec le style de son
-        /// parent), ou sortir du sous-arbre d'un élément (ses empreintes, à
-        /// retirer du filtre, commencent à cet indice de `hashes`).
+        /// parent et son arbre), ou sortir du sous-arbre d'un élément (ses
+        /// empreintes, à retirer du filtre, commencent à cet indice de `hashes`).
         enum Step {
-            Enter(NodeId, Option<Rc<ComputedStyle>>),
+            Enter(NodeId, Option<Rc<ComputedStyle>>, Scope),
             Exit(usize),
         }
         let mut styles = Styles::default();
@@ -358,25 +413,28 @@ impl StyleEngine {
         let mut filter = AncestorFilter::default();
         // Les empreintes des ancêtres, en pile : une seule allocation.
         let mut hashes: Vec<u32> = Vec::new();
+        // L'arbre de chaque hôte, et les nœuds assignés à chaque slot.
+        let mut host_scope: HashMap<NodeId, Scope> = HashMap::new();
+        let mut assigned: HashMap<NodeId, Vec<NodeId>> = HashMap::new();
         // Une pile plutôt que la récursion : pas de débordement, même sur un DOM
         // très profond.
         let mut stack: Vec<Step> = doc
             .children(NodeId::DOCUMENT)
-            .map(|c| Step::Enter(c, None))
+            .map(|c| Step::Enter(c, None, Scope::Document))
             .collect();
         stack.reverse();
         while let Some(step) = stack.pop() {
-            let (id, parent) = match step {
-                Step::Enter(id, parent) => (id, parent),
+            let (id, parent, scope) = match step {
+                Step::Enter(id, parent, scope) => (id, parent, scope),
                 Step::Exit(start) => {
                     filter.pop(&hashes[start..]);
                     hashes.truncate(start);
                     continue;
                 }
             };
-            if doc.element(id).is_none() {
+            let Some(element) = doc.element(id) else {
                 continue;
-            }
+            };
             let is_root = parent.is_none();
             let ctx = Context {
                 viewport_width: self.env.width,
@@ -390,18 +448,30 @@ impl StyleEngine {
                     )
                 }),
             };
-            let style = Rc::new(self.style_element(doc, id, parent.as_deref(), &ctx, &filter));
+            let style =
+                Rc::new(self.style_element(doc, id, parent.as_deref(), &ctx, &filter, scope));
             if is_root {
                 root_font_size = style.font_size.px;
             }
+            // Les enfants dans l'arbre plat.
+            let children: Vec<(NodeId, Scope)> = if let Some(root) = element.shadow_root {
+                host_scope.insert(id, scope);
+                assign_slots(doc, id, root, &mut assigned);
+                doc.children(root).map(|c| (c, Scope::Shadow(id))).collect()
+            } else if let (Scope::Shadow(host), Some(nodes)) = (scope, assigned.get(&id)) {
+                // Un slot qui a reçu des nœuds de l'hôte.
+                let host_scope = host_scope.get(&host).copied().unwrap_or(Scope::Document);
+                nodes.iter().map(|&n| (n, host_scope)).collect()
+            } else {
+                doc.children(id).map(|c| (c, scope)).collect()
+            };
             // L'élément devient un ancêtre pour ses enfants.
-            if doc.first_child(id).is_some() {
+            if !children.is_empty() {
                 let start = hashes.len();
                 filter.push(&DomElement::new(doc, id), &mut hashes);
                 stack.push(Step::Exit(start));
-                let children: Vec<NodeId> = doc.children(id).collect();
-                for c in children.into_iter().rev() {
-                    stack.push(Step::Enter(c, Some(style.clone())));
+                for (c, child_scope) in children.into_iter().rev() {
+                    stack.push(Step::Enter(c, Some(style.clone()), child_scope));
                 }
             }
             styles.styles.insert(id, style);
@@ -417,9 +487,11 @@ impl StyleEngine {
         id: NodeId,
         inline: &'s [Declaration],
         filter: &AncestorFilter,
+        scope: Scope,
     ) -> Vec<(Priority, &'s Declaration)> {
         let element = DomElement::new(doc, id);
         let ns = element.element().ns;
+        let in_shadow = matches!(scope, Scope::Shadow(_));
         let mut candidates = Vec::new();
         self.index.candidates(&element, &mut candidates);
         // Les sélecteurs qui correspondent vraiment : le filtre des ancêtres
@@ -427,8 +499,10 @@ impl StyleEngine {
         let mut matched: Vec<Entry> = candidates
             .into_iter()
             .filter(|e| {
-                let (_, target, sheet) = &self.sheets[e.sheet as usize];
-                target.is_none_or(|t| t == ns)
+                let (origin, target, sheet) = &self.sheets[e.sheet as usize];
+                // Dans un arbre fantôme, les feuilles du document ne s'appliquent pas.
+                (!in_shadow || *origin == Origin::UserAgent)
+                    && target.is_none_or(|t| t == ns)
                     && e.may_match(filter)
                     && sheet.rules[e.rule as usize].selectors.0[e.selector as usize]
                         .matches(element)
@@ -444,15 +518,59 @@ impl StyleEngine {
             let (origin, _, sheet) = &self.sheets[e.sheet as usize];
             for d in &sheet.rules[e.rule as usize].declarations {
                 found.push((
-                    priority(*origin, d.important, false, e.specificity, e.order),
+                    priority(
+                        *origin,
+                        d.important,
+                        TreeContext::Own,
+                        false,
+                        e.specificity,
+                        e.order,
+                    ),
                     d,
                 ));
+            }
+        }
+        // Dans un arbre fantôme : les feuilles de cet arbre (peu de règles, pas
+        // d'index). Pour un hôte : les règles `:host` de son propre arbre fantôme.
+        let own = match scope {
+            Scope::Shadow(host) => self.shadow_sheets.get(&host),
+            Scope::Document => None,
+        };
+        let inner = self.shadow_sheets.get(&id);
+        let mut order = 0;
+        for (sheets, context) in [(own, TreeContext::Own), (inner, TreeContext::Inner)] {
+            for rule in sheets.into_iter().flatten().flat_map(|s| &s.rules) {
+                order += 1;
+                let spec = rule
+                    .selectors
+                    .0
+                    .iter()
+                    .filter(|s| match context {
+                        TreeContext::Own => s.matches(element),
+                        TreeContext::Inner => s.matches_as_host(element),
+                    })
+                    .map(|s| s.specificity())
+                    .max();
+                let Some(spec) = spec else { continue };
+                for d in &rule.declarations {
+                    found.push((
+                        priority(Origin::Author, d.important, context, false, spec, order),
+                        d,
+                    ));
+                }
             }
         }
         let order = u32::MAX;
         for d in inline {
             found.push((
-                priority(Origin::Author, d.important, true, (0, 0, 0), order),
+                priority(
+                    Origin::Author,
+                    d.important,
+                    TreeContext::Own,
+                    true,
+                    (0, 0, 0),
+                    order,
+                ),
                 d,
             ));
         }
@@ -468,12 +586,13 @@ impl StyleEngine {
         parent: Option<&ComputedStyle>,
         ctx: &Context,
         filter: &AncestorFilter,
+        scope: Scope,
     ) -> ComputedStyle {
         let inline = DomElement::new(doc, id)
             .attribute("style")
             .map(parse_style_attribute)
             .unwrap_or_default();
-        let declarations = self.matching_declarations(doc, id, &inline, filter);
+        let declarations = self.matching_declarations(doc, id, &inline, filter, scope);
 
         // Les propriétés personnalisées d'abord : les autres peuvent en dépendre.
         let empty = CustomProperties::default();
@@ -536,6 +655,44 @@ impl StyleEngine {
             }
         }
         compute(&cascaded, parent, custom, ctx)
+    }
+}
+
+/// La valeur d'un attribut (sans espace de noms) d'un élément.
+fn attribute<'d>(doc: &'d Document, id: NodeId, name: &str) -> Option<&'d str> {
+    doc.element(id)?
+        .attrs
+        .iter()
+        .find(|a| a.ns == AttrNamespace::None && a.name == name)
+        .map(|a| a.value.as_str())
+}
+
+/// Assigne les enfants de `host` (éléments et textes) aux `<slot>` de son arbre
+/// fantôme : au premier slot dont le nom (`name`, vide par défaut) est celui de
+/// leur attribut `slot` (vide par défaut). DOM, « find a slot ».
+fn assign_slots(
+    doc: &Document,
+    host: NodeId,
+    root: NodeId,
+    assigned: &mut HashMap<NodeId, Vec<NodeId>>,
+) {
+    let mut slots: HashMap<&str, NodeId> = HashMap::new();
+    for id in doc.descendants(root) {
+        let Some(e) = doc.element(id) else { continue };
+        if e.ns == Namespace::Html && doc.atoms.name(e.name) == "slot" {
+            let name = attribute(doc, id, "name").unwrap_or("");
+            slots.entry(name).or_insert(id);
+        }
+    }
+    for child in doc.children(host) {
+        let name = match &doc.node(child).data {
+            NodeData::Element(_) => attribute(doc, child, "slot").unwrap_or(""),
+            NodeData::Text(_) => "",
+            _ => continue,
+        };
+        if let Some(&slot) = slots.get(name) {
+            assigned.entry(slot).or_default().push(child);
+        }
     }
 }
 

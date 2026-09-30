@@ -8,7 +8,7 @@
 
 use std::panic;
 
-use html_parseur::dom::{Document, Namespace, NodeId};
+use html_parseur::dom::{Document, Namespace, NodeData, NodeId};
 use html_parseur::{ParseOptions, parse_document_with, parse_fragment};
 
 /// Générateur pseudo-aléatoire xorshift64* : simple, rapide, reproductible.
@@ -50,6 +50,7 @@ const TAGS: &[&str] = &[
     "colgroup",
     "col",
     "template",
+    "my-el",
     "svg",
     "math",
     "foreignObject",
@@ -139,6 +140,8 @@ fn random_html(rng: &mut Rng) -> String {
                         " color=red",
                         " selected",
                         " a=\"<b>\"",
+                        " shadowrootmode=open",
+                        " shadowrootmode=closed",
                     ]));
                 }
                 html.push_str(rng.pick(&[">", "/>", " >", ""]));
@@ -165,6 +168,14 @@ fn check_tree(doc: &Document, root: NodeId) {
             doc.children(parent).any(|c| c == node),
             "enfant absent de son parent"
         );
+        // Les arbres fantômes aussi, et chaque racine désigne bien son hôte.
+        if let Some(shadow) = doc.element(node).and_then(|e| e.shadow_root) {
+            match &doc.node(shadow).data {
+                NodeData::ShadowRoot(info) => assert_eq!(info.host, node, "mauvais hôte"),
+                _ => panic!("shadow_root n'est pas une racine fantôme"),
+            }
+            check_tree(doc, shadow);
+        }
     }
 }
 
@@ -190,7 +201,10 @@ fn html_aleatoire_sans_panique() {
         let scripting = rng.below(2) == 0;
         let (ns, context) = contexts[rng.below(contexts.len())];
         let result = panic::catch_unwind(|| {
-            let options = ParseOptions { scripting };
+            let options = ParseOptions {
+                scripting,
+                declarative_shadow_roots: seed % 2 == 0,
+            };
             let doc = parse_document_with(&html, options);
             check_tree(&doc, NodeId::DOCUMENT);
             let (frag, root) = parse_fragment(&html, ns, context, options);

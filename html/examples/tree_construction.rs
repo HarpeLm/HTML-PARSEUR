@@ -129,7 +129,10 @@ fn main() {
             }
             for &scripting in modes {
                 file_total += 1;
-                let options = ParseOptions { scripting };
+                let options = ParseOptions {
+                    scripting,
+                    ..ParseOptions::default()
+                };
                 let label = if scripting { " [script-on]" } else { "" };
                 // Chaque test tourne dans son thread, avec un délai maximum : une boucle
                 // infinie dans le parser ne bloque pas tout le banc.

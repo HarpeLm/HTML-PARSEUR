@@ -73,7 +73,13 @@ fn memes_styles_que_chromium() {
     let mut per_property: BTreeMap<&str, usize> = BTreeMap::new();
     for (case, r) in oracle["results"].as_array().unwrap().iter().enumerate() {
         let html = r["html"].as_str().unwrap();
-        let doc = parse_document_with(html, ParseOptions { scripting: true });
+        let doc = parse_document_with(
+            html,
+            ParseOptions {
+                scripting: true,
+                declarative_shadow_roots: true,
+            },
+        );
         let styles = style_document(&doc, &env);
         let ours = elements(&doc);
         let theirs = r["elements"].as_array().unwrap();
@@ -88,15 +94,17 @@ fn memes_styles_que_chromium() {
         );
 
         for ((&id, name), expected) in ours.iter().zip(&names).zip(theirs) {
-            let style = styles.get(id).expect("élément sans style");
+            // Pas de style : élément hors de l'arbre plat (enfant d'un hôte assigné à
+            // aucun slot) ; Chromium renvoie alors des valeurs vides.
+            let style = styles.get(id);
             for (i, property) in props.iter().enumerate() {
                 let expected = expected[i + 1].as_str().unwrap();
-                if needs_layout(property, style.get(property)) {
+                if needs_layout(property, style.and_then(|s| s.get(property))) {
                     layout += 1;
                     continue;
                 }
                 checked += 1;
-                let got = style.resolved(property).unwrap_or_default();
+                let got = style.and_then(|s| s.resolved(property)).unwrap_or_default();
                 if got != expected {
                     *per_property.entry(property).or_default() += 1;
                     failures.push(format!(

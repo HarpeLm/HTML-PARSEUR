@@ -316,7 +316,10 @@ fn memes_elements_que_servo() {
         // JavaScript activé : <noscript> devient du texte. On fait pareil.
         let doc = html_parseur::parse_document_with(
             &html,
-            html_parseur::ParseOptions { scripting: true },
+            html_parseur::ParseOptions {
+                scripting: true,
+                ..Default::default()
+            },
         );
         let ours: Vec<El> = doc
             .descendants(NodeId::DOCUMENT)

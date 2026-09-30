@@ -16,7 +16,13 @@ fn main() {
         env!("CARGO_MANIFEST_DIR")
     );
     let html = std::fs::read_to_string(path).unwrap();
-    let doc = parse_document_with(&html, ParseOptions { scripting: true });
+    let doc = parse_document_with(
+        &html,
+        ParseOptions {
+            scripting: true,
+            declarative_shadow_roots: true,
+        },
+    );
     let env = Environment {
         width: 1024.0,
         height: 768.0,

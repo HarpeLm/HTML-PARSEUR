@@ -8,13 +8,14 @@ assemble les précédentes : le DOM de [`html-parseur`](../html/) et, de
 1. **Collecter les règles** : la feuille par défaut du navigateur
    ([`src/ua.css`](src/ua.css), [`src/mathml.css`](src/mathml.css)), les
    `<style>` du document (avec `media="..."`, `@media`, `@supports`), l'attribut
-   `style=""`.
-2. **Trier les déclarations** : origine et `!important`, attribut `style`,
-   spécificité, ordre d'apparition.
+   `style=""`, et les `<style>` des arbres fantômes (shadow DOM déclaratif).
+2. **Trier les déclarations** : origine et `!important`, contexte (règles `:host`
+   d'un arbre fantôme), attribut `style`, spécificité, ordre d'apparition.
 3. **Calculer les valeurs** : héritage, `initial` / `inherit` / `unset`, `var()`,
    unités converties en px (`em`, `rem`, `vw`, `calc()`...), mots-clés de taille
    de police, `bolder` / `lighter`, éléments flottants ou positionnés changés en
-   blocs.
+   blocs. L'héritage suit l'« arbre plat » : un élément placé dans un `<slot>`
+   hérite du slot, pas de son hôte.
 
 ## Utilisation
 
@@ -35,12 +36,12 @@ Pas de suite officielle utilisable hors navigateur : on compare à
 
 | Test | Résultat |
 |---|---|
-| 42 pages écrites pour chaque règle de la cascade (`tests/oracle_cascade.rs`) | **5 509 / 5 509** valeurs identiques |
+| 52 pages écrites pour chaque règle de la cascade, dont 10 de shadow DOM (`tests/oracle_cascade.rs`) | **6 195 / 6 195** valeurs identiques |
 | Wikipédia FR, *Rust* (5 995 éléments) | **83 929 / 83 929** |
 | Wikipedia EN, *HTML* (7 864 éléments) | **110 085 / 110 085** |
 | Spec WHATWG, *Parsing* (13 650 éléments) | **191 085 / 191 085** |
 | Doc Rust, `Vec` (16 086 éléments) | **225 204 / 225 204** |
-| MDN FR, `<table>` (2 166 éléments) | 30 313 / 30 324 (voir plus bas) |
+| MDN FR, `<table>` (2 166 éléments, 18 arbres fantômes) | **30 324 / 30 324** |
 
 Propriétés comparées : `display`, `position`, `float`, `visibility`,
 `box-sizing`, `opacity`, `z-index`, `font-size`, `font-weight`, `line-height`,
@@ -56,10 +57,10 @@ les attributs `style`. Scripts et capture : [tests/oracle/](tests/oracle/).
 
 - Les marges et retraits en `auto` ou en `%` : `getComputedStyle` les donne après
   la mise en page, que Lumen ne fait pas encore (34 valeurs, non comparées).
-- Le shadow DOM déclaratif (`<template shadowrootmode>`) : html-parseur ne le gère
-  pas encore. Sur MDN, 11 éléments personnalisés (`<mdn-dropdown>`...) tirent leur
-  `display` d'une règle `:host` de leur racine fantôme : ce sont les 11
-  différences. Le test les identifie et échoue sur toute autre différence.
+- Shadow DOM : `:host`, `:host(...)`, les slots et l'arbre plat sont gérés ;
+  pas encore `::slotted()`, `:host-context()` ni `::part()`. Les feuilles d'arbres
+  fantômes identiques sont parsées une fois chacune (les navigateurs les
+  partagent).
 - Les feuilles `<link rel=stylesheet>` ne sont pas chargées (pas de réseau).
 - `@layer` : le contenu est appliqué, mais sans l'ordre des couches. `revert`
   est traité comme `unset`. Pas de CSS imbriqué dans les règles.
@@ -96,7 +97,10 @@ des trois côtés. Temps pour calculer le style de toute la page, en ms :
 | Wikipedia EN | **5,0** | 5,5 | 6,2 | 7,3 |
 | Spec WHATWG | 6,4 | **5,4** | 10,1 | 9,8 |
 | Doc Rust | 7,5 | **6,6** | 13,7 | 10,7 |
-| MDN FR | 1,1 | 1,1 | 1,7 | 1,3 |
+| MDN FR | 1,1 * | 1,1 | 1,7 | 1,3 |
+
+\* Mesuré avant le shadow DOM déclaratif. Depuis, Lumen calcule aussi le style
+des 146 éléments des arbres fantômes de MDN et parse leurs 18 feuilles : 2,0 ms.
 
 - **Stylo** : via [blitz-dom](https://github.com/dioxuslabs/blitz), qui l'utilise
   avec un DOM html5ever ([comparaisons/stylo](../comparaisons/stylo/),
@@ -115,7 +119,7 @@ des trois côtés. Temps pour calculer le style de toute la page, en ms :
   29 pour l'instant. Chaque propriété ajoutée coûtera du temps.
 - Ils ne calculent pas le style des éléments dans un sous-arbre `display: none`
   (`<head>`...) ; Lumen, si. Leur feuille par défaut n'est pas la même.
-- Ils gèrent le shadow DOM, les animations, les pseudo-éléments, le style
+- Ils gèrent `::slotted()` et `::part()`, les animations, les pseudo-éléments, le style
   incrémental (ne recalculer que ce qui a changé)...
 
 Ce que ces chiffres montrent : l'algorithme de Lumen est au niveau des vrais

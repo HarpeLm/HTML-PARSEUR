@@ -69,8 +69,36 @@ pub struct Element {
     pub name: Atom,
     /// Attributs, dans l'ordre de la page (doublons déjà retirés).
     pub attrs: Vec<Attribute>,
-    /// Pour `<template>` : le fragment qui contient son contenu.
+    /// Pour `<template>` : le fragment qui contient son contenu (ou, pour un
+    /// `<template shadowrootmode>`, la racine fantôme qu'il a créée).
     pub template_contents: Option<NodeId>,
+    /// La racine fantôme de l'élément, s'il en a une (il est alors « hôte »).
+    pub shadow_root: Option<NodeId>,
+}
+
+/// Le mode d'une racine fantôme : `open` (accessible depuis la page par
+/// `element.shadowRoot`) ou `closed`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ShadowRootMode {
+    /// `shadowrootmode="open"`.
+    Open,
+    /// `shadowrootmode="closed"`.
+    Closed,
+}
+
+/// Une racine fantôme (shadow root), créée par le shadow DOM déclaratif.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ShadowRoot {
+    /// L'élément hôte.
+    pub host: NodeId,
+    /// `open` ou `closed`.
+    pub mode: ShadowRootMode,
+    /// `shadowrootclonable`.
+    pub clonable: bool,
+    /// `shadowrootserializable`.
+    pub serializable: bool,
+    /// `shadowrootdelegatesfocus`.
+    pub delegates_focus: bool,
 }
 
 /// Le contenu d'un nœud texte.
@@ -98,6 +126,9 @@ pub enum NodeData {
     Document,
     /// Un fragment : le contenu d'un `<template>`.
     DocumentFragment,
+    /// Une racine fantôme : ses enfants forment l'arbre fantôme d'un hôte.
+    /// Elle n'est l'enfant de personne ; on l'atteint par `Element::shadow_root`.
+    ShadowRoot(ShadowRoot),
     /// `<!DOCTYPE ...>`.
     Doctype {
         /// Nom (`html`).
@@ -427,7 +458,11 @@ impl Document {
 
     /// Copie profonde d'un nœud et de ses descendants (la copie est détachée).
     pub fn clone_subtree(&mut self, id: NodeId) -> NodeId {
-        let data = self.node(id).data.clone();
+        let mut data = self.node(id).data.clone();
+        // Une copie n'emporte pas la racine fantôme de l'original.
+        if let NodeData::Element(e) = &mut data {
+            e.shadow_root = None;
+        }
         let copy = self.create(data);
         let children: Vec<NodeId> = self.children(id).collect();
         for child in children {
@@ -471,6 +506,10 @@ impl Document {
         indent(out, depth);
         match &self.node(id).data {
             NodeData::Document | NodeData::DocumentFragment => out.push_str("#document"),
+            NodeData::ShadowRoot(root) => out.push_str(match root.mode {
+                ShadowRootMode::Open => "#shadow-root (open)",
+                ShadowRootMode::Closed => "#shadow-root (closed)",
+            }),
             NodeData::Doctype {
                 name,
                 public_id,
@@ -523,6 +562,12 @@ impl Document {
                 for (name, value) in attrs {
                     indent(out, depth + 1);
                     out.push_str(&format!("{name}=\"{value}\"\n"));
+                }
+                if let Some(root) = e.shadow_root {
+                    self.dump(root, depth + 1, out);
+                    for child in self.children(root) {
+                        self.dump(child, depth + 2, out);
+                    }
                 }
                 if let Some(contents) = e.template_contents {
                     indent(out, depth + 1);

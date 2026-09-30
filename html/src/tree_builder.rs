@@ -14,6 +14,7 @@ use std::rc::Rc;
 use crate::atoms::{self, Atom};
 use crate::dom::{
     AttrNamespace, Attribute, Document, Element, Namespace, NodeData, NodeId, QuirksMode,
+    ShadowRoot, ShadowRootMode,
 };
 use crate::foreign;
 use crate::token::{Doctype, Token};
@@ -24,6 +25,40 @@ use crate::tokenizer::{InitialState, Tokenizer};
 pub struct ParseOptions {
     /// JavaScript activé : change seulement l'interprétation de `<noscript>`.
     pub scripting: bool,
+    /// Shadow DOM déclaratif : un `<template shadowrootmode="open">` devient une
+    /// racine fantôme attachée à son parent, au lieu d'un élément de l'arbre.
+    /// Vrai pour une page chargée par un navigateur ; faux par défaut, comme
+    /// `DOMParser` (et les suites de tests html5lib et WPT). Jamais pour un
+    /// fragment (`innerHTML`).
+    pub declarative_shadow_roots: bool,
+}
+
+/// Un nom d'élément personnalisé valide (`mdn-dropdown`) : commence par une
+/// minuscule, contient un tiret, pas de majuscule, pas un nom réservé (spec
+/// HTML, « valid custom element name »).
+fn is_valid_custom_element_name(name: &str) -> bool {
+    const RESERVED: &[&str] = &[
+        "annotation-xml",
+        "color-profile",
+        "font-face",
+        "font-face-src",
+        "font-face-uri",
+        "font-face-format",
+        "font-face-name",
+        "missing-glyph",
+    ];
+    let pcen_char = |c: char| {
+        matches!(c,
+            '-' | '.' | '0'..='9' | '_' | 'a'..='z' | '\u{B7}'
+            | '\u{C0}'..='\u{D6}' | '\u{D8}'..='\u{F6}' | '\u{F8}'..='\u{37D}'
+            | '\u{37F}'..='\u{1FFF}' | '\u{200C}'..='\u{200D}' | '\u{203F}'..='\u{2040}'
+            | '\u{2070}'..='\u{218F}' | '\u{2C00}'..='\u{2FEF}' | '\u{3001}'..='\u{D7FF}'
+            | '\u{F900}'..='\u{FDCF}' | '\u{FDF0}'..='\u{FFFD}' | '\u{10000}'..='\u{EFFFF}')
+    };
+    name.starts_with(|c: char| c.is_ascii_lowercase())
+        && name.contains('-')
+        && name.chars().all(pcen_char)
+        && !RESERVED.contains(&name)
 }
 
 /// Parse une page HTML complète et renvoie son DOM.
@@ -47,6 +82,7 @@ pub fn parse_document_owned(html: String) -> Document {
 pub fn parse_document_owned_with(html: String, options: ParseOptions) -> Document {
     let mut builder = TreeBuilder {
         scripting: options.scripting,
+        declarative_shadow_roots: options.declarative_shadow_roots,
         ..TreeBuilder::default()
     };
     // Le document garde la page ; le tokenizer lit CE texte-là, pour que les
@@ -229,6 +265,8 @@ pub struct TreeBuilder {
     /// Ignorer un '\n' juste après `<pre>`, `<listing>`, `<textarea>`.
     ignore_lf: bool,
     scripting: bool,
+    /// Le shadow DOM déclaratif est permis (voir [`ParseOptions`]).
+    declarative_shadow_roots: bool,
     /// Nouvel état demandé au tokenizer (lu par `parse_document`).
     tokenizer_state: Option<InitialState>,
     /// Actif quand du contenu mal placé dans un tableau doit être "adopté"
@@ -257,6 +295,7 @@ impl Default for TreeBuilder {
             frameset_ok: true,
             ignore_lf: false,
             scripting: false,
+            declarative_shadow_roots: false,
             tokenizer_state: None,
             foster_parenting: false,
             pending_table_text: String::new(),
@@ -612,6 +651,7 @@ impl TreeBuilder {
             name: tag.name,
             attrs: tag.attrs, // déplacés, pas copiés
             template_contents,
+            shadow_root: None,
         }))
     }
 
@@ -915,11 +955,11 @@ impl TreeBuilder {
                 None
             }
             Tok::Start(tag) if tag.name == TEMPLATE => {
-                self.insert_html(tag);
                 self.formatting.push(Formatting::Marker);
                 self.frameset_ok = false;
                 self.mode = Mode::InTemplate;
                 self.template_modes.push(Mode::InTemplate);
+                self.insert_template(tag);
                 None
             }
             Tok::End(tag) if tag.name == TEMPLATE => {
@@ -933,6 +973,93 @@ impl TreeBuilder {
             Tok::End(ref tag) if ![BODY, HTML, BR].contains(&tag.name) => None,
             tok => self.in_head_anything_else(tok),
         }
+    }
+
+    /// Insère un `<template>`, avec le shadow DOM déclaratif (§13.2.6.4.4,
+    /// balise de début « template ») : si la balise a un `shadowrootmode`
+    /// valide, le template n'entre pas dans l'arbre ; il crée une racine
+    /// fantôme sur son parent, et son contenu ira dans cette racine.
+    fn insert_template(&mut self, tag: TagToken) {
+        let mode = tag
+            .attrs
+            .iter()
+            .find(|a| a.name == "shadowrootmode")
+            .and_then(|a| match a.value.to_ascii_lowercase().as_str() {
+                "open" => Some(ShadowRootMode::Open),
+                "closed" => Some(ShadowRootMode::Closed),
+                _ => None,
+            });
+        let host = self.adjusted_current();
+        let (Some(mode), true, Some(host)) = (mode, self.declarative_shadow_roots, host) else {
+            self.insert_html(tag);
+            return;
+        };
+        if Some(&host) == self.open.first() {
+            self.insert_html(tag); // l'hôte ne peut pas être <html>
+            return;
+        }
+        let has = |name: &str| tag.attrs.iter().any(|a| a.name == name);
+        let (clonable, serializable, delegates_focus) = (
+            has("shadowrootclonable"),
+            has("shadowrootserializable"),
+            has("shadowrootdelegatesfocus"),
+        );
+        // L'endroit où le template irait s'il n'y avait pas de racine fantôme.
+        let (parent, before) = self.insertion_place(None);
+        let template = self.create_element(tag, Namespace::Html);
+        self.open.push(template); // sur la pile seulement, pas dans l'arbre
+        if !self.can_attach_shadow_root(host) {
+            // L'hôte ne peut pas en avoir (ou en a déjà une) : template ordinaire.
+            self.doc.insert_before(parent, template, before);
+            return;
+        }
+        let root = self.doc.create(NodeData::ShadowRoot(ShadowRoot {
+            host,
+            mode,
+            clonable,
+            serializable,
+            delegates_focus,
+        }));
+        if let Some(e) = self.doc.element_mut(host) {
+            e.shadow_root = Some(root);
+        }
+        if let Some(e) = self.doc.element_mut(template) {
+            e.template_contents = Some(root);
+        }
+    }
+
+    /// « Attach a shadow root » (DOM §4.2.14) réussirait-il sur `host` ?
+    /// Seuls certains éléments HTML et les éléments personnalisés peuvent être
+    /// hôtes, et une seule fois.
+    fn can_attach_shadow_root(&self, host: NodeId) -> bool {
+        let Some(e) = self.doc.element(host) else {
+            return false;
+        };
+        if e.ns != Namespace::Html || e.shadow_root.is_some() {
+            return false;
+        }
+        let name = self.doc.atoms.name(e.name);
+        const HOSTS: &[&str] = &[
+            "article",
+            "aside",
+            "blockquote",
+            "body",
+            "div",
+            "footer",
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6",
+            "header",
+            "main",
+            "nav",
+            "p",
+            "section",
+            "span",
+        ];
+        HOSTS.contains(&name) || is_valid_custom_element_name(name)
     }
 
     fn in_head_anything_else<'t>(&mut self, tok: Tok<'t>) -> Option<Tok<'t>> {

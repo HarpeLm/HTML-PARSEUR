@@ -37,7 +37,13 @@ fn main() {
             env!("CARGO_MANIFEST_DIR")
         );
         let html = std::fs::read_to_string(path).unwrap();
-        let doc = parse_document_with(&html, ParseOptions { scripting: true });
+        let doc = parse_document_with(
+            &html,
+            ParseOptions {
+                scripting: true,
+                declarative_shadow_roots: true,
+            },
+        );
         let (mut sheets, mut cascade) = (Vec::new(), Vec::new());
         let mut counts = (0, 0);
         for _ in 0..20 {

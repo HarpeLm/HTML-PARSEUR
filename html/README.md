@@ -47,7 +47,7 @@ Autres points d'entrée :
 | `parse_document(&str)` | page complète (copie la page une fois) |
 | `parse_document_owned(String)` | page complète, **sans copie** (la page est reprise par le document) |
 | `parse_fragment(html, ns, contexte, options)` | fragment, comme `element.innerHTML = html` |
-| `ParseOptions { scripting }` | JavaScript activé ou non (change l'interprétation de `<noscript>`) |
+| `ParseOptions { scripting, declarative_shadow_roots }` | JavaScript activé ou non (change l'interprétation de `<noscript>`) ; shadow DOM déclaratif (`<template shadowrootmode>`), comme une page chargée par un navigateur |
 | `Tokenizer::new(&str)` | le tokenizer seul, un itérateur de `Token` |
 
 La documentation complète : `cargo doc --open`.
@@ -58,6 +58,7 @@ La documentation complète : `cargo doc --open`.
 |---|---|
 | html5lib-tests, tokenizer | **7017 / 7017** exécutions |
 | WPT, construction d'arbre : 1953 tests (documents et fragments) | **3870 / 3870** exécutions |
+| Shadow DOM déclaratif (`tests/shadow_dom.rs`, écrits d'après la spec : les suites ci-dessus ne le couvrent pas) | **10 / 10** |
 | Robustesse : HTML aléatoire (`tests/robustesse.rs`) | **2 000 000 pages, 0 panique** |
 
 Une « exécution » = un test lancé dans une configuration : un test html5lib
@@ -81,6 +82,10 @@ Mis de côté, et affiché comme tel par les bancs de test :
   à la fois avec NEON sur ARM64 (boucle simple ailleurs).
 - **Zero-copy** : les tokens empruntent des morceaux de la page (`Cow<str>`) ; les
   nœuds texte du DOM sont des *plages* de la page, pas des copies.
+- **Shadow DOM déclaratif** : avec `declarative_shadow_roots`, un
+  `<template shadowrootmode="open">` n'entre pas dans l'arbre ; il attache une
+  racine fantôme (`NodeData::ShadowRoot`) à son parent, comme dans Chromium.
+  Désactivé par défaut, comme `DOMParser` et les suites de tests.
 - **Parser** (§13.2.6) : 23 modes d'insertion, *adoption agency algorithm*,
   *foster parenting*, contenu SVG/MathML, templates, fragments.
 - **Interning** (`src/atoms.rs`) : chaque nom de balise devient un `u32`.
