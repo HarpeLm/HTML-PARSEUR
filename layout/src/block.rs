@@ -9,9 +9,9 @@
 //! Chaque bloc renvoie donc à son parent les marges qui « s'échappent » par le
 //! haut et par le bas ; c'est le parent qui décide où elles s'appliquent.
 
-use lumen_style::{Computed, ComputedStyle, Styles};
+use lumen_style::{Computed, ComputedStyle};
 
-use crate::{BoxKind, Edges, LayoutBox};
+use crate::{BoxKind, Ctx, Edges, LayoutBox};
 
 /// Des marges qui fusionnent : la plus grande positive plus la plus négative.
 #[derive(Debug, Clone, Copy, Default)]
@@ -66,26 +66,35 @@ pub(crate) struct Containing {
     pub height: Option<f64>,
 }
 
+/// Tronque une longueur au 64e de pixel d'écran, comme Chromium qui range
+/// toutes ses positions et tailles dans ce format (`LayoutUnit`) : 0,67em de
+/// 32px (21,44px) y devient 21,4375px sur un écran de densité 2.
+pub(crate) fn layout_unit(px: f64, dpr: f64) -> f64 {
+    (px * dpr * 64.0).trunc() / 64.0 / dpr
+}
+
 /// Une longueur calculée, résolue par rapport à `basis` (les `%`). `None` pour
 /// `auto`, `none`, `min-content`...
-fn resolve(value: Option<&Computed>, basis: f64) -> Option<f64> {
-    match value? {
-        Computed::Px(px) => Some(*px),
-        Computed::Percentage(p) => Some(basis * p / 100.0),
-        Computed::Calc { percent, px } => Some(basis * percent / 100.0 + px),
-        _ => None,
-    }
+fn resolve(value: Option<&Computed>, basis: f64, dpr: f64) -> Option<f64> {
+    let px = match value? {
+        Computed::Px(px) => *px,
+        Computed::Percentage(p) => basis * p / 100.0,
+        Computed::Calc { percent, px } => basis * percent / 100.0 + px,
+        _ => return None,
+    };
+    Some(layout_unit(px, dpr))
 }
 
 /// Comme `resolve`, mais un `%` sans base connue (hauteur du parent `auto`)
 /// vaut `auto`.
-fn resolve_height(value: Option<&Computed>, basis: Option<f64>) -> Option<f64> {
-    match value? {
-        Computed::Px(px) => Some(*px),
-        Computed::Percentage(p) => basis.map(|b| b * p / 100.0),
-        Computed::Calc { percent, px } => basis.map(|b| b * percent / 100.0 + px),
-        _ => None,
-    }
+fn resolve_height(value: Option<&Computed>, basis: Option<f64>, dpr: f64) -> Option<f64> {
+    let px = match value? {
+        Computed::Px(px) => *px,
+        Computed::Percentage(p) => basis? * p / 100.0,
+        Computed::Calc { percent, px } => basis? * percent / 100.0 + px,
+        _ => return None,
+    };
+    Some(layout_unit(px, dpr))
 }
 
 /// Le bloc établit-il un nouveau contexte de formatage de bloc ? Ses marges ne
@@ -110,12 +119,13 @@ fn establishes_bfc(style: Option<&ComputedStyle>, is_root: bool) -> bool {
 pub(crate) fn layout_block(
     b: &mut LayoutBox,
     style: Option<&ComputedStyle>,
-    styles: &Styles,
+    ctx: &Ctx,
     cb: Containing,
     is_root: bool,
 ) -> Laid {
     let get = |name: &str| style.and_then(|s| s.get(name));
-    let length = |name: &str| resolve(get(name), cb.width).unwrap_or(0.0);
+    let dpr = ctx.dpr;
+    let length = |name: &str| resolve(get(name), cb.width, dpr).unwrap_or(0.0);
 
     // Retraits et bordures (les `%` verticaux aussi se rapportent à la largeur).
     let padding = Edges {
@@ -151,7 +161,7 @@ pub(crate) fn layout_block(
     // Largeur (§10.3.3). Une marge `auto` vaut `None` ; une boîte anonyme n'a
     // ni marge ni style.
     let margin = |name: &str| match style {
-        Some(_) => resolve(get(name), cb.width),
+        Some(_) => resolve(get(name), cb.width, dpr),
         None => Some(0.0),
     };
     let (margin_left, margin_right) = (margin("margin-left"), margin("margin-right"));
@@ -179,9 +189,9 @@ pub(crate) fn layout_block(
             }
         }
     };
-    let width = resolve(get("width"), cb.width).map(content_w);
-    let min_width = resolve(get("min-width"), cb.width).map_or(0.0, content_w);
-    let max_width = resolve(get("max-width"), cb.width).map_or(f64::INFINITY, content_w);
+    let width = resolve(get("width"), cb.width, dpr).map(content_w);
+    let min_width = resolve(get("min-width"), cb.width, dpr).map_or(0.0, content_w);
+    let max_width = resolve(get("max-width"), cb.width, dpr).map_or(f64::INFINITY, content_w);
     let (mut w, mut ml, mut mr) = solve(width);
     if w > max_width {
         (w, ml, mr) = solve(Some(max_width));
@@ -191,11 +201,12 @@ pub(crate) fn layout_block(
     }
 
     // Hauteur demandée (§10.6.3) ; `None` : `auto`, calculée d'après le contenu.
-    let height = resolve_height(get("height"), cb.height).map(content_h);
-    let min_height = resolve_height(get("min-height"), cb.height).map_or(0.0, content_h);
-    let max_height = resolve_height(get("max-height"), cb.height).map_or(f64::INFINITY, content_h);
-    let margin_top = resolve(get("margin-top"), cb.width).unwrap_or(0.0);
-    let margin_bottom = resolve(get("margin-bottom"), cb.width).unwrap_or(0.0);
+    let height = resolve_height(get("height"), cb.height, dpr).map(content_h);
+    let min_height = resolve_height(get("min-height"), cb.height, dpr).map_or(0.0, content_h);
+    let max_height =
+        resolve_height(get("max-height"), cb.height, dpr).map_or(f64::INFINITY, content_h);
+    let margin_top = resolve(get("margin-top"), cb.width, dpr).unwrap_or(0.0);
+    let margin_bottom = resolve(get("margin-bottom"), cb.width, dpr).unwrap_or(0.0);
 
     // Les marges des enfants peuvent-elles s'échapper par le haut ou le bas ?
     let bfc = establishes_bfc(style, is_root);
@@ -214,13 +225,20 @@ pub(crate) fn layout_block(
     let inline_content =
         !b.children.is_empty() && b.children.iter().all(|c| c.kind != BoxKind::Block);
     if inline_content {
-        // Contenu en ligne (texte...) : pas encore mis en page (il faut des
-        // polices). Il compte comme du contenu, de hauteur nulle.
-        at_start = false;
+        // Du contenu en ligne : des lignes de texte. Un bloc anonyme prend la
+        // police de son parent.
+        let strut = style.or_else(|| b.style_node.and_then(|n| ctx.styles.get(n)));
+        if let Some(strut) = strut {
+            let lines = crate::inline::layout_lines(b, strut, ctx, w);
+            if lines > 0.0 {
+                cursor = lines;
+                at_start = false;
+            }
+        }
     } else {
         for child in &mut b.children {
-            let child_style = child.node.and_then(|n| styles.get(n));
-            let r = layout_block(child, child_style, styles, child_cb, false);
+            let child_style = child.node.and_then(|n| ctx.styles.get(n));
+            let r = layout_block(child, child_style, ctx, child_cb, false);
             child.offset.0 = child.margin.left;
             if at_start && top_open {
                 // Rien encore au-dessus : ses marges rejoignent la nôtre.

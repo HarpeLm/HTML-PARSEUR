@@ -542,6 +542,7 @@ version = "0.1.0"
 dependencies = [
  "html-parseur",
  "lumen-css",
+ "lumen-font",
  "lumen-style",
  "serde_json",
 ]

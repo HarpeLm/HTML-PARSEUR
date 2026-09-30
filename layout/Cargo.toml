@@ -12,6 +12,7 @@ categories = ["web-programming"]
 [dependencies]
 html-parseur = { path = "../html" }
 lumen-css = { path = "../css" }
+lumen-font = { path = "../font" }
 lumen-style = { path = "../style" }
 
 [dev-dependencies]

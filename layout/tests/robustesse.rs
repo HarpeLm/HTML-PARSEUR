@@ -9,7 +9,8 @@ use std::panic;
 use html_parseur::dom::NodeId;
 use html_parseur::{ParseOptions, parse_document_with};
 use lumen_css::media::Environment;
-use lumen_layout::layout_document;
+use lumen_font::FontDatabase;
+use lumen_layout::{Viewport, layout_document};
 use lumen_style::style_document;
 
 /// Générateur pseudo-aléatoire xorshift64* : simple, rapide, reproductible.
@@ -92,7 +93,7 @@ fn random_page(rng: &mut Rng) -> String {
     html
 }
 
-fn check(html: &str, env: &Environment) {
+fn check(html: &str, env: &Environment, fonts: &FontDatabase) {
     let doc = parse_document_with(
         html,
         ParseOptions {
@@ -101,7 +102,12 @@ fn check(html: &str, env: &Environment) {
         },
     );
     let styles = style_document(&doc, env);
-    let layout = layout_document(&doc, &styles, env.width, env.height);
+    let viewport = Viewport {
+        width: env.width,
+        height: env.height,
+        device_pixel_ratio: 2.0,
+    };
+    let layout = layout_document(&doc, &styles, &viewport, fonts);
     for id in doc.descendants(NodeId::DOCUMENT) {
         if let Some(r) = layout.border_box(id) {
             for v in [r.x, r.y, r.width, r.height] {
@@ -123,10 +129,11 @@ fn pages_aleatoires_sans_panique() {
         height: 600.0,
         ..Environment::default()
     };
+    let fonts = FontDatabase::system();
     for seed in 1..=cases {
         let mut rng = Rng(seed.wrapping_mul(0x9E37_79B9_7F4A_7C15) | 1);
         let html = random_page(&mut rng);
-        let result = panic::catch_unwind(|| check(&html, &env));
+        let result = panic::catch_unwind(panic::AssertUnwindSafe(|| check(&html, &env, &fonts)));
         assert!(result.is_ok(), "problème pour la graine {seed} : {html:?}");
     }
 }
@@ -138,6 +145,7 @@ fn vraies_pages_sans_panique() {
         height: 768.0,
         ..Environment::default()
     };
+    let fonts = FontDatabase::system();
     for page in [
         "wikipedia-fr-rust",
         "wikipedia-en-html",
@@ -149,6 +157,6 @@ fn vraies_pages_sans_panique() {
             "{}/../html/benches/pages/{page}.html",
             env!("CARGO_MANIFEST_DIR")
         );
-        check(&std::fs::read_to_string(path).unwrap(), &env);
+        check(&std::fs::read_to_string(path).unwrap(), &env, &fonts);
     }
 }
