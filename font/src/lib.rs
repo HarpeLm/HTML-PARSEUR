@@ -23,11 +23,13 @@
 #![warn(missing_docs)]
 
 mod database;
+mod kern;
 mod sfnt;
 
 pub use database::{FaceInfo, FontDatabase};
 pub use sfnt::{FontError, face_count};
 
+use kern::Kerning;
 use sfnt::{CharMap, Reader, Tables};
 
 /// Les métriques verticales d'une police, en unités de la police.
@@ -62,6 +64,7 @@ pub struct Font {
     pub win: Option<(u16, u16)>,
     advances: Vec<u16>,
     cmap: CharMap,
+    kerning: Kerning,
 }
 
 impl Font {
@@ -135,7 +138,26 @@ impl Font {
             win,
             advances,
             cmap: CharMap::parse(tables.require("cmap")?)?,
+            kerning: Kerning::from_tables(tables.get(b"GPOS"), tables.get(b"kern")),
         })
+    }
+
+    /// Une police vide (aucun glyphe, métriques nulles) : le dernier recours
+    /// quand aucune police n'est installée.
+    pub fn empty() -> Font {
+        Font {
+            family: String::new(),
+            subfamily: String::new(),
+            weight: 400,
+            italic: false,
+            units_per_em: 1000,
+            hhea: VerticalMetrics::default(),
+            typo: None,
+            win: None,
+            advances: Vec::new(),
+            cmap: CharMap::default(),
+            kerning: Kerning::None,
+        }
     }
 
     /// Le glyphe qui dessine `c` (0 : absent de la police).
@@ -160,6 +182,32 @@ impl Font {
             .chars()
             .map(|c| self.advance(self.glyph(c)) as u64)
             .sum();
+        units as f64 * size / self.units_per_em as f64
+    }
+
+    /// Le crénage entre deux glyphes (en unités) : ce qu'il faut ajouter à
+    /// l'avance de `left` quand `right` le suit.
+    pub fn kerning(&self, left: u16, right: u16) -> i32 {
+        self.kerning.pair(left, right)
+    }
+
+    /// L'avance de chaque caractère d'un texte, crénage compris (en unités) :
+    /// le crénage d'une paire s'ajoute au premier des deux, comme dans HarfBuzz.
+    pub fn kerned_advances(&self, text: &str) -> Vec<i32> {
+        let glyphs: Vec<u16> = text.chars().map(|c| self.glyph(c)).collect();
+        glyphs
+            .iter()
+            .enumerate()
+            .map(|(i, &g)| {
+                let kern = glyphs.get(i + 1).map_or(0, |&next| self.kerning(g, next));
+                self.advance(g) as i32 + kern
+            })
+            .collect()
+    }
+
+    /// La largeur d'un texte à la taille `size` (px), crénage compris.
+    pub fn kerned_width(&self, text: &str, size: f64) -> f64 {
+        let units: i64 = self.kerned_advances(text).iter().map(|&a| a as i64).sum();
         units as f64 * size / self.units_per_em as f64
     }
 

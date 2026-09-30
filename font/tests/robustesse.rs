@@ -30,6 +30,7 @@ fn exercise(data: &[u8]) {
     for index in 0..count {
         if let Ok(font) = Font::parse(data, index) {
             let _ = font.text_width("Hello, wörld € 😀 \u{10FFFF}", 16.0);
+            let _ = font.kerned_width("AVATAR To, Wave yo! fi", 16.0);
             let _ = font.line_metrics(13.0);
         }
     }

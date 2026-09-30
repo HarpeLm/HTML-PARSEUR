@@ -33,11 +33,12 @@ fn main() {
             Some(font) => {
                 let m = font.hhea;
                 println!(
-                    "{family:<16} -> {} {} ({} unités/em) : « {text} » à {size}px = {} px ; hhea {}/{}/{}, arrondis {} / {}",
+                    "{family:<16} -> {} {} ({} unités/em) : « {text} » à {size}px = {} px ({} avec crénage) ; hhea {}/{}/{}, arrondis {} / {}",
                     font.family,
                     font.subfamily,
                     font.units_per_em,
                     font.text_width(text, size),
+                    font.kerned_width(text, size),
                     m.ascender,
                     m.descender,
                     m.line_gap,

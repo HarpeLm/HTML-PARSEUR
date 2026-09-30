@@ -50,7 +50,12 @@ impl<'a> Reader<'a> {
         Reader { data }
     }
 
-    fn bytes(&self, offset: usize, len: usize) -> Result<&'a [u8]> {
+    /// Tous les octets.
+    pub(crate) fn bytes_all(&self) -> &'a [u8] {
+        self.data
+    }
+
+    pub(crate) fn bytes(&self, offset: usize, len: usize) -> Result<&'a [u8]> {
         self.data
             .get(
                 offset
