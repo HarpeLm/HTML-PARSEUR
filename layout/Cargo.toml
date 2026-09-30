@@ -1,0 +1,18 @@
+[package]
+name = "lumen-layout"
+version = "0.1.0"
+edition = "2024"
+description = "Mise en page CSS (boîtes de bloc), brique du navigateur Lumen"
+repository = "https://github.com/HarpeLm/lumen"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+keywords = ["css", "layout", "browser"]
+categories = ["web-programming"]
+
+[dependencies]
+html-parseur = { path = "../html" }
+lumen-css = { path = "../css" }
+lumen-style = { path = "../style" }
+
+[dev-dependencies]
+serde_json = "1.0.151"

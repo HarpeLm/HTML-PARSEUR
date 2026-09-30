@@ -530,6 +530,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "lumen-layout"
+version = "0.1.0"
+dependencies = [
+ "html-parseur",
+ "lumen-css",
+ "lumen-style",
+ "serde_json",
+]
+
+[[package]]
 name = "lumen-style"
 version = "0.1.0"
 dependencies = [

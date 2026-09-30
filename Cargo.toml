@@ -1,6 +1,6 @@
 # Lumen, un navigateur web : un workspace Cargo, une brique par crate.
 [workspace]
-members = ["css","html","style"]
+members = ["css","html","layout","style"]
 resolver = "3"
 
 # Les profils de compilation ne s'appliquent qu'à la racine du workspace.
