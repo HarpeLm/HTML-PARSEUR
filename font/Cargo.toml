@@ -1,0 +1,15 @@
+[package]
+name = "lumen-font"
+version = "0.1.0"
+edition = "2024"
+description = "Lecture des polices TrueType/OpenType et mesure du texte, brique du navigateur Lumen"
+repository = "https://github.com/HarpeLm/lumen"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+keywords = ["font", "truetype", "opentype", "text", "browser"]
+categories = ["text-processing", "parser-implementations"]
+
+[dependencies]
+
+[dev-dependencies]
+serde_json = "1.0.151"

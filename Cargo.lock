@@ -530,6 +530,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "lumen-font"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+]
+
+[[package]]
 name = "lumen-layout"
 version = "0.1.0"
 dependencies = [

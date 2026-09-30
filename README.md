@@ -10,7 +10,8 @@ optimisé en mesurant.
 | Parser CSS : sélecteurs, couleurs, valeurs, `@media`, `var()` | [`css/`](css/) | ✅ 8 338 / 8 338 tests officiels, sélecteurs identiques à Servo, propriétés, media queries et `var()` identiques à Chromium, tokenizer au niveau de cssparser |
 | Cascade CSS : style calculé de chaque élément | [`style/`](style/) | ✅ identique à Chromium : 1 006 715 / 1 006 715 valeurs (22 propriétés) sur 5 vraies pages, shadow DOM compris ; au niveau de Stylo (Firefox) en vitesse |
 | Mise en page : boîtes de bloc | [`layout/`](layout/) | 🚧 blocs identiques à Chromium (292 / 292 boîtes, sans texte) ; texte, flottants, flexbox à venir |
-| Polices et texte, rendu, réseau, JavaScript… | — | à venir |
+| Polices : lecture TrueType/OpenType, mesure du texte | [`font/`](font/) | 🚧 mesures identiques à Chromium (495 / 495) ; crénage et dessin des glyphes à venir |
+| Texte dans la mise en page, rendu, réseau, JavaScript… | — | à venir |
 
 ## Démarrer
 

@@ -1,0 +1,3966 @@
+{
+ "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Claude/2.16120.0 Chrome/152.0.7977.130 Safari/537.36",
+ "captured": "2026-09-30",
+ "results": [
+  {
+   "family": "serif",
+   "size": 16,
+   "text": "Hello",
+   "width": 35.546875,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "serif",
+   "size": 16,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 296.375,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "serif",
+   "size": 16,
+   "text": "0123456789 +-*/=%",
+   "width": 133.1484375,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "serif",
+   "size": 16,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 318.4765625,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "serif",
+   "size": 16,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 277.34375,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "serif",
+   "size": 16,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 231.2890625,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "serif",
+   "size": 16,
+   "text": "espace insécable",
+   "width": 106.15625,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "serif",
+   "size": 16,
+   "text": "   ",
+   "width": 12,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "serif",
+   "size": 16,
+   "text": "W",
+   "width": 15.1015625,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "serif",
+   "size": 13,
+   "text": "Hello",
+   "width": 28.8818359375,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "serif",
+   "size": 13,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 240.8046875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "serif",
+   "size": 13,
+   "text": "0123456789 +-*/=%",
+   "width": 108.18310546875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "serif",
+   "size": 13,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 258.76220703125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "serif",
+   "size": 13,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 225.341796875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "serif",
+   "size": 13,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 187.92236328125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "serif",
+   "size": 13,
+   "text": "espace insécable",
+   "width": 86.251953125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "serif",
+   "size": 13,
+   "text": "   ",
+   "width": 9.75,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "serif",
+   "size": 13,
+   "text": "W",
+   "width": 12.27001953125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "serif",
+   "size": 10.5,
+   "text": "Hello",
+   "width": 23.32763671875,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "serif",
+   "size": 10.5,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 194.49609375,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "serif",
+   "size": 10.5,
+   "text": "0123456789 +-*/=%",
+   "width": 87.378662109375,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "serif",
+   "size": 10.5,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 209.000244140625,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "serif",
+   "size": 10.5,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 182.0068359375,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "serif",
+   "size": 10.5,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 151.783447265625,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "serif",
+   "size": 10.5,
+   "text": "espace insécable",
+   "width": 69.6650390625,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "serif",
+   "size": 10.5,
+   "text": "   ",
+   "width": 7.875,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "serif",
+   "size": 10.5,
+   "text": "W",
+   "width": 9.910400390625,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "serif",
+   "size": 32,
+   "text": "Hello",
+   "width": 71.09375,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "serif",
+   "size": 32,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 592.75,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "serif",
+   "size": 32,
+   "text": "0123456789 +-*/=%",
+   "width": 266.296875,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "serif",
+   "size": 32,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 636.953125,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "serif",
+   "size": 32,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 554.6875,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "serif",
+   "size": 32,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 462.578125,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "serif",
+   "size": 32,
+   "text": "espace insécable",
+   "width": 212.3125,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "serif",
+   "size": 32,
+   "text": "   ",
+   "width": 24,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "serif",
+   "size": 32,
+   "text": "W",
+   "width": 30.203125,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "serif",
+   "size": 7,
+   "text": "Hello",
+   "width": 15.5517578125,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "serif",
+   "size": 7,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 129.6640625,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "serif",
+   "size": 7,
+   "text": "0123456789 +-*/=%",
+   "width": 58.25244140625,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "serif",
+   "size": 7,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 139.33349609375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "serif",
+   "size": 7,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 121.337890625,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "serif",
+   "size": 7,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 101.18896484375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "serif",
+   "size": 7,
+   "text": "espace insécable",
+   "width": 46.443359375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "serif",
+   "size": 7,
+   "text": "   ",
+   "width": 5.25,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "serif",
+   "size": 7,
+   "text": "W",
+   "width": 6.60693359375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "sans-serif",
+   "size": 16,
+   "text": "Hello",
+   "width": 36.4609375,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "sans-serif",
+   "size": 16,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 321.046875,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "sans-serif",
+   "size": 16,
+   "text": "0123456789 +-*/=%",
+   "width": 142.34375,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "sans-serif",
+   "size": 16,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 351.625,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "sans-serif",
+   "size": 16,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 281.8046875,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "sans-serif",
+   "size": 16,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 247.609375,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "sans-serif",
+   "size": 16,
+   "text": "espace insécable",
+   "width": 123.640625,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "sans-serif",
+   "size": 16,
+   "text": "   ",
+   "width": 13.3359375,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "sans-serif",
+   "size": 16,
+   "text": "W",
+   "width": 15.1015625,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "sans-serif",
+   "size": 13,
+   "text": "Hello",
+   "width": 29.62451171875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "sans-serif",
+   "size": 13,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 260.8505859375,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "sans-serif",
+   "size": 13,
+   "text": "0123456789 +-*/=%",
+   "width": 115.654296875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "sans-serif",
+   "size": 13,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 285.6953125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "sans-serif",
+   "size": 13,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 228.96630859375,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "sans-serif",
+   "size": 13,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 201.1826171875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "sans-serif",
+   "size": 13,
+   "text": "espace insécable",
+   "width": 100.4580078125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "sans-serif",
+   "size": 13,
+   "text": "   ",
+   "width": 10.83544921875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "sans-serif",
+   "size": 13,
+   "text": "W",
+   "width": 12.27001953125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "sans-serif",
+   "size": 10.5,
+   "text": "Hello",
+   "width": 23.927490234375,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "sans-serif",
+   "size": 10.5,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 210.68701171875,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "sans-serif",
+   "size": 10.5,
+   "text": "0123456789 +-*/=%",
+   "width": 93.4130859375,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "sans-serif",
+   "size": 10.5,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 230.75390625,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "sans-serif",
+   "size": 10.5,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 184.934326171875,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "sans-serif",
+   "size": 10.5,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 162.49365234375,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "sans-serif",
+   "size": 10.5,
+   "text": "espace insécable",
+   "width": 81.13916015625,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "sans-serif",
+   "size": 10.5,
+   "text": "   ",
+   "width": 8.751708984375,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "sans-serif",
+   "size": 10.5,
+   "text": "W",
+   "width": 9.910400390625,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "sans-serif",
+   "size": 32,
+   "text": "Hello",
+   "width": 72.921875,
+   "ascent": 30,
+   "descent": 7
+  },
+  {
+   "family": "sans-serif",
+   "size": 32,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 642.09375,
+   "ascent": 30,
+   "descent": 7
+  },
+  {
+   "family": "sans-serif",
+   "size": 32,
+   "text": "0123456789 +-*/=%",
+   "width": 284.6875,
+   "ascent": 30,
+   "descent": 7
+  },
+  {
+   "family": "sans-serif",
+   "size": 32,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 703.25,
+   "ascent": 30,
+   "descent": 7
+  },
+  {
+   "family": "sans-serif",
+   "size": 32,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 563.609375,
+   "ascent": 30,
+   "descent": 7
+  },
+  {
+   "family": "sans-serif",
+   "size": 32,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 495.21875,
+   "ascent": 30,
+   "descent": 7
+  },
+  {
+   "family": "sans-serif",
+   "size": 32,
+   "text": "espace insécable",
+   "width": 247.28125,
+   "ascent": 30,
+   "descent": 7
+  },
+  {
+   "family": "sans-serif",
+   "size": 32,
+   "text": "   ",
+   "width": 26.671875,
+   "ascent": 30,
+   "descent": 7
+  },
+  {
+   "family": "sans-serif",
+   "size": 32,
+   "text": "W",
+   "width": 30.203125,
+   "ascent": 30,
+   "descent": 7
+  },
+  {
+   "family": "sans-serif",
+   "size": 7,
+   "text": "Hello",
+   "width": 15.95166015625,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "sans-serif",
+   "size": 7,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 140.4580078125,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "sans-serif",
+   "size": 7,
+   "text": "0123456789 +-*/=%",
+   "width": 62.275390625,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "sans-serif",
+   "size": 7,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 153.8359375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "sans-serif",
+   "size": 7,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 123.28955078125,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "sans-serif",
+   "size": 7,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 108.3291015625,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "sans-serif",
+   "size": 7,
+   "text": "espace insécable",
+   "width": 54.0927734375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "sans-serif",
+   "size": 7,
+   "text": "   ",
+   "width": 5.83447265625,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "sans-serif",
+   "size": 7,
+   "text": "W",
+   "width": 6.60693359375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "monospace",
+   "size": 16,
+   "text": "Hello",
+   "width": 48.1640625,
+   "ascent": 15,
+   "descent": 4
+  },
+  {
+   "family": "monospace",
+   "size": 16,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 423.84375,
+   "ascent": 15,
+   "descent": 4
+  },
+  {
+   "family": "monospace",
+   "size": 16,
+   "text": "0123456789 +-*/=%",
+   "width": 163.7578125,
+   "ascent": 15,
+   "descent": 4
+  },
+  {
+   "family": "monospace",
+   "size": 16,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 481.640625,
+   "ascent": 15,
+   "descent": 4
+  },
+  {
+   "family": "monospace",
+   "size": 16,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 250.453125,
+   "ascent": 15,
+   "descent": 4
+  },
+  {
+   "family": "monospace",
+   "size": 16,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 337.1484375,
+   "ascent": 15,
+   "descent": 4
+  },
+  {
+   "family": "monospace",
+   "size": 16,
+   "text": "espace insécable",
+   "width": 154.125,
+   "ascent": 15,
+   "descent": 4
+  },
+  {
+   "family": "monospace",
+   "size": 16,
+   "text": "   ",
+   "width": 28.8984375,
+   "ascent": 15,
+   "descent": 4
+  },
+  {
+   "family": "monospace",
+   "size": 16,
+   "text": "W",
+   "width": 9.6328125,
+   "ascent": 15,
+   "descent": 4
+  },
+  {
+   "family": "monospace",
+   "size": 13,
+   "text": "Hello",
+   "width": 39.13330078125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "monospace",
+   "size": 13,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 344.373046875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "monospace",
+   "size": 13,
+   "text": "0123456789 +-*/=%",
+   "width": 133.05322265625,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "monospace",
+   "size": 13,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 391.3330078125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "monospace",
+   "size": 13,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 203.4931640625,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "monospace",
+   "size": 13,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 273.93310546875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "monospace",
+   "size": 13,
+   "text": "espace insécable",
+   "width": 125.2265625,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "monospace",
+   "size": 13,
+   "text": "   ",
+   "width": 23.47998046875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "monospace",
+   "size": 13,
+   "text": "W",
+   "width": 7.82666015625,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "monospace",
+   "size": 10.5,
+   "text": "Hello",
+   "width": 31.607666015625,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "monospace",
+   "size": 10.5,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 278.1474609375,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "monospace",
+   "size": 10.5,
+   "text": "0123456789 +-*/=%",
+   "width": 107.466064453125,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "monospace",
+   "size": 10.5,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 316.07666015625,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "monospace",
+   "size": 10.5,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 164.35986328125,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "monospace",
+   "size": 10.5,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 221.253662109375,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "monospace",
+   "size": 10.5,
+   "text": "espace insécable",
+   "width": 101.14453125,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "monospace",
+   "size": 10.5,
+   "text": "   ",
+   "width": 18.964599609375,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "monospace",
+   "size": 10.5,
+   "text": "W",
+   "width": 6.321533203125,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "monospace",
+   "size": 32,
+   "text": "Hello",
+   "width": 96.328125,
+   "ascent": 30,
+   "descent": 8
+  },
+  {
+   "family": "monospace",
+   "size": 32,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 847.6875,
+   "ascent": 30,
+   "descent": 8
+  },
+  {
+   "family": "monospace",
+   "size": 32,
+   "text": "0123456789 +-*/=%",
+   "width": 327.515625,
+   "ascent": 30,
+   "descent": 8
+  },
+  {
+   "family": "monospace",
+   "size": 32,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 963.28125,
+   "ascent": 30,
+   "descent": 8
+  },
+  {
+   "family": "monospace",
+   "size": 32,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 500.90625,
+   "ascent": 30,
+   "descent": 8
+  },
+  {
+   "family": "monospace",
+   "size": 32,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 674.296875,
+   "ascent": 30,
+   "descent": 8
+  },
+  {
+   "family": "monospace",
+   "size": 32,
+   "text": "espace insécable",
+   "width": 308.25,
+   "ascent": 30,
+   "descent": 8
+  },
+  {
+   "family": "monospace",
+   "size": 32,
+   "text": "   ",
+   "width": 57.796875,
+   "ascent": 30,
+   "descent": 8
+  },
+  {
+   "family": "monospace",
+   "size": 32,
+   "text": "W",
+   "width": 19.265625,
+   "ascent": 30,
+   "descent": 8
+  },
+  {
+   "family": "monospace",
+   "size": 7,
+   "text": "Hello",
+   "width": 21.07177734375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "monospace",
+   "size": 7,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 185.431640625,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "monospace",
+   "size": 7,
+   "text": "0123456789 +-*/=%",
+   "width": 71.64404296875,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "monospace",
+   "size": 7,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 210.7177734375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "monospace",
+   "size": 7,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 109.5732421875,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "monospace",
+   "size": 7,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 147.50244140625,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "monospace",
+   "size": 7,
+   "text": "espace insécable",
+   "width": 67.4296875,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "monospace",
+   "size": 7,
+   "text": "   ",
+   "width": 12.64306640625,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "monospace",
+   "size": 7,
+   "text": "W",
+   "width": 4.21435546875,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Arial",
+   "size": 16,
+   "text": "Hello",
+   "width": 36.4609375,
+   "ascent": 14,
+   "descent": 3
+  },
+  {
+   "family": "Arial",
+   "size": 16,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 321.046875,
+   "ascent": 14,
+   "descent": 3
+  },
+  {
+   "family": "Arial",
+   "size": 16,
+   "text": "0123456789 +-*/=%",
+   "width": 142.34375,
+   "ascent": 14,
+   "descent": 3
+  },
+  {
+   "family": "Arial",
+   "size": 16,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 348.6171875,
+   "ascent": 14,
+   "descent": 3
+  },
+  {
+   "family": "Arial",
+   "size": 16,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 281.8046875,
+   "ascent": 14,
+   "descent": 3
+  },
+  {
+   "family": "Arial",
+   "size": 16,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 247.609375,
+   "ascent": 14,
+   "descent": 3
+  },
+  {
+   "family": "Arial",
+   "size": 16,
+   "text": "espace insécable",
+   "width": 123.640625,
+   "ascent": 14,
+   "descent": 3
+  },
+  {
+   "family": "Arial",
+   "size": 16,
+   "text": "   ",
+   "width": 13.3359375,
+   "ascent": 14,
+   "descent": 3
+  },
+  {
+   "family": "Arial",
+   "size": 16,
+   "text": "W",
+   "width": 15.1015625,
+   "ascent": 14,
+   "descent": 3
+  },
+  {
+   "family": "Arial",
+   "size": 13,
+   "text": "Hello",
+   "width": 29.62451171875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Arial",
+   "size": 13,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 260.8505859375,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Arial",
+   "size": 13,
+   "text": "0123456789 +-*/=%",
+   "width": 115.654296875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Arial",
+   "size": 13,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 283.25146484375,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Arial",
+   "size": 13,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 228.96630859375,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Arial",
+   "size": 13,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 201.1826171875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Arial",
+   "size": 13,
+   "text": "espace insécable",
+   "width": 100.4580078125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Arial",
+   "size": 13,
+   "text": "   ",
+   "width": 10.83544921875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Arial",
+   "size": 13,
+   "text": "W",
+   "width": 12.27001953125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Arial",
+   "size": 10.5,
+   "text": "Hello",
+   "width": 23.927490234375,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Arial",
+   "size": 10.5,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 210.68701171875,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Arial",
+   "size": 10.5,
+   "text": "0123456789 +-*/=%",
+   "width": 93.4130859375,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Arial",
+   "size": 10.5,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 228.780029296875,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Arial",
+   "size": 10.5,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 184.934326171875,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Arial",
+   "size": 10.5,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 162.49365234375,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Arial",
+   "size": 10.5,
+   "text": "espace insécable",
+   "width": 81.13916015625,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Arial",
+   "size": 10.5,
+   "text": "   ",
+   "width": 8.751708984375,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Arial",
+   "size": 10.5,
+   "text": "W",
+   "width": 9.910400390625,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Arial",
+   "size": 32,
+   "text": "Hello",
+   "width": 72.921875,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Arial",
+   "size": 32,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 642.09375,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Arial",
+   "size": 32,
+   "text": "0123456789 +-*/=%",
+   "width": 284.6875,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Arial",
+   "size": 32,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 697.234375,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Arial",
+   "size": 32,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 563.609375,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Arial",
+   "size": 32,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 495.21875,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Arial",
+   "size": 32,
+   "text": "espace insécable",
+   "width": 247.28125,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Arial",
+   "size": 32,
+   "text": "   ",
+   "width": 26.671875,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Arial",
+   "size": 32,
+   "text": "W",
+   "width": 30.203125,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Arial",
+   "size": 7,
+   "text": "Hello",
+   "width": 15.95166015625,
+   "ascent": 6,
+   "descent": 1
+  },
+  {
+   "family": "Arial",
+   "size": 7,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 140.4580078125,
+   "ascent": 6,
+   "descent": 1
+  },
+  {
+   "family": "Arial",
+   "size": 7,
+   "text": "0123456789 +-*/=%",
+   "width": 62.275390625,
+   "ascent": 6,
+   "descent": 1
+  },
+  {
+   "family": "Arial",
+   "size": 7,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 152.52001953125,
+   "ascent": 6,
+   "descent": 1
+  },
+  {
+   "family": "Arial",
+   "size": 7,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 123.28955078125,
+   "ascent": 6,
+   "descent": 1
+  },
+  {
+   "family": "Arial",
+   "size": 7,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 108.3291015625,
+   "ascent": 6,
+   "descent": 1
+  },
+  {
+   "family": "Arial",
+   "size": 7,
+   "text": "espace insécable",
+   "width": 54.0927734375,
+   "ascent": 6,
+   "descent": 1
+  },
+  {
+   "family": "Arial",
+   "size": 7,
+   "text": "   ",
+   "width": 5.83447265625,
+   "ascent": 6,
+   "descent": 1
+  },
+  {
+   "family": "Arial",
+   "size": 7,
+   "text": "W",
+   "width": 6.60693359375,
+   "ascent": 6,
+   "descent": 1
+  },
+  {
+   "family": "Times New Roman",
+   "size": 16,
+   "text": "Hello",
+   "width": 35.546875,
+   "ascent": 14,
+   "descent": 3
+  },
+  {
+   "family": "Times New Roman",
+   "size": 16,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 296.375,
+   "ascent": 14,
+   "descent": 3
+  },
+  {
+   "family": "Times New Roman",
+   "size": 16,
+   "text": "0123456789 +-*/=%",
+   "width": 133.1484375,
+   "ascent": 14,
+   "descent": 3
+  },
+  {
+   "family": "Times New Roman",
+   "size": 16,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 314.5703125,
+   "ascent": 14,
+   "descent": 3
+  },
+  {
+   "family": "Times New Roman",
+   "size": 16,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 277.34375,
+   "ascent": 14,
+   "descent": 3
+  },
+  {
+   "family": "Times New Roman",
+   "size": 16,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 231.2890625,
+   "ascent": 14,
+   "descent": 3
+  },
+  {
+   "family": "Times New Roman",
+   "size": 16,
+   "text": "espace insécable",
+   "width": 106.15625,
+   "ascent": 14,
+   "descent": 3
+  },
+  {
+   "family": "Times New Roman",
+   "size": 16,
+   "text": "   ",
+   "width": 12,
+   "ascent": 14,
+   "descent": 3
+  },
+  {
+   "family": "Times New Roman",
+   "size": 16,
+   "text": "W",
+   "width": 15.1015625,
+   "ascent": 14,
+   "descent": 3
+  },
+  {
+   "family": "Times New Roman",
+   "size": 13,
+   "text": "Hello",
+   "width": 28.8818359375,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Times New Roman",
+   "size": 13,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 240.8046875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Times New Roman",
+   "size": 13,
+   "text": "0123456789 +-*/=%",
+   "width": 108.18310546875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Times New Roman",
+   "size": 13,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 255.58837890625,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Times New Roman",
+   "size": 13,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 225.341796875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Times New Roman",
+   "size": 13,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 187.92236328125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Times New Roman",
+   "size": 13,
+   "text": "espace insécable",
+   "width": 86.251953125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Times New Roman",
+   "size": 13,
+   "text": "   ",
+   "width": 9.75,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Times New Roman",
+   "size": 13,
+   "text": "W",
+   "width": 12.27001953125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Times New Roman",
+   "size": 10.5,
+   "text": "Hello",
+   "width": 23.32763671875,
+   "ascent": 9,
+   "descent": 2
+  },
+  {
+   "family": "Times New Roman",
+   "size": 10.5,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 194.49609375,
+   "ascent": 9,
+   "descent": 2
+  },
+  {
+   "family": "Times New Roman",
+   "size": 10.5,
+   "text": "0123456789 +-*/=%",
+   "width": 87.378662109375,
+   "ascent": 9,
+   "descent": 2
+  },
+  {
+   "family": "Times New Roman",
+   "size": 10.5,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 206.436767578125,
+   "ascent": 9,
+   "descent": 2
+  },
+  {
+   "family": "Times New Roman",
+   "size": 10.5,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 182.0068359375,
+   "ascent": 9,
+   "descent": 2
+  },
+  {
+   "family": "Times New Roman",
+   "size": 10.5,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 151.783447265625,
+   "ascent": 9,
+   "descent": 2
+  },
+  {
+   "family": "Times New Roman",
+   "size": 10.5,
+   "text": "espace insécable",
+   "width": 69.6650390625,
+   "ascent": 9,
+   "descent": 2
+  },
+  {
+   "family": "Times New Roman",
+   "size": 10.5,
+   "text": "   ",
+   "width": 7.875,
+   "ascent": 9,
+   "descent": 2
+  },
+  {
+   "family": "Times New Roman",
+   "size": 10.5,
+   "text": "W",
+   "width": 9.910400390625,
+   "ascent": 9,
+   "descent": 2
+  },
+  {
+   "family": "Times New Roman",
+   "size": 32,
+   "text": "Hello",
+   "width": 71.09375,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Times New Roman",
+   "size": 32,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 592.75,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Times New Roman",
+   "size": 32,
+   "text": "0123456789 +-*/=%",
+   "width": 266.296875,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Times New Roman",
+   "size": 32,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 629.140625,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Times New Roman",
+   "size": 32,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 554.6875,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Times New Roman",
+   "size": 32,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 462.578125,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Times New Roman",
+   "size": 32,
+   "text": "espace insécable",
+   "width": 212.3125,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Times New Roman",
+   "size": 32,
+   "text": "   ",
+   "width": 24,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Times New Roman",
+   "size": 32,
+   "text": "W",
+   "width": 30.203125,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Times New Roman",
+   "size": 7,
+   "text": "Hello",
+   "width": 15.5517578125,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Times New Roman",
+   "size": 7,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 129.6640625,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Times New Roman",
+   "size": 7,
+   "text": "0123456789 +-*/=%",
+   "width": 58.25244140625,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Times New Roman",
+   "size": 7,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 137.62451171875,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Times New Roman",
+   "size": 7,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 121.337890625,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Times New Roman",
+   "size": 7,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 101.18896484375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Times New Roman",
+   "size": 7,
+   "text": "espace insécable",
+   "width": 46.443359375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Times New Roman",
+   "size": 7,
+   "text": "   ",
+   "width": 5.25,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Times New Roman",
+   "size": 7,
+   "text": "W",
+   "width": 6.60693359375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Georgia",
+   "size": 16,
+   "text": "Hello",
+   "width": 38.5546875,
+   "ascent": 15,
+   "descent": 4
+  },
+  {
+   "family": "Georgia",
+   "size": 16,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 319.140625,
+   "ascent": 15,
+   "descent": 4
+  },
+  {
+   "family": "Georgia",
+   "size": 16,
+   "text": "0123456789 +-*/=%",
+   "width": 146.1953125,
+   "ascent": 15,
+   "descent": 4
+  },
+  {
+   "family": "Georgia",
+   "size": 16,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 339.9921875,
+   "ascent": 15,
+   "descent": 4
+  },
+  {
+   "family": "Georgia",
+   "size": 16,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 283.40625,
+   "ascent": 15,
+   "descent": 4
+  },
+  {
+   "family": "Georgia",
+   "size": 16,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 242.3984375,
+   "ascent": 15,
+   "descent": 4
+  },
+  {
+   "family": "Georgia",
+   "size": 16,
+   "text": "espace insécable",
+   "width": 116.1015625,
+   "ascent": 15,
+   "descent": 4
+  },
+  {
+   "family": "Georgia",
+   "size": 16,
+   "text": "   ",
+   "width": 11.578125,
+   "ascent": 15,
+   "descent": 4
+  },
+  {
+   "family": "Georgia",
+   "size": 16,
+   "text": "W",
+   "width": 15.609375,
+   "ascent": 15,
+   "descent": 4
+  },
+  {
+   "family": "Georgia",
+   "size": 13,
+   "text": "Hello",
+   "width": 31.32568359375,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Georgia",
+   "size": 13,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 259.3017578125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Georgia",
+   "size": 13,
+   "text": "0123456789 +-*/=%",
+   "width": 118.78369140625,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Georgia",
+   "size": 13,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 276.24365234375,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Georgia",
+   "size": 13,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 230.267578125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Georgia",
+   "size": 13,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 196.94873046875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Georgia",
+   "size": 13,
+   "text": "espace insécable",
+   "width": 94.33251953125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Georgia",
+   "size": 13,
+   "text": "   ",
+   "width": 9.4072265625,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Georgia",
+   "size": 13,
+   "text": "W",
+   "width": 12.6826171875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Georgia",
+   "size": 10.5,
+   "text": "Hello",
+   "width": 25.301513671875,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Georgia",
+   "size": 10.5,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 209.43603515625,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Georgia",
+   "size": 10.5,
+   "text": "0123456789 +-*/=%",
+   "width": 95.940673828125,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Georgia",
+   "size": 10.5,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 223.119873046875,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Georgia",
+   "size": 10.5,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 185.9853515625,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Georgia",
+   "size": 10.5,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 159.073974609375,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Georgia",
+   "size": 10.5,
+   "text": "espace insécable",
+   "width": 76.191650390625,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Georgia",
+   "size": 10.5,
+   "text": "   ",
+   "width": 7.59814453125,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Georgia",
+   "size": 10.5,
+   "text": "W",
+   "width": 10.24365234375,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Georgia",
+   "size": 32,
+   "text": "Hello",
+   "width": 77.109375,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Georgia",
+   "size": 32,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 638.28125,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Georgia",
+   "size": 32,
+   "text": "0123456789 +-*/=%",
+   "width": 292.390625,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Georgia",
+   "size": 32,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 679.984375,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Georgia",
+   "size": 32,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 566.8125,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Georgia",
+   "size": 32,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 484.796875,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Georgia",
+   "size": 32,
+   "text": "espace insécable",
+   "width": 232.203125,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Georgia",
+   "size": 32,
+   "text": "   ",
+   "width": 23.15625,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Georgia",
+   "size": 32,
+   "text": "W",
+   "width": 31.21875,
+   "ascent": 29,
+   "descent": 7
+  },
+  {
+   "family": "Georgia",
+   "size": 7,
+   "text": "Hello",
+   "width": 16.86767578125,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Georgia",
+   "size": 7,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 139.6240234375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Georgia",
+   "size": 7,
+   "text": "0123456789 +-*/=%",
+   "width": 63.96044921875,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Georgia",
+   "size": 7,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 148.74658203125,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Georgia",
+   "size": 7,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 123.990234375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Georgia",
+   "size": 7,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 106.04931640625,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Georgia",
+   "size": 7,
+   "text": "espace insécable",
+   "width": 50.79443359375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Georgia",
+   "size": 7,
+   "text": "   ",
+   "width": 5.0654296875,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Georgia",
+   "size": 7,
+   "text": "W",
+   "width": 6.8291015625,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Verdana",
+   "size": 16,
+   "text": "Hello",
+   "width": 40.046875,
+   "ascent": 16,
+   "descent": 3
+  },
+  {
+   "family": "Verdana",
+   "size": 16,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 369.6796875,
+   "ascent": 16,
+   "descent": 3
+  },
+  {
+   "family": "Verdana",
+   "size": 16,
+   "text": "0123456789 +-*/=%",
+   "width": 175.453125,
+   "ascent": 16,
+   "descent": 3
+  },
+  {
+   "family": "Verdana",
+   "size": 16,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 401.4296875,
+   "ascent": 16,
+   "descent": 3
+  },
+  {
+   "family": "Verdana",
+   "size": 16,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 285.59375,
+   "ascent": 16,
+   "descent": 3
+  },
+  {
+   "family": "Verdana",
+   "size": 16,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 279.953125,
+   "ascent": 16,
+   "descent": 3
+  },
+  {
+   "family": "Verdana",
+   "size": 16,
+   "text": "espace insécable",
+   "width": 135.15625,
+   "ascent": 16,
+   "descent": 3
+  },
+  {
+   "family": "Verdana",
+   "size": 16,
+   "text": "   ",
+   "width": 16.875,
+   "ascent": 16,
+   "descent": 3
+  },
+  {
+   "family": "Verdana",
+   "size": 16,
+   "text": "W",
+   "width": 15.8203125,
+   "ascent": 16,
+   "descent": 3
+  },
+  {
+   "family": "Verdana",
+   "size": 13,
+   "text": "Hello",
+   "width": 32.5380859375,
+   "ascent": 13,
+   "descent": 3
+  },
+  {
+   "family": "Verdana",
+   "size": 13,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 300.36474609375,
+   "ascent": 13,
+   "descent": 3
+  },
+  {
+   "family": "Verdana",
+   "size": 13,
+   "text": "0123456789 +-*/=%",
+   "width": 142.5556640625,
+   "ascent": 13,
+   "descent": 3
+  },
+  {
+   "family": "Verdana",
+   "size": 13,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 326.16162109375,
+   "ascent": 13,
+   "descent": 3
+  },
+  {
+   "family": "Verdana",
+   "size": 13,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 232.044921875,
+   "ascent": 13,
+   "descent": 3
+  },
+  {
+   "family": "Verdana",
+   "size": 13,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 227.4619140625,
+   "ascent": 13,
+   "descent": 3
+  },
+  {
+   "family": "Verdana",
+   "size": 13,
+   "text": "espace insécable",
+   "width": 109.814453125,
+   "ascent": 13,
+   "descent": 3
+  },
+  {
+   "family": "Verdana",
+   "size": 13,
+   "text": "   ",
+   "width": 13.7109375,
+   "ascent": 13,
+   "descent": 3
+  },
+  {
+   "family": "Verdana",
+   "size": 13,
+   "text": "W",
+   "width": 12.85400390625,
+   "ascent": 13,
+   "descent": 3
+  },
+  {
+   "family": "Verdana",
+   "size": 10.5,
+   "text": "Hello",
+   "width": 26.28076171875,
+   "ascent": 11,
+   "descent": 2
+  },
+  {
+   "family": "Verdana",
+   "size": 10.5,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 242.602294921875,
+   "ascent": 11,
+   "descent": 2
+  },
+  {
+   "family": "Verdana",
+   "size": 10.5,
+   "text": "0123456789 +-*/=%",
+   "width": 115.14111328125,
+   "ascent": 11,
+   "descent": 2
+  },
+  {
+   "family": "Verdana",
+   "size": 10.5,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 263.438232421875,
+   "ascent": 11,
+   "descent": 2
+  },
+  {
+   "family": "Verdana",
+   "size": 10.5,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 187.4208984375,
+   "ascent": 11,
+   "descent": 2
+  },
+  {
+   "family": "Verdana",
+   "size": 10.5,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 183.71923828125,
+   "ascent": 11,
+   "descent": 2
+  },
+  {
+   "family": "Verdana",
+   "size": 10.5,
+   "text": "espace insécable",
+   "width": 88.6962890625,
+   "ascent": 11,
+   "descent": 2
+  },
+  {
+   "family": "Verdana",
+   "size": 10.5,
+   "text": "   ",
+   "width": 11.07421875,
+   "ascent": 11,
+   "descent": 2
+  },
+  {
+   "family": "Verdana",
+   "size": 10.5,
+   "text": "W",
+   "width": 10.382080078125,
+   "ascent": 11,
+   "descent": 2
+  },
+  {
+   "family": "Verdana",
+   "size": 32,
+   "text": "Hello",
+   "width": 80.09375,
+   "ascent": 32,
+   "descent": 7
+  },
+  {
+   "family": "Verdana",
+   "size": 32,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 739.359375,
+   "ascent": 32,
+   "descent": 7
+  },
+  {
+   "family": "Verdana",
+   "size": 32,
+   "text": "0123456789 +-*/=%",
+   "width": 350.90625,
+   "ascent": 32,
+   "descent": 7
+  },
+  {
+   "family": "Verdana",
+   "size": 32,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 802.859375,
+   "ascent": 32,
+   "descent": 7
+  },
+  {
+   "family": "Verdana",
+   "size": 32,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 571.1875,
+   "ascent": 32,
+   "descent": 7
+  },
+  {
+   "family": "Verdana",
+   "size": 32,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 559.90625,
+   "ascent": 32,
+   "descent": 7
+  },
+  {
+   "family": "Verdana",
+   "size": 32,
+   "text": "espace insécable",
+   "width": 270.3125,
+   "ascent": 32,
+   "descent": 7
+  },
+  {
+   "family": "Verdana",
+   "size": 32,
+   "text": "   ",
+   "width": 33.75,
+   "ascent": 32,
+   "descent": 7
+  },
+  {
+   "family": "Verdana",
+   "size": 32,
+   "text": "W",
+   "width": 31.640625,
+   "ascent": 32,
+   "descent": 7
+  },
+  {
+   "family": "Verdana",
+   "size": 7,
+   "text": "Hello",
+   "width": 17.5205078125,
+   "ascent": 7,
+   "descent": 1
+  },
+  {
+   "family": "Verdana",
+   "size": 7,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 161.73486328125,
+   "ascent": 7,
+   "descent": 1
+  },
+  {
+   "family": "Verdana",
+   "size": 7,
+   "text": "0123456789 +-*/=%",
+   "width": 76.7607421875,
+   "ascent": 7,
+   "descent": 1
+  },
+  {
+   "family": "Verdana",
+   "size": 7,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 175.62548828125,
+   "ascent": 7,
+   "descent": 1
+  },
+  {
+   "family": "Verdana",
+   "size": 7,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 124.947265625,
+   "ascent": 7,
+   "descent": 1
+  },
+  {
+   "family": "Verdana",
+   "size": 7,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 122.4794921875,
+   "ascent": 7,
+   "descent": 1
+  },
+  {
+   "family": "Verdana",
+   "size": 7,
+   "text": "espace insécable",
+   "width": 59.130859375,
+   "ascent": 7,
+   "descent": 1
+  },
+  {
+   "family": "Verdana",
+   "size": 7,
+   "text": "   ",
+   "width": 7.3828125,
+   "ascent": 7,
+   "descent": 1
+  },
+  {
+   "family": "Verdana",
+   "size": 7,
+   "text": "W",
+   "width": 6.92138671875,
+   "ascent": 7,
+   "descent": 1
+  },
+  {
+   "family": "Courier New",
+   "size": 16,
+   "text": "Hello",
+   "width": 48.0078125,
+   "ascent": 13,
+   "descent": 5
+  },
+  {
+   "family": "Courier New",
+   "size": 16,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 422.46875,
+   "ascent": 13,
+   "descent": 5
+  },
+  {
+   "family": "Courier New",
+   "size": 16,
+   "text": "0123456789 +-*/=%",
+   "width": 163.2265625,
+   "ascent": 13,
+   "descent": 5
+  },
+  {
+   "family": "Courier New",
+   "size": 16,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 480.078125,
+   "ascent": 13,
+   "descent": 5
+  },
+  {
+   "family": "Courier New",
+   "size": 16,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 249.640625,
+   "ascent": 13,
+   "descent": 5
+  },
+  {
+   "family": "Courier New",
+   "size": 16,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 336.0546875,
+   "ascent": 13,
+   "descent": 5
+  },
+  {
+   "family": "Courier New",
+   "size": 16,
+   "text": "espace insécable",
+   "width": 153.625,
+   "ascent": 13,
+   "descent": 5
+  },
+  {
+   "family": "Courier New",
+   "size": 16,
+   "text": "   ",
+   "width": 28.8046875,
+   "ascent": 13,
+   "descent": 5
+  },
+  {
+   "family": "Courier New",
+   "size": 16,
+   "text": "W",
+   "width": 9.6015625,
+   "ascent": 13,
+   "descent": 5
+  },
+  {
+   "family": "Courier New",
+   "size": 13,
+   "text": "Hello",
+   "width": 39.00634765625,
+   "ascent": 11,
+   "descent": 4
+  },
+  {
+   "family": "Courier New",
+   "size": 13,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 343.255859375,
+   "ascent": 11,
+   "descent": 4
+  },
+  {
+   "family": "Courier New",
+   "size": 13,
+   "text": "0123456789 +-*/=%",
+   "width": 132.62158203125,
+   "ascent": 11,
+   "descent": 4
+  },
+  {
+   "family": "Courier New",
+   "size": 13,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 390.0634765625,
+   "ascent": 11,
+   "descent": 4
+  },
+  {
+   "family": "Courier New",
+   "size": 13,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 202.8330078125,
+   "ascent": 11,
+   "descent": 4
+  },
+  {
+   "family": "Courier New",
+   "size": 13,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 273.04443359375,
+   "ascent": 11,
+   "descent": 4
+  },
+  {
+   "family": "Courier New",
+   "size": 13,
+   "text": "espace insécable",
+   "width": 124.8203125,
+   "ascent": 11,
+   "descent": 4
+  },
+  {
+   "family": "Courier New",
+   "size": 13,
+   "text": "   ",
+   "width": 23.40380859375,
+   "ascent": 11,
+   "descent": 4
+  },
+  {
+   "family": "Courier New",
+   "size": 13,
+   "text": "W",
+   "width": 7.80126953125,
+   "ascent": 11,
+   "descent": 4
+  },
+  {
+   "family": "Courier New",
+   "size": 10.5,
+   "text": "Hello",
+   "width": 31.505126953125,
+   "ascent": 9,
+   "descent": 3
+  },
+  {
+   "family": "Courier New",
+   "size": 10.5,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 277.2451171875,
+   "ascent": 9,
+   "descent": 3
+  },
+  {
+   "family": "Courier New",
+   "size": 10.5,
+   "text": "0123456789 +-*/=%",
+   "width": 107.117431640625,
+   "ascent": 9,
+   "descent": 3
+  },
+  {
+   "family": "Courier New",
+   "size": 10.5,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 315.05126953125,
+   "ascent": 9,
+   "descent": 3
+  },
+  {
+   "family": "Courier New",
+   "size": 10.5,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 163.82666015625,
+   "ascent": 9,
+   "descent": 3
+  },
+  {
+   "family": "Courier New",
+   "size": 10.5,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 220.535888671875,
+   "ascent": 9,
+   "descent": 3
+  },
+  {
+   "family": "Courier New",
+   "size": 10.5,
+   "text": "espace insécable",
+   "width": 100.81640625,
+   "ascent": 9,
+   "descent": 3
+  },
+  {
+   "family": "Courier New",
+   "size": 10.5,
+   "text": "   ",
+   "width": 18.903076171875,
+   "ascent": 9,
+   "descent": 3
+  },
+  {
+   "family": "Courier New",
+   "size": 10.5,
+   "text": "W",
+   "width": 6.301025390625,
+   "ascent": 9,
+   "descent": 3
+  },
+  {
+   "family": "Courier New",
+   "size": 32,
+   "text": "Hello",
+   "width": 96.015625,
+   "ascent": 27,
+   "descent": 10
+  },
+  {
+   "family": "Courier New",
+   "size": 32,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 844.9375,
+   "ascent": 27,
+   "descent": 10
+  },
+  {
+   "family": "Courier New",
+   "size": 32,
+   "text": "0123456789 +-*/=%",
+   "width": 326.453125,
+   "ascent": 27,
+   "descent": 10
+  },
+  {
+   "family": "Courier New",
+   "size": 32,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 960.15625,
+   "ascent": 27,
+   "descent": 10
+  },
+  {
+   "family": "Courier New",
+   "size": 32,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 499.28125,
+   "ascent": 27,
+   "descent": 10
+  },
+  {
+   "family": "Courier New",
+   "size": 32,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 672.109375,
+   "ascent": 27,
+   "descent": 10
+  },
+  {
+   "family": "Courier New",
+   "size": 32,
+   "text": "espace insécable",
+   "width": 307.25,
+   "ascent": 27,
+   "descent": 10
+  },
+  {
+   "family": "Courier New",
+   "size": 32,
+   "text": "   ",
+   "width": 57.609375,
+   "ascent": 27,
+   "descent": 10
+  },
+  {
+   "family": "Courier New",
+   "size": 32,
+   "text": "W",
+   "width": 19.203125,
+   "ascent": 27,
+   "descent": 10
+  },
+  {
+   "family": "Courier New",
+   "size": 7,
+   "text": "Hello",
+   "width": 21.00341796875,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Courier New",
+   "size": 7,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 184.830078125,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Courier New",
+   "size": 7,
+   "text": "0123456789 +-*/=%",
+   "width": 71.41162109375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Courier New",
+   "size": 7,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 210.0341796875,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Courier New",
+   "size": 7,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 109.2177734375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Courier New",
+   "size": 7,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 147.02392578125,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Courier New",
+   "size": 7,
+   "text": "espace insécable",
+   "width": 67.2109375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Courier New",
+   "size": 7,
+   "text": "   ",
+   "width": 12.60205078125,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Courier New",
+   "size": 7,
+   "text": "W",
+   "width": 4.20068359375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Courier",
+   "size": 16,
+   "text": "Hello",
+   "width": 48.0078125,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Courier",
+   "size": 16,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 422.46875,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Courier",
+   "size": 16,
+   "text": "0123456789 +-*/=%",
+   "width": 163.2265625,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Courier",
+   "size": 16,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 480.078125,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Courier",
+   "size": 16,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 249.640625,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Courier",
+   "size": 16,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 336.0546875,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Courier",
+   "size": 16,
+   "text": "espace insécable",
+   "width": 153.625,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Courier",
+   "size": 16,
+   "text": "   ",
+   "width": 28.8046875,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Courier",
+   "size": 16,
+   "text": "W",
+   "width": 9.6015625,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Courier",
+   "size": 13,
+   "text": "Hello",
+   "width": 39.00634765625,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Courier",
+   "size": 13,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 343.255859375,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Courier",
+   "size": 13,
+   "text": "0123456789 +-*/=%",
+   "width": 132.62158203125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Courier",
+   "size": 13,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 390.0634765625,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Courier",
+   "size": 13,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 202.8330078125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Courier",
+   "size": 13,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 273.04443359375,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Courier",
+   "size": 13,
+   "text": "espace insécable",
+   "width": 124.8203125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Courier",
+   "size": 13,
+   "text": "   ",
+   "width": 23.40380859375,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Courier",
+   "size": 13,
+   "text": "W",
+   "width": 7.80126953125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Courier",
+   "size": 10.5,
+   "text": "Hello",
+   "width": 31.505126953125,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "Courier",
+   "size": 10.5,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 277.2451171875,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "Courier",
+   "size": 10.5,
+   "text": "0123456789 +-*/=%",
+   "width": 107.117431640625,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "Courier",
+   "size": 10.5,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 315.05126953125,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "Courier",
+   "size": 10.5,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 163.82666015625,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "Courier",
+   "size": 10.5,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 220.535888671875,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "Courier",
+   "size": 10.5,
+   "text": "espace insécable",
+   "width": 100.81640625,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "Courier",
+   "size": 10.5,
+   "text": "   ",
+   "width": 18.903076171875,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "Courier",
+   "size": 10.5,
+   "text": "W",
+   "width": 6.301025390625,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "Courier",
+   "size": 32,
+   "text": "Hello",
+   "width": 96.015625,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "Courier",
+   "size": 32,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 844.9375,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "Courier",
+   "size": 32,
+   "text": "0123456789 +-*/=%",
+   "width": 326.453125,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "Courier",
+   "size": 32,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 960.15625,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "Courier",
+   "size": 32,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 499.28125,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "Courier",
+   "size": 32,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 672.109375,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "Courier",
+   "size": 32,
+   "text": "espace insécable",
+   "width": 307.25,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "Courier",
+   "size": 32,
+   "text": "   ",
+   "width": 57.609375,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "Courier",
+   "size": 32,
+   "text": "W",
+   "width": 19.203125,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "Courier",
+   "size": 7,
+   "text": "Hello",
+   "width": 21.00341796875,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Courier",
+   "size": 7,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 184.830078125,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Courier",
+   "size": 7,
+   "text": "0123456789 +-*/=%",
+   "width": 71.41162109375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Courier",
+   "size": 7,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 210.0341796875,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Courier",
+   "size": 7,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 109.2177734375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Courier",
+   "size": 7,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 147.02392578125,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Courier",
+   "size": 7,
+   "text": "espace insécable",
+   "width": 67.2109375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Courier",
+   "size": 7,
+   "text": "   ",
+   "width": 12.60205078125,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Courier",
+   "size": 7,
+   "text": "W",
+   "width": 4.20068359375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Helvetica",
+   "size": 16,
+   "text": "Hello",
+   "width": 36.4609375,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Helvetica",
+   "size": 16,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 321.046875,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Helvetica",
+   "size": 16,
+   "text": "0123456789 +-*/=%",
+   "width": 142.34375,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Helvetica",
+   "size": 16,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 351.625,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Helvetica",
+   "size": 16,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 281.8046875,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Helvetica",
+   "size": 16,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 247.609375,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Helvetica",
+   "size": 16,
+   "text": "espace insécable",
+   "width": 123.640625,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Helvetica",
+   "size": 16,
+   "text": "   ",
+   "width": 13.3359375,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Helvetica",
+   "size": 16,
+   "text": "W",
+   "width": 15.1015625,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Helvetica",
+   "size": 13,
+   "text": "Hello",
+   "width": 29.62451171875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Helvetica",
+   "size": 13,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 260.8505859375,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Helvetica",
+   "size": 13,
+   "text": "0123456789 +-*/=%",
+   "width": 115.654296875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Helvetica",
+   "size": 13,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 285.6953125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Helvetica",
+   "size": 13,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 228.96630859375,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Helvetica",
+   "size": 13,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 201.1826171875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Helvetica",
+   "size": 13,
+   "text": "espace insécable",
+   "width": 100.4580078125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Helvetica",
+   "size": 13,
+   "text": "   ",
+   "width": 10.83544921875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Helvetica",
+   "size": 13,
+   "text": "W",
+   "width": 12.27001953125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Helvetica",
+   "size": 10.5,
+   "text": "Hello",
+   "width": 23.927490234375,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Helvetica",
+   "size": 10.5,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 210.68701171875,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Helvetica",
+   "size": 10.5,
+   "text": "0123456789 +-*/=%",
+   "width": 93.4130859375,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Helvetica",
+   "size": 10.5,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 230.75390625,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Helvetica",
+   "size": 10.5,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 184.934326171875,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Helvetica",
+   "size": 10.5,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 162.49365234375,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Helvetica",
+   "size": 10.5,
+   "text": "espace insécable",
+   "width": 81.13916015625,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Helvetica",
+   "size": 10.5,
+   "text": "   ",
+   "width": 8.751708984375,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Helvetica",
+   "size": 10.5,
+   "text": "W",
+   "width": 9.910400390625,
+   "ascent": 10,
+   "descent": 2
+  },
+  {
+   "family": "Helvetica",
+   "size": 32,
+   "text": "Hello",
+   "width": 72.921875,
+   "ascent": 30,
+   "descent": 7
+  },
+  {
+   "family": "Helvetica",
+   "size": 32,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 642.09375,
+   "ascent": 30,
+   "descent": 7
+  },
+  {
+   "family": "Helvetica",
+   "size": 32,
+   "text": "0123456789 +-*/=%",
+   "width": 284.6875,
+   "ascent": 30,
+   "descent": 7
+  },
+  {
+   "family": "Helvetica",
+   "size": 32,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 703.25,
+   "ascent": 30,
+   "descent": 7
+  },
+  {
+   "family": "Helvetica",
+   "size": 32,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 563.609375,
+   "ascent": 30,
+   "descent": 7
+  },
+  {
+   "family": "Helvetica",
+   "size": 32,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 495.21875,
+   "ascent": 30,
+   "descent": 7
+  },
+  {
+   "family": "Helvetica",
+   "size": 32,
+   "text": "espace insécable",
+   "width": 247.28125,
+   "ascent": 30,
+   "descent": 7
+  },
+  {
+   "family": "Helvetica",
+   "size": 32,
+   "text": "   ",
+   "width": 26.671875,
+   "ascent": 30,
+   "descent": 7
+  },
+  {
+   "family": "Helvetica",
+   "size": 32,
+   "text": "W",
+   "width": 30.203125,
+   "ascent": 30,
+   "descent": 7
+  },
+  {
+   "family": "Helvetica",
+   "size": 7,
+   "text": "Hello",
+   "width": 15.95166015625,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Helvetica",
+   "size": 7,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 140.4580078125,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Helvetica",
+   "size": 7,
+   "text": "0123456789 +-*/=%",
+   "width": 62.275390625,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Helvetica",
+   "size": 7,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 153.8359375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Helvetica",
+   "size": 7,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 123.28955078125,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Helvetica",
+   "size": 7,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 108.3291015625,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Helvetica",
+   "size": 7,
+   "text": "espace insécable",
+   "width": 54.0927734375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Helvetica",
+   "size": 7,
+   "text": "   ",
+   "width": 5.83447265625,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Helvetica",
+   "size": 7,
+   "text": "W",
+   "width": 6.60693359375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Times",
+   "size": 16,
+   "text": "Hello",
+   "width": 35.546875,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Times",
+   "size": 16,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 296.375,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Times",
+   "size": 16,
+   "text": "0123456789 +-*/=%",
+   "width": 133.1484375,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Times",
+   "size": 16,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 318.4765625,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Times",
+   "size": 16,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 277.34375,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Times",
+   "size": 16,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 231.2890625,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Times",
+   "size": 16,
+   "text": "espace insécable",
+   "width": 106.15625,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Times",
+   "size": 16,
+   "text": "   ",
+   "width": 12,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Times",
+   "size": 16,
+   "text": "W",
+   "width": 15.1015625,
+   "ascent": 14,
+   "descent": 4
+  },
+  {
+   "family": "Times",
+   "size": 13,
+   "text": "Hello",
+   "width": 28.8818359375,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Times",
+   "size": 13,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 240.8046875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Times",
+   "size": 13,
+   "text": "0123456789 +-*/=%",
+   "width": 108.18310546875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Times",
+   "size": 13,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 258.76220703125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Times",
+   "size": 13,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 225.341796875,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Times",
+   "size": 13,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 187.92236328125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Times",
+   "size": 13,
+   "text": "espace insécable",
+   "width": 86.251953125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Times",
+   "size": 13,
+   "text": "   ",
+   "width": 9.75,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Times",
+   "size": 13,
+   "text": "W",
+   "width": 12.27001953125,
+   "ascent": 12,
+   "descent": 3
+  },
+  {
+   "family": "Times",
+   "size": 10.5,
+   "text": "Hello",
+   "width": 23.32763671875,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "Times",
+   "size": 10.5,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 194.49609375,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "Times",
+   "size": 10.5,
+   "text": "0123456789 +-*/=%",
+   "width": 87.378662109375,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "Times",
+   "size": 10.5,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 209.000244140625,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "Times",
+   "size": 10.5,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 182.0068359375,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "Times",
+   "size": 10.5,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 151.783447265625,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "Times",
+   "size": 10.5,
+   "text": "espace insécable",
+   "width": 69.6650390625,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "Times",
+   "size": 10.5,
+   "text": "   ",
+   "width": 7.875,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "Times",
+   "size": 10.5,
+   "text": "W",
+   "width": 9.910400390625,
+   "ascent": 10,
+   "descent": 3
+  },
+  {
+   "family": "Times",
+   "size": 32,
+   "text": "Hello",
+   "width": 71.09375,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "Times",
+   "size": 32,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 592.75,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "Times",
+   "size": 32,
+   "text": "0123456789 +-*/=%",
+   "width": 266.296875,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "Times",
+   "size": 32,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 636.953125,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "Times",
+   "size": 32,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 554.6875,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "Times",
+   "size": 32,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 462.578125,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "Times",
+   "size": 32,
+   "text": "espace insécable",
+   "width": 212.3125,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "Times",
+   "size": 32,
+   "text": "   ",
+   "width": 24,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "Times",
+   "size": 32,
+   "text": "W",
+   "width": 30.203125,
+   "ascent": 29,
+   "descent": 8
+  },
+  {
+   "family": "Times",
+   "size": 7,
+   "text": "Hello",
+   "width": 15.5517578125,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Times",
+   "size": 7,
+   "text": "The quick brown fox jumps over the lazy dog.",
+   "width": 129.6640625,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Times",
+   "size": 7,
+   "text": "0123456789 +-*/=%",
+   "width": 58.25244140625,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Times",
+   "size": 7,
+   "text": "Élève, garçon, cœur, naïve, « guillemets », 12 € !",
+   "width": 139.33349609375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Times",
+   "size": 7,
+   "text": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+   "width": 121.337890625,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Times",
+   "size": 7,
+   "text": "l'apostrophe ’ — tiret — et… points",
+   "width": 101.18896484375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Times",
+   "size": 7,
+   "text": "espace insécable",
+   "width": 46.443359375,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Times",
+   "size": 7,
+   "text": "   ",
+   "width": 5.25,
+   "ascent": 6,
+   "descent": 2
+  },
+  {
+   "family": "Times",
+   "size": 7,
+   "text": "W",
+   "width": 6.60693359375,
+   "ascent": 6,
+   "descent": 2
+  }
+ ]
+}
